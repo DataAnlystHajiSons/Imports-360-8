@@ -1,0 +1,124 @@
+/* General styles for the payment terms page */
+.payment-terms-page .panel-body {
+    padding: 0;
+}
+
+/* Schedule builder enhancements */
+#payment-schedule-builder {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #f8fafc;
+    margin-top: 10px;
+}
+
+.schedule-item-header,
+.schedule-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.schedule-item-header {
+    font-weight: 600;
+    color: var(--text-primary-color);
+    font-size: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.schedule-item .btn-danger {
+    background: transparent;
+    color: var(--error-color);
+    border: none;
+    font-size: 18px;
+    padding: 0 5px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.schedule-item .btn-danger:hover {
+    color: #b91c1c;
+}
+
+#add-schedule-item-btn {
+    margin-top: 0;
+}
+
+/* Modal enhancements */
+.payment-terms-page .modal-content {
+    padding: 0;
+}
+
+.payment-terms-page .modal-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.payment-terms-page .modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.payment-terms-page .modal-body {
+    padding: 25px;
+}
+
+.payment-terms-page .modal-footer {
+    padding: 15px 25px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    background-color: #f8fafc;
+    border-radius: 0 0 8px 8px;
+}
+
+/* Card layout for payment terms */
+.terms-list {
+    display: grid;
+    gap: 15px;
+    padding: 20px;
+}
+
+.term-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    padding: 20px;
+    background-color: var(--primary-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.term-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+}
+
+.term-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    color: var(--text-primary-color);
+}
+
+.term-details p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary-color);
+}
+
+.term-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.action-cell .btn-icon {
+    border: none;
+    padding: 5px;
+}

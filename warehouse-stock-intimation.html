@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Stock Intimation</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* CC Email Tags Styling */
+        .cc-container {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px;
+            min-height: 45px;
+            background: #fff;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            cursor: text;
+        }
+        .cc-container:focus-within {
+            border-color: #F59E0B;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
+        }
+        .cc-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #F59E0B 0%, #FBB124 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .cc-tag .remove-cc {
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            transition: background 0.2s;
+        }
+        .cc-tag .remove-cc:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .cc-input-field {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 200px;
+            font-size: 14px;
+            padding: 4px;
+        }
+        .cc-helper-text {
+            font-size: 12px;
+            color: #64748B;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cc-error {
+            color: #EF4444;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .cc-error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i> Back</button>
+        <h1>Warehouse Stock Intimation for Shipment #<span id="shipment-reference"></span></h1>
+
+        <div class="card">
+            <h2>Send Stock Intimation</h2>
+            <form id="warehouse-comm-form">
+                <div class="form-group">
+                    <label for="warehouse-select">Warehouse</label>
+                    <select id="warehouse-select" name="warehouse" required></select>
+                    <small id="warehouse-email-display" style="display: block; margin-top: 5px; color: #64748b; font-size: 0.9em;"></small>
+                </div>
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" id="subject" name="subject" required>
+                </div>
+                <div class="form-group">
+                    <label for="cc-emails">CC (Stakeholders)</label>
+                    <div class="cc-container" id="cc-container">
+                        <input type="text" 
+                               class="cc-input-field" 
+                               id="cc-input" 
+                               placeholder="Enter email and press Enter or comma"
+                               autocomplete="off">
+                    </div>
+                    <div class="cc-helper-text">
+                        <i class="fas fa-info-circle"></i>
+                        Add stakeholder emails one at a time. Press Enter or use comma to add.
+                    </div>
+                    <div class="cc-error" id="cc-error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="email-body">Body</label>
+                    <textarea id="email-body" name="body" rows="6" required></textarea>
+                </div>
+                <button type="submit" class="btn">Send Intimation</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Communication History</h2>
+            <table id="comm-history-table">
+                <thead>
+                    <tr>
+                        <th>Sent At</th>
+                        <th>Warehouse</th>
+                        <th>CC</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- History rows will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+        const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+        const shipmentId = new URLSearchParams(window.location.search).get('id');
+        let currentUser = null;
+        let ccEmails = []; // Store CC emails
+        let warehouses = []; // Store fetched warehouses
+
+        // UI Elements
+        const shipmentReferenceEl = document.getElementById('shipment-reference');
+        const warehouseSelect = document.getElementById('warehouse-select');
+        const warehouseEmailDisplay = document.getElementById('warehouse-email-display');
+        const historyTableBody = document.querySelector('#comm-history-table tbody');
+        const form = document.getElementById('warehouse-comm-form');
+        const ccContainer = document.getElementById('cc-container');
+        const ccInput = document.getElementById('cc-input');
+        const ccError = document.getElementById('cc-error');
+        const subjectInput = document.getElementById('subject');
+        const bodyInput = document.getElementById('email-body');
+
+        async function loadInitialData() {
+            // Fetch shipment reference
+            const { data: shipment, error: shipmentError } = await supabase
+                .from('shipment')
+                .select('reference_code, shipment_products(product_variety(product_name, variety_name), quantity, unit)')
+                .eq('id', shipmentId)
+                .single();
+
+            if (shipmentError) {
+                console.error('Error fetching shipment reference:', shipmentError);
+                shipmentReferenceEl.textContent = 'Error';
+                return;
+            }
+            shipmentReferenceEl.textContent = shipment.reference_code;
+            
+            // Pre-fill subject and body
+            subjectInput.value = `Stock Intimation - Shipment #${shipment.reference_code}`;
+            
+            let productDetails = "";
+            if (shipment.shipment_products && shipment.shipment_products.length > 0) {
+                productDetails = shipment.shipment_products.map(p => 
+                    `- ${p.product_variety.product_name} (${p.product_variety.variety_name}): ${p.quantity} ${p.unit}`
+                ).join('\n');
+            }
+            
+            bodyInput.value = `Dear Warehouse Manager,\n\nPlease be informed that shipment #${shipment.reference_code} is expected to arrive shortly.\n\nDetails:\n${productDetails}\n\nPlease make necessary arrangements.\n\nBest Regards,\nImports Team`;
+
+            await Promise.all([
+                loadWarehouses(),
+                loadCommunicationHistory()
+            ]);
+        }
+
+        async function loadWarehouses() {
+            const { data, error } = await supabase.from('warehouse').select('id, warehouse_name, email');
+            if (error) {
+                console.error('Error fetching warehouses:', error);
+                return;
+            }
+            
+            warehouses = data;
+            warehouseSelect.innerHTML = '<option value="">Select Warehouse</option>';
+            
+            data.forEach(wh => {
+                const option = document.createElement('option');
+                option.value = wh.id;
+                option.textContent = wh.warehouse_name;
+                warehouseSelect.appendChild(option);
+            });
+        }
+        
+        function updateWarehouseEmailDisplay() {
+            const selectedId = warehouseSelect.value;
+            if (!selectedId) {
+                warehouseEmailDisplay.textContent = '';
+                return;
+            }
+            
+            const warehouse = warehouses.find(w => w.id === selectedId);
+            if (warehouse && warehouse.email) {
+                warehouseEmailDisplay.textContent = `Email: ${warehouse.email}`;
+            } else {
+                warehouseEmailDisplay.textContent = 'No email address found for this warehouse.';
+            }
+        }
+
+        // CC Email Management Functions
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email.toLowerCase());
+        }
+
+        function showCCError(message) {
+            ccError.textContent = message;
+            ccError.classList.add('show');
+            setTimeout(() => {
+                ccError.classList.remove('show');
+            }, 3000);
+        }
+
+        function addCCEmail(email) {
+            email = email.trim().toLowerCase();
+            
+            if (!email) return;
+            
+            if (!validateEmail(email)) {
+                showCCError('Invalid email format');
+                return;
+            }
+            
+            if (ccEmails.includes(email)) {
+                showCCError('Email already added');
+                return;
+            }
+            
+            ccEmails.push(email);
+            renderCCTags();
+            ccInput.value = '';
+        }
+
+        function removeCCEmail(email) {
+            ccEmails = ccEmails.filter(e => e !== email);
+            renderCCTags();
+        }
+
+        function renderCCTags() {
+            // Remove existing tags
+            const existingTags = ccContainer.querySelectorAll('.cc-tag');
+            existingTags.forEach(tag => tag.remove());
+            
+            // Add tags before the input field
+            ccEmails.forEach(email => {
+                const tag = document.createElement('div');
+                tag.className = 'cc-tag';
+                tag.innerHTML = `
+                    <span>${email}</span>
+                    <span class="remove-cc" onclick="window.removeCCEmail('${email}')">×</span>
+                `;
+                ccContainer.insertBefore(tag, ccInput);
+            });
+        }
+
+        // Make removeCCEmail available globally for onclick
+        window.removeCCEmail = removeCCEmail;
+
+        async function loadCommunicationHistory() {
+            const { data, error } = await supabase
+                .from('warehouse_communication')
+                .select(`sent_at,email_subject,status,cc_emails,warehouse(warehouse_name)`)
+                .eq('shipment_id', shipmentId)
+                .order('sent_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching communication history:', error);
+                return;
+            }
+            
+            historyTableBody.innerHTML = '';
+            if (!data || data.length === 0) {
+                const row = historyTableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 5;
+                cell.textContent = 'No communication history found.';
+                cell.style.textAlign = 'center';
+                return;
+            }
+            data.forEach(item => {
+                const ccDisplay = item.cc_emails && item.cc_emails.length > 0 
+                    ? item.cc_emails.join(', ') 
+                    : '-';
+                
+                const row = historyTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${new Date(item.sent_at).toLocaleString()}</td>
+                    <td>${item.warehouse ? item.warehouse.warehouse_name : 'N/A'}</td>
+                    <td style="font-size: 12px; color: #64748B;">${ccDisplay}</td>
+                    <td>${item.email_subject}</td>
+                    <td>${item.status || 'Sent'}</td>
+                `;
+            });
+        }
+
+        async function handleSendCommunication(e) {
+            e.preventDefault();
+            
+            const warehouseId = warehouseSelect.value;
+            if (!warehouseId) {
+                alert('Please select a warehouse.');
+                return;
+            }
+            
+            const formData = new FormData(form);
+            const communicationData = {
+                shipment_id: shipmentId,
+                warehouse_id: warehouseId,
+                sent_by: currentUser.id,
+                email_subject: formData.get('subject'),
+                email_body: formData.get('body'),
+                cc_emails: ccEmails.length > 0 ? ccEmails : null,
+                status: 'sent' // Assuming sent immediately
+            };
+
+            const { data: commResult, error: commError } = await supabase
+                .from('warehouse_communication')
+                .insert(communicationData)
+                .select('id')
+                .single();
+
+            if (commError) {
+                alert('Failed to log communication: ' + commError.message);
+                return;
+            }
+            
+            // Invoke Edge Function to send email
+            const { error: functionError } = await supabase.functions.invoke('send-warehouse-intimation', {
+                body: { communication_id: commResult.id },
+            });
+
+            if (functionError) {
+                alert('DB log successful, but failed to send email: ' + functionError.message);
+            } else {
+                alert('Communication sent and logged successfully!');
+            }
+            
+            form.reset();
+            ccEmails = [];
+            renderCCTags();
+            await loadCommunicationHistory();
+            
+            // Re-populate default values
+            loadInitialData();
+        }
+
+        // --- Event Listeners ---
+        warehouseSelect.addEventListener('change', updateWarehouseEmailDisplay);
+
+        // CC input event listeners
+        ccInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                addCCEmail(ccInput.value.replace(',', ''));
+            } else if (e.key === 'Backspace' && !ccInput.value && ccEmails.length > 0) {
+                // Remove last CC email on backspace if input is empty
+                removeCCEmail(ccEmails[ccEmails.length - 1]);
+            }
+        });
+
+        ccInput.addEventListener('blur', () => {
+            // Add email on blur if there's a value
+            if (ccInput.value.trim()) {
+                addCCEmail(ccInput.value);
+            }
+        });
+
+        // Allow clicking on container to focus input
+        ccContainer.addEventListener('click', (e) => {
+            if (e.target === ccContainer) {
+                ccInput.focus();
+            }
+        });
+
+        form.addEventListener('submit', handleSendCommunication);
+
+        window.onload = async () => {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+                console.error('User not authenticated. Redirecting to login.');
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = user;
+
+            if (!shipmentId) {
+                document.body.innerHTML = '<h1>Error: No Shipment ID provided in URL.</h1>';
+                return;
+            }
+
+            await loadInitialData();
+        };
+    </script>
+</body>
+</html>

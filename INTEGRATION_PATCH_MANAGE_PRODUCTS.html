@@ -1,0 +1,278 @@
+<!-- ============================================================================
+     INTEGRATION PATCH: Add "Manage Products" Button to Shipment Tracker
+     ============================================================================
+     
+     STEP 1: Add this button to shipment_tracker.html
+     Find the "Manage Documents" button section (around line 200-210)
+     Add this code RIGHT AFTER the documents section:
+     ============================================================================ -->
+
+<!-- FIND THIS in shipment_tracker.html (around line 200): -->
+<!--
+        <div class="documents-section">
+          <button class="documents-stage-btn">
+            <i class="fas fa-folder-open"></i>
+            <span>Manage Documents</span>
+          </button>
+        </div>
+-->
+
+<!-- ADD THIS RIGHT AFTER: -->
+
+        <!-- Products Management Section -->
+        <div class="products-section" style="margin-top: 16px;">
+          <button class="products-manage-btn" onclick="openManageProductsModal()" style="
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(124, 58, 237, 0.4)';" 
+             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(124, 58, 237, 0.3)';">
+            <i class="fas fa-boxes"></i>
+            <span>Manage Products</span>
+            <i class="fas fa-chevron-right" style="margin-left: auto; font-size: 12px;"></i>
+          </button>
+        </div>
+
+<!-- ============================================================================
+     STEP 2: Include the Product Management Modal HTML
+     Add this at the END of shipment_tracker.html, just before </body>
+     ============================================================================ -->
+
+  <!-- Include Product Management Modal -->
+  <div id="product-management-modal-container"></div>
+  <script>
+    // Load the product management modal HTML
+    fetch('manage-products-modal.html')
+      .then(response => response.text())
+      .then(html => {
+        document.getElementById('product-management-modal-container').innerHTML = html;
+        console.log('✅ Product management modal loaded');
+      })
+      .catch(error => {
+        console.error('❌ Error loading product management modal:', error);
+      });
+  </script>
+
+<!-- ============================================================================
+     STEP 3: Add JavaScript Imports
+     Add this at the TOP of js/shipment-tracker.js (after any existing imports)
+     ============================================================================ -->
+
+<!--
+import { initProductManagement } from './manage-products.js';
+import { CommodityService } from './services/CommodityService.js';
+-->
+
+<!-- ============================================================================
+     STEP 4: Initialize Product Management in shipment-tracker.js
+     
+     Find the function where you load shipment details (probably called 
+     loadShipmentDetails or similar). Add this code AFTER you load the shipment:
+     ============================================================================ -->
+
+<!--
+// Example location in your code:
+async function loadShipmentDetails(shipmentId) {
+  try {
+    // ... your existing code to load shipment ...
+    
+    const { data: shipmentData, error } = await supabase
+      .from('shipment')
+      .select('*')
+      .eq('id', shipmentId)
+      .single();
+    
+    if (error) throw error;
+    
+    // ... your existing code to display shipment details ...
+    
+    // ADD THIS: Initialize product management for this shipment
+    await initProductManagement(
+      supabase, 
+      shipmentId, 
+      shipmentData.reference_code
+    );
+    console.log('✅ Product management initialized for', shipmentData.reference_code);
+    
+  } catch (error) {
+    console.error('Error loading shipment:', error);
+  }
+}
+-->
+
+<!-- ============================================================================
+     ALTERNATIVE: If you don't know where to add the init code
+     
+     Add this at the end of your window.onload or DOMContentLoaded handler:
+     ============================================================================ -->
+
+<!--
+window.addEventListener('DOMContentLoaded', async () => {
+  // ... your existing initialization code ...
+  
+  // Get shipment ID from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const shipmentId = urlParams.get('id');
+  const shipmentRef = urlParams.get('ref') || document.querySelector('.shipment-id')?.textContent;
+  
+  if (shipmentId) {
+    try {
+      await initProductManagement(supabase, shipmentId, shipmentRef);
+      console.log('✅ Product management ready');
+    } catch (error) {
+      console.error('❌ Product management init failed:', error);
+    }
+  }
+});
+-->
+
+<!-- ============================================================================
+     STEP 5: Make sure manage-products.js is using ES6 modules
+     
+     Add type="module" to your script tag in shipment_tracker.html:
+     ============================================================================ -->
+
+<!--
+CHANGE THIS:
+<script src="js/shipment-tracker.js"></script>
+
+TO THIS:
+<script type="module" src="js/shipment-tracker.js"></script>
+-->
+
+<!-- ============================================================================
+     COMPLETE EXAMPLE: Full sidebar section with both buttons
+     ============================================================================ -->
+
+<!-- Copy this entire section to replace your existing sidebar -->
+<!--
+      <div class="tracker-sidebar">
+        ...supplier section...
+        
+        <h3>Current Stage Details</h3>
+        <div class="stage-details" id="currentStageDetails">
+          ...stage details...
+        </div>
+
+        <div class="progress-bar-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="overallProgress"></div>
+          </div>
+        </div>
+
+        <!-- Documents Management Button -->
+        <div class="documents-section">
+          <button class="documents-stage-btn" onclick="openDocumentsModal()">
+            <i class="fas fa-folder-open"></i>
+            <span>Manage Documents</span>
+          </button>
+        </div>
+
+        <!-- Products Management Button ⭐ NEW -->
+        <div class="products-section" style="margin-top: 16px;">
+          <button class="products-manage-btn" onclick="openManageProductsModal()" style="
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(124, 58, 237, 0.4)';" 
+             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(124, 58, 237, 0.3)';">
+            <i class="fas fa-boxes"></i>
+            <span>Manage Products</span>
+            <i class="fas fa-chevron-right" style="margin-left: auto; font-size: 12px;"></i>
+          </button>
+        </div>
+
+        <h3>Timeline</h3>
+        <div class="timeline" id="timeline">
+        </div>
+      </div>
+-->
+
+<!-- ============================================================================
+     VERIFICATION CHECKLIST
+     ============================================================================
+     
+     After integration, verify:
+     
+     1. [ ] "Manage Products" button appears in shipment tracker sidebar
+     2. [ ] Button has purple gradient background
+     3. [ ] Clicking button opens the modal
+     4. [ ] Modal has 3 tabs (Current Products, Add Product, Change History)
+     5. [ ] Current Products tab shows existing products
+     6. [ ] Add Product tab has dropdowns and form
+     7. [ ] Can add a product successfully
+     8. [ ] Change History tab shows the added product
+     9. [ ] Can edit and delete products
+     10. [ ] All changes appear in Change History
+     
+     ============================================================================ -->
+
+<!-- ============================================================================
+     TROUBLESHOOTING
+     ============================================================================
+     
+     Problem: Button doesn't appear
+     Solution: Check browser console for errors, verify HTML was added correctly
+     
+     Problem: Modal doesn't open
+     Solution: Check if manage-products-modal.html loaded, verify in console
+     
+     Problem: "openManageProductsModal is not defined"
+     Solution: Verify manage-products.js is imported and loaded
+     
+     Problem: Products don't load
+     Solution: Check if initProductManagement() was called with correct shipment ID
+     
+     Problem: Can't add products
+     Solution: Verify database migration ran successfully
+     
+     ============================================================================ -->
+
+<!-- ============================================================================
+     WHAT THE BUTTON LOOKS LIKE
+     ============================================================================
+     
+     ┌─────────────────────────────────────┐
+     │  📦 Manage Products              ›  │  ← Purple gradient button
+     └─────────────────────────────────────┘
+     
+     When clicked:
+     ┌─────────────────────────────────────────────────────────┐
+     │  📦 Manage Products     LC-2026-001                  ✕  │
+     ├─────────────────────────────────────────────────────────┤
+     │  ● Current Products  ○ Add Product  ○ Change History   │
+     ├─────────────────────────────────────────────────────────┤
+     │                                                         │
+     │  Current Products in Shipment                  Refresh │
+     │                                                         │
+     │  Commodity │ Product │ Variety │ Qty │ Unit │ Actions │
+     │  ──────────┼─────────┼─────────┼─────┼──────┼─────────│
+     │  Seed      │ Wheat   │ Premium │ 100 │ KG   │ ✏️  🗑️  │
+     │                                                         │
+     └─────────────────────────────────────────────────────────┘
+     
+     ============================================================================ -->

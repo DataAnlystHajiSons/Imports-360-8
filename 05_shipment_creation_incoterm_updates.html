@@ -1,0 +1,238 @@
+<!-- 
+  ========================================================================
+  SHIPMENT CREATION MODAL UPDATES
+  ========================================================================
+  Add these changes to admin-dashboard.html in the Step 2 section
+  This adds Inco-term and Freight Charges fields with dynamic logic
+  ======================================================================== 
+-->
+
+<!-- REPLACE THE STEP 2 SECTION IN admin-dashboard.html WITH THIS: -->
+
+<!-- Step 2: Shipment Details Section -->
+<div class="form-step" id="step-2" data-step="2" style="display: none;">
+  <div class="form-section">
+    <h3 class="section-title">
+      <i class="fas fa-info-circle"></i>
+      Shipment Information
+    </h3>
+    <p class="section-description">Provide the essential details for this shipment.</p>
+    
+    <div class="form-row">
+      <div class="form-field">
+        <label>Shipment Type: <span class="required">*</span></label>
+        <select name="type" required>
+          <option value="">Select type</option>
+          <option value="LC">LC (Letter of Credit)</option>
+          <option value="DP">DP (Documents against Payment)</option>
+        </select>
+        <small class="field-hint">Choose the payment method for this shipment</small>
+      </div>
+      
+      <div class="form-field">
+        <label>Mode of Transport: <span class="required">*</span></label>
+        <select name="mode_of_transport" id="mode_of_transport" required>
+          <option value="">Select mode</option>
+          <option value="sea">Sea Freight</option>
+          <option value="air">Air Freight</option>
+          <option value="land">Land Transport</option>
+          <option value="rail">Rail Transport</option>
+          <option value="multimodal">Multimodal Transport</option>
+        </select>
+        <small class="field-hint">How will the products be transported?</small>
+      </div>
+    </div>
+    
+    <!-- NEW: Inco-term field (dynamic based on mode of transport) -->
+    <div class="form-row">
+      <div class="form-field">
+        <label>Inco-term: <span class="required">*</span></label>
+        <select name="inco_term" id="inco_term" required disabled>
+          <option value="">Select mode of transport first</option>
+        </select>
+        <small class="field-hint" id="incoterm-hint">
+          Select mode of transport to see available inco-terms
+        </small>
+      </div>
+      
+      <!-- NEW: Freight Charges field (only shown when inco-term is FOB) -->
+              <div class="form-field" id="freight-charges-field" style="display: none;">
+                <label>FOB Charges (USD): <span class="required">*</span></label>
+                <input type="number" name="freight_charges" id="freight_charges" step="0.01" min="0" placeholder="Enter FOB charges" />
+                <small class="field-hint">Required for FOB inco-term</small>
+              </div>
+    </div>
+    
+    <div class="form-field">
+      <label>Payment Term: <span class="required">*</span></label>
+      <select name="payment_term_id" required>
+        <option value="">Loading payment terms...</option>
+      </select>
+      <small class="field-hint">Select the agreed payment terms</small>
+    </div>
+  </div>
+</div>
+
+<!-- 
+  ========================================================================
+  JAVASCRIPT LOGIC TO ADD TO ShipmentFormManager.js or admin-dashboard.js
+  ========================================================================
+-->
+
+<script>
+// Add this to your ShipmentFormManager class or in admin-dashboard.js initialization
+
+// Inco-term options based on mode of transport
+const INCOTERM_OPTIONS = {
+  air: [
+    { value: 'FCA', label: 'FCA (Free Carrier)' },
+    { value: 'EXW', label: 'EXW (Ex Works)' },
+    { value: 'CPT', label: 'CPT (Carriage Paid To)' }
+  ],
+  sea: [
+    { value: 'EXW', label: 'EXW (Ex Works)' },
+    { value: 'FOB', label: 'FOB (Free On Board)' },
+    { value: 'CFR', label: 'CFR (Cost and Freight)' }
+  ],
+  land: [
+    { value: 'FCA', label: 'FCA (Free Carrier)' },
+    { value: 'EXW', label: 'EXW (Ex Works)' },
+    { value: 'CPT', label: 'CPT (Carriage Paid To)' }
+  ],
+  rail: [
+    { value: 'FCA', label: 'FCA (Free Carrier)' },
+    { value: 'EXW', label: 'EXW (Ex Works)' },
+    { value: 'CPT', label: 'CPT (Carriage Paid To)' }
+  ],
+  multimodal: [
+    { value: 'FCA', label: 'FCA (Free Carrier)' },
+    { value: 'EXW', label: 'EXW (Ex Works)' },
+    { value: 'CPT', label: 'CPT (Carriage Paid To)' },
+    { value: 'DDP', label: 'DDP (Delivered Duty Paid)' }
+  ]
+};
+
+// Function to update inco-term options based on mode of transport
+function updateIncotermOptions() {
+  const modeOfTransport = document.getElementById('mode_of_transport').value;
+  const incotermSelect = document.getElementById('inco_term');
+  const incotermHint = document.getElementById('incoterm-hint');
+  
+  // Clear existing options
+  incotermSelect.innerHTML = '';
+  
+  if (!modeOfTransport) {
+    incotermSelect.innerHTML = '<option value="">Select mode of transport first</option>';
+    incotermSelect.disabled = true;
+    incotermHint.textContent = 'Select mode of transport to see available inco-terms';
+    return;
+  }
+  
+  // Get options for selected mode
+  const options = INCOTERM_OPTIONS[modeOfTransport] || [];
+  
+  if (options.length === 0) {
+    incotermSelect.innerHTML = '<option value="">No inco-terms available</option>';
+    incotermSelect.disabled = true;
+    return;
+  }
+  
+  // Add placeholder
+  incotermSelect.innerHTML = '<option value="">Select inco-term</option>';
+  
+  // Add options
+  options.forEach(opt => {
+    const option = document.createElement('option');
+    option.value = opt.value;
+    option.textContent = opt.label;
+    incotermSelect.appendChild(option);
+  });
+  
+  // Enable the select
+  incotermSelect.disabled = false;
+  
+  // Update hint
+  const modeLabel = {
+    'air': 'Air Freight',
+    'sea': 'Sea Freight',
+    'land': 'Land Transport',
+    'rail': 'Rail Transport',
+    'multimodal': 'Multimodal'
+  }[modeOfTransport] || 'selected mode';
+  
+  incotermHint.textContent = `Available inco-terms for ${modeLabel}`;
+}
+
+// Function to toggle freight charges field visibility
+function toggleFreightChargesField() {
+  const incotermValue = document.getElementById('inco_term').value;
+  const freightChargesField = document.getElementById('freight-charges-field');
+  const freightChargesInput = document.getElementById('freight_charges');
+  
+  if (incotermValue === 'FOB') {
+    freightChargesField.style.display = 'block';
+    freightChargesInput.required = true;
+  } else {
+    freightChargesField.style.display = 'none';
+    freightChargesInput.required = false;
+    freightChargesInput.value = ''; // Clear value when hidden
+  }
+}
+
+// Event listeners
+document.getElementById('mode_of_transport').addEventListener('change', function() {
+  updateIncotermOptions();
+  // Reset inco-term when mode changes
+  document.getElementById('inco_term').value = '';
+  toggleFreightChargesField();
+});
+
+document.getElementById('inco_term').addEventListener('change', function() {
+  toggleFreightChargesField();
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  updateIncotermOptions();
+  toggleFreightChargesField();
+});
+</script>
+
+<!-- 
+  ========================================================================
+  CSS STYLES TO ADD (optional - for better visual feedback)
+  ========================================================================
+-->
+
+<style>
+.form-field {
+  transition: all 0.3s ease;
+}
+
+#freight-charges-field {
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+  }
+}
+
+.field-hint {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 4px;
+  display: block;
+}
+
+.required {
+  color: #e74c3c;
+  font-weight: bold;
+}
+</style>

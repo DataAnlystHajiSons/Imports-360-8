@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Freight Quote - Imports 360</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #FEFEFE 0%, #F1F5F9 100%);
+      min-height: 100vh;
+      color: #1E293B;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 40px 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      border: 1px solid rgba(124, 58, 237, 0.1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+      border-radius: 20px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo i {
+      color: white;
+      font-size: 2rem;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #1E293B;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      color: #64748B;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    .form-container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 40px;
+      border: 1px solid rgba(124, 58, 237, 0.1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-section {
+      margin-bottom: 30px;
+    }
+
+    .form-section h3 {
+      color: #7C3AED;
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid rgba(124, 58, 237, 0.1);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      color: #1E293B;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 12px 16px;
+      border: 2px solid #E2E8F0;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: #FEFEFE;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #7C3AED;
+      box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+      background: white;
+    }
+
+    .required {
+      color: #DC2626;
+    }
+
+    .submit-button {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    .submit-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);
+    }
+
+    .submit-button:active {
+      transform: translateY(0);
+    }
+
+    .submit-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .message {
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+
+    .success-message {
+      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+      color: #166534;
+      border-left: 4px solid #16a34a;
+    }
+
+    .error-message {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      color: #dc2626;
+      border-left: 4px solid #dc2626;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px;
+      color: #64748B;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+      }
+      
+      .form-container {
+        padding: 20px;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .loader {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 10px 0;
+    }
+
+    .loader-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7C3AED, #8B5CF6);
+      animation: bounce 1.4s ease-in-out infinite both;
+    }
+
+    .loader-dot:nth-child(1) { animation-delay: -0.32s; }
+    .loader-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% {
+        transform: scale(0);
+      }
+      40% {
+        transform: scale(1);
+      }
+    }
+  </style>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+    const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+    function showMessage(message, isError = false) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.innerHTML = `<div class="${isError ? 'error-message' : 'success-message'} message">
+        <i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}" style="margin-right: 8px;"></i>
+        ${message}
+      </div>`;
+    }
+
+    function showLoader(show = true) {
+      const loader = document.getElementById('loader');
+      const submitButton = document.getElementById('submit-button');
+      
+      if (show) {
+        loader.style.display = 'flex';
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+      } else {
+        loader.style.display = 'none';
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Submit Quote';
+      }
+    }
+
+    async function submitQuote() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const freightQueryId = urlParams.get('freight_query_id');
+
+      if (!freightQueryId) {
+        showMessage('A freight query ID is required to submit a quote. Please use the link provided in your email.', true);
+        return;
+      }
+
+      showLoader(true);
+      showMessage('');
+
+      try {
+        // First, check if a quote has already been submitted for this freight_query_id
+        console.log('🔍 Checking for existing quote submissions...');
+        const { data: existingQuote, error: checkError } = await supabase
+          .from('freight_quote_response')
+          .select('id, name_of_your_company, received_at')
+          .eq('freight_query_id', freightQueryId)
+          .maybeSingle();
+
+        console.log('🔍 Existing quote check:', existingQuote);
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('Error checking for existing quotes:', checkError);
+          showMessage('Error checking submission status. Please try again.', true);
+          showLoader(false);
+          return;
+        }
+
+        if (existingQuote) {
+          console.log('⚠️ Quote already submitted by:', existingQuote.name_of_your_company);
+          showMessage(`
+            <div style="background: rgba(251, 191, 36, 0.1); padding: 20px; border-radius: 12px; border-left: 4px solid #F59E0B;">
+              <h3 style="color: #92400E; margin: 0 0 10px 0;">Quote Already Submitted</h3>
+              <p style="color: #78350F; margin: 0;">
+                A quote has already been submitted for this freight query by <strong>${existingQuote.name_of_your_company}</strong> 
+                on ${new Date(existingQuote.received_at).toLocaleDateString()}.
+              </p>
+              <p style="color: #78350F; margin: 10px 0 0 0; font-size: 0.9rem;">
+                If you need to update your quote or believe this is an error, please contact our support team at support@imports360.com
+              </p>
+            </div>
+          `, false);
+          showLoader(false);
+          return;
+        }
+
+        const form = document.getElementById('quote-form');
+        const formData = new FormData(form);
+        
+        // Prepare quote data according to new schema
+        const quoteData = {
+          freight_query_id: freightQueryId,
+          name_of_your_company: formData.get('name_of_your_company'),
+          name_of_person_filling: formData.get('name_of_person_filling'),
+          transit_time: parseFloat(formData.get('transit_time')) || null,
+          flight_schedule: formData.get('flight_schedule'),
+          airline: formData.get('airline'),
+          cut_of_time: parseFloat(formData.get('cut_of_time')) || null,
+          tentative_arrival_date: formData.get('tentative_arrival_date') || null,
+          freight_charges: parseFloat(formData.get('freight_charges')) || null,
+          do_charges: parseFloat(formData.get('do_charges')) || null
+        };
+
+        console.log('📤 Submitting quote data:', quoteData);
+
+        const { error } = await supabase
+          .from('freight_quote_response')
+          .insert(quoteData);
+
+        if (error) {
+          console.error('Submission error:', error);
+          showMessage(`Error submitting quote: ${error.message}`, true);
+        } else {
+          console.log('✅ Quote submitted successfully');
+          showMessage(`
+            <div style="background: rgba(34, 197, 94, 0.1); padding: 20px; border-radius: 12px; border-left: 4px solid #22C55E;">
+              <h3 style="color: #15803D; margin: 0 0 10px 0;">Quote Submitted Successfully!</h3>
+              <p style="color: #166534; margin: 0;">
+                Thank you for your response. Your quote has been recorded and our team will review it shortly.
+              </p>
+              <p style="color: #166534; margin: 10px 0 0 0; font-size: 0.9rem;">
+                We will contact you soon with next steps. This form is now disabled to prevent duplicate submissions.
+              </p>
+            </div>
+          `, false);
+          
+          // Disable the form after successful submission
+          disableForm();
+          
+          // Scroll to top to show success message
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        showMessage('An unexpected error occurred. Please try again.', true);
+      }
+
+      showLoader(false);
+    }
+
+    function disableForm() {
+      const form = document.getElementById('quote-form');
+      const submitButton = document.getElementById('submit-button');
+      
+      // Disable all form inputs
+      const inputs = form.querySelectorAll('input, select, textarea');
+      inputs.forEach(input => {
+        input.disabled = true;
+        input.style.backgroundColor = '#F3F4F6';
+        input.style.color = '#6B7280';
+      });
+      
+      // Disable and update submit button
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<i class="fas fa-check-circle" style="margin-right: 8px;"></i>Quote Submitted';
+      submitButton.style.background = '#9CA3AF';
+      submitButton.style.cursor = 'not-allowed';
+      submitButton.style.transform = 'none';
+    }
+
+    window.submitQuote = submitQuote;
+
+    // Load freight query details when page loads
+    document.addEventListener('DOMContentLoaded', async function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const freightQueryId = urlParams.get('freight_query_id');
+      
+      if (freightQueryId) {
+        try {
+          console.log('🔍 DEBUG: Loading freight query with ID:', freightQueryId);
+          
+          // Check if quote already submitted before loading freight details
+          const { data: existingQuote, error: checkError } = await supabase
+            .from('freight_quote_response')
+            .select('id, name_of_your_company, received_at')
+            .eq('freight_query_id', freightQueryId)
+            .maybeSingle();
+
+          if (existingQuote) {
+            console.log('⚠️ Quote already exists, showing read-only view');
+            document.getElementById('freight-info').innerHTML = `
+              <div style="background: rgba(251, 191, 36, 0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(251, 191, 36, 0.2);">
+                <h4 style="color: #92400E; margin-bottom: 15px; font-size: 1.2rem;">⚠️ Quote Already Submitted</h4>
+                <p style="color: #78350F; margin: 0;">
+                  A quote has already been submitted for this freight query by <strong>${existingQuote.name_of_your_company}</strong> 
+                  on ${new Date(existingQuote.received_at).toLocaleDateString()}.
+                </p>
+                <p style="color: #78350F; margin: 10px 0 0 0; font-size: 0.9rem;">
+                  If you need to update your quote or believe this is an error, please contact our support team at support@imports360.com
+                </p>
+              </div>
+            `;
+            
+            // Disable the form immediately
+            disableForm();
+            return;
+          }
+          
+          // First, fetch basic freight query data
+          const { data: freightData, error: freightError } = await supabase
+            .from('freight_query')
+            .select('*')
+            .eq('id', freightQueryId)
+            .single();
+
+          console.log('🔍 DEBUG: Freight query data:', freightData);
+          console.log('🔍 DEBUG: Freight query error:', freightError);
+
+          if (freightError) {
+            throw freightError;
+          }
+
+          // Then fetch shipment data separately
+          let shipmentData = null;
+          let commodities = 'N/A';
+          let products = '';
+
+          if (freightData.shipment_id) {
+            console.log('🔍 DEBUG: Loading shipment with ID:', freightData.shipment_id);
+            
+            const { data: shipment, error: shipmentError } = await supabase
+              .from('shipment')
+              .select('id, reference_code')
+              .eq('id', freightData.shipment_id)
+              .single();
+
+            console.log('🔍 DEBUG: Shipment data:', shipment);
+            console.log('🔍 DEBUG: Shipment error:', shipmentError);
+
+            if (!shipmentError && shipment) {
+              shipmentData = shipment;
+
+              // Fetch shipment products and commodities
+              const { data: shipmentProducts, error: productsError } = await supabase
+                .from('shipment_products')
+                .select(`
+                  quantity,
+                  unit,
+                  product_variety!inner(
+                    product_name,
+                    variety_name,
+                    commodity!inner(name)
+                  )
+                `)
+                .eq('shipment_id', freightData.shipment_id);
+
+              console.log('🔍 DEBUG: Shipment products:', shipmentProducts);
+              console.log('🔍 DEBUG: Products error:', productsError);
+
+              if (!productsError && shipmentProducts && shipmentProducts.length > 0) {
+                // Extract commodities
+                const commodityNames = shipmentProducts
+                  .map(sp => sp.product_variety?.commodity?.name)
+                  .filter(Boolean)
+                  .filter((value, index, self) => self.indexOf(value) === index);
+                
+                commodities = commodityNames.length > 0 ? commodityNames.join(', ') : 'N/A';
+
+                // Create product descriptions
+                products = shipmentProducts
+                  .map(sp => {
+                    const productName = sp.product_variety?.product_name || 'Unknown Product';
+                    const varietyName = sp.product_variety?.variety_name || 'Unknown Variety';
+                    const quantity = sp.quantity || 'N/A';
+                    const unit = sp.unit || '';
+                    return `${productName} - ${varietyName} (${quantity} ${unit})`;
+                  })
+                  .join('\n');
+              }
+            }
+          }
+
+          console.log('🔍 DEBUG: Final data - Commodities:', commodities);
+          console.log('🔍 DEBUG: Final data - Products:', products);
+
+          // Display the freight query details
+          document.getElementById('freight-info').innerHTML = `
+            <div style="background: rgba(124, 58, 237, 0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(124, 58, 237, 0.1);">
+              <h4 style="color: #7C3AED; margin-bottom: 15px; font-size: 1.2rem;">📋 Freight Query Details</h4>
+              
+              ${!freightData.term && !freightData.shipment_from && !freightData.destination && !freightData.gross_weight ? `
+                <div style="background: rgba(251, 191, 36, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #F59E0B;">
+                  <p style="color: #92400E; margin: 0; font-weight: 500;">
+                    <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                    This freight query is waiting for detailed information to be completed by our team.
+                  </p>
+                  <p style="color: #78350F; margin: 5px 0 0 24px; font-size: 0.9rem;">
+                    The basic shipment information below is available for your reference.
+                  </p>
+                </div>
+              ` : ''}
+              
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; font-size: 0.95rem;">
+                <div>
+                  <p><strong>Reference Number:</strong><br><span style="color: ${shipmentData?.reference_code ? '#16A34A' : '#64748B'};">${shipmentData?.reference_code || 'N/A'}</span></p>
+                  <p><strong>Term:</strong><br><span style="color: ${freightData.term ? '#16A34A' : '#64748B'};">${freightData.term || 'Pending'}</span></p>
+                  <p><strong>Shipment From:</strong><br><span style="color: ${freightData.shipment_from ? '#16A34A' : '#64748B'};">${freightData.shipment_from || 'Pending'}</span></p>
+                  <p><strong>Destination:</strong><br><span style="color: ${freightData.destination ? '#16A34A' : '#64748B'};">${freightData.destination || 'Pending'}</span></p>
+                </div>
+                <div>
+                  <p><strong>Origin:</strong><br><span style="color: ${freightData.origin ? '#16A34A' : '#64748B'};">${freightData.origin || 'Pending'}</span></p>
+                  <p><strong>Commodity:</strong><br><span style="color: ${commodities !== 'N/A' ? '#16A34A' : '#64748B'};">${commodities}</span></p>
+                  <p><strong>Readiness Date:</strong><br><span style="color: ${freightData.readiness_date ? '#16A34A' : '#64748B'};">${freightData.readiness_date || 'Pending'}</span></p>
+                  <p><strong>Pick-up Address:</strong><br><span style="color: ${freightData.pick_up_address ? '#16A34A' : '#64748B'};">${freightData.pick_up_address || 'Pending'}</span></p>
+                </div>
+                <div>
+                  <p><strong>Gross Weight:</strong><br><span style="color: ${freightData.gross_weight ? '#16A34A' : '#64748B'};">${freightData.gross_weight ? freightData.gross_weight + ' kg' : 'Pending'}</span></p>
+                  <p><strong>Net Weight:</strong><br><span style="color: ${freightData.net_weight ? '#16A34A' : '#64748B'};">${freightData.net_weight ? freightData.net_weight + ' kg' : 'Pending'}</span></p>
+                  <p><strong>Chargeable Weight:</strong><br><span style="color: ${freightData.chargeable_weight ? '#16A34A' : '#64748B'};">${freightData.chargeable_weight ? freightData.chargeable_weight + ' kg' : 'Pending'}</span></p>
+                  <p><strong>Number of Cartons:</strong><br><span style="color: ${freightData.no_of_cartoons ? '#16A34A' : '#64748B'};">${freightData.no_of_cartoons || 'Pending'}</span></p>
+                </div>
+              </div>
+              ${products ? `
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(124, 58, 237, 0.1);">
+                  <p><strong>Products:</strong></p>
+                  <div style="background: rgba(255, 255, 255, 0.7); padding: 10px; border-radius: 8px; margin-top: 5px; white-space: pre-line; font-size: 0.9rem; color: #64748B;">
+                    ${products}
+                  </div>
+                </div>
+              ` : ''}
+              ${freightData.remarks ? `
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(124, 58, 237, 0.1);">
+                  <p><strong>Additional Remarks:</strong></p>
+                  <div style="background: rgba(255, 255, 255, 0.7); padding: 10px; border-radius: 8px; margin-top: 5px; font-size: 0.9rem; color: #64748B;">
+                    ${freightData.remarks}
+                  </div>
+                </div>
+              ` : ''}
+              
+              <div style="margin-top: 20px; padding: 15px; background: rgba(34, 197, 94, 0.05); border-radius: 8px; border-left: 4px solid #22C55E;">
+                <p style="color: #15803D; margin: 0; font-weight: 500;">
+                  <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+                  You can submit your freight quote based on the available information above.
+                </p>
+                <p style="color: #166534; margin: 5px 0 0 24px; font-size: 0.9rem;">
+                  Our team will contact you if additional details are needed.
+                </p>
+              </div>
+            </div>
+          `;
+
+        } catch (err) {
+          console.error('❌ Error loading freight query details:', err);
+          document.getElementById('freight-info').innerHTML = `
+            <div style="background: rgba(220, 38, 38, 0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(220, 38, 38, 0.1);">
+              <p style="color: #DC2626; margin: 0;"><i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>Error loading shipment details: ${err.message}</p>
+              <p style="color: #64748B; margin: 5px 0 0 0; font-size: 0.9rem;">Please try refreshing the page or contact support.</p>
+            </div>
+          `;
+        }
+      } else {
+        document.getElementById('freight-info').innerHTML = `
+          <div style="background: rgba(220, 38, 38, 0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(220, 38, 38, 0.1);">
+            <p style="color: #DC2626; margin: 0;"><i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>No freight query ID provided. Please use the link from your email.</p>
+          </div>
+        `;
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <i class="fas fa-ship"></i>
+      </div>
+      <h1>Submit Freight Quote</h1>
+      <p>Please fill out the form below to submit your freight quote</p>
+    </div>
+
+    <div class="form-container">
+      <div id="message"></div>
+      <div id="freight-info"></div>
+      
+      <form id="quote-form" onsubmit="event.preventDefault(); submitQuote();">
+        <div class="form-section">
+          <h3><i class="fas fa-building" style="margin-right: 8px;"></i>Company Information</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="name_of_your_company">Company Name <span class="required">*</span></label>
+              <input type="text" id="name_of_your_company" name="name_of_your_company" required placeholder="Enter your company name">
+            </div>
+            <div class="form-group">
+              <label for="name_of_person_filling">Contact Person <span class="required">*</span></label>
+              <input type="text" id="name_of_person_filling" name="name_of_person_filling" required placeholder="Your full name">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3><i class="fas fa-plane" style="margin-right: 8px;"></i>Flight & Schedule Information</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="airline">Airline</label>
+              <input type="text" id="airline" name="airline" placeholder="e.g., Emirates, Qatar Airways">
+            </div>
+            <div class="form-group">
+              <label for="flight_schedule">Flight Schedule</label>
+              <input type="text" id="flight_schedule" name="flight_schedule" placeholder="e.g., Daily, Mon/Wed/Fri, Twice weekly">
+            </div>
+            <div class="form-group">
+              <label for="transit_time">Transit Time (In Days)</label>
+              <input type="number" id="transit_time" name="transit_time" step="0.1" placeholder="e.g., 5, 6, 7">
+            </div>
+            <div class="form-group">
+              <label for="cut_of_time">Cut-off Time (In Days)</label>
+              <input type="number" id="cut_of_time" name="cut_of_time" step="0.1" placeholder="e.g., 4, 6, 8">
+            </div>
+            <div class="form-group">
+              <label for="tentative_arrival_date">Tentative Arrival Date</label>
+              <input type="date" id="tentative_arrival_date" name="tentative_arrival_date">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3><i class="fas fa-dollar-sign" style="margin-right: 8px;"></i>Pricing Information</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="freight_charges">Freight Charges (USD) <span class="required">*</span></label>
+              <input type="number" id="freight_charges" name="freight_charges" step="0.01" required placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label for="do_charges">DO Charges (USD)</label>
+              <input type="number" id="do_charges" name="do_charges" step="0.01" placeholder="0.00">
+            </div>
+          </div>
+        </div>
+
+        <div id="loader" class="loader">
+          <div class="loader-dot"></div>
+          <div class="loader-dot"></div>
+          <div class="loader-dot"></div>
+        </div>
+
+        <button type="submit" id="submit-button" class="submit-button">
+          <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>
+          Submit Quote
+        </button>
+      </form>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2025 Imports 360. All rights reserved.</p>
+      <p>For technical support, please contact: support@imports360.com</p>
+    </div>
+  </div>
+</body>
+</html>

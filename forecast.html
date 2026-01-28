@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Imports 360 - Forecasts</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .toast-notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1001;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .toast-notification.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .toast-notification .icon {
+        font-size: 24px;
+    }
+    .toast-notification.success {
+        background-color: #28a745;
+    }
+
+    .toast-notification.error {
+        background-color: #dc3545;
+    }
+
+    /* Enhanced Table Styles for Better Readability */
+    .table-container {
+        overflow-x: auto;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .table-container table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: white;
+        font-size: 14px;
+    }
+    
+    .table-container thead {
+        background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .table-container thead th {
+        padding: 16px 20px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        color: white !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        border-bottom: 3px solid rgba(255, 255, 255, 0.1);
+        background: transparent !important;
+    }
+    
+    .table-container thead th:first-child {
+        border-radius: 12px 0 0 0;
+    }
+    
+    .table-container thead th:last-child {
+        border-radius: 0 12px 0 0;
+    }
+    
+    .table-container tbody tr {
+        background: white;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #F1F5F9;
+    }
+    
+    .table-container tbody tr:hover {
+        background: linear-gradient(to right, rgba(124, 58, 237, 0.03), rgba(139, 92, 246, 0.03));
+        transform: scale(1.005);
+        box-shadow: 0 2px 8px rgba(124, 58, 237, 0.1);
+    }
+    
+    .table-container tbody tr:last-child {
+        border-bottom: none;
+    }
+    
+    .table-container tbody td {
+        padding: 16px 20px;
+        vertical-align: middle;
+        color: #334155;
+        font-size: 14px;
+    }
+    
+    /* Product Name Column - Make it stand out */
+    .table-container tbody td:first-child {
+        font-weight: 600;
+        color: #1E293B;
+    }
+    
+    /* Supplier Column */
+    .table-container tbody td:nth-child(2) {
+        color: #7C3AED;
+        font-weight: 500;
+    }
+    
+    /* Unit Column Badge */
+    .unit-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(139, 92, 246, 0.1));
+        border: 1px solid rgba(124, 58, 237, 0.2);
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #7C3AED;
+        text-transform: uppercase;
+    }
+    
+    /* Numeric Columns */
+    .table-container .text-right {
+        text-align: right;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+    }
+    
+    .table-container .text-center {
+        text-align: center;
+    }
+    
+    /* Remaining Qty - Positive/Negative Styling */
+    .table-container .text-danger {
+        color: #dc3545;
+        font-weight: 600;
+        background: rgba(220, 53, 69, 0.05);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+    
+    .qty-positive {
+        color: #059669;
+        font-weight: 600;
+        background: rgba(5, 150, 105, 0.05);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+    
+    /* Icon Styling */
+    .table-container tbody td i {
+        font-size: 18px;
+    }
+    
+    .status-icon-sent {
+        color: #059669;
+        filter: drop-shadow(0 0 4px rgba(5, 150, 105, 0.3));
+    }
+    
+    .status-icon-not-sent {
+        color: #dc3545;
+        opacity: 0.6;
+    }
+    
+    .status-icon-active {
+        color: #059669;
+        filter: drop-shadow(0 0 4px rgba(5, 150, 105, 0.3));
+    }
+    
+    .status-icon-inactive {
+        color: #dc3545;
+        opacity: 0.6;
+    }
+    
+    /* Action Buttons */
+    .table-container .action-cell {
+        white-space: nowrap;
+    }
+    
+    .table-container .action-cell button {
+        background: rgba(124, 58, 237, 0.08);
+        border: 1px solid rgba(124, 58, 237, 0.15);
+        cursor: pointer;
+        font-size: 14px;
+        color: #7C3AED;
+        margin: 0 3px;
+        padding: 8px 10px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+    
+    .table-container .action-cell button:hover {
+        background: #7C3AED;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(124, 58, 237, 0.2);
+    }
+    
+    .table-container .action-cell button:active {
+        transform: translateY(0);
+    }
+    
+    /* Zebra Striping (Subtle) */
+    .table-container tbody tr:nth-child(even) {
+        background: #FAFBFC;
+    }
+    
+    .table-container tbody tr:nth-child(even):hover {
+        background: linear-gradient(to right, rgba(124, 58, 237, 0.03), rgba(139, 92, 246, 0.03));
+    }
+    
+    /* View Toggle Styles */
+    .view-toggle-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+      border-radius: 12px;
+    }
+    
+    .view-toggle-label {
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 60px;
+      height: 30px;
+      background: #ddd;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .toggle-switch.active {
+      background: linear-gradient(to right, #7C3AED, #8B5CF6);
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(30px);
+    }
+    
+    .view-section {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    
+    .view-section.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Company View Styles */
+    .company-summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-left: 5px solid #7C3AED;
+    }
+    
+    .company-summary-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.2);
+      border-left-color: #8B5CF6;
+    }
+    
+    .company-summary-card.expanded {
+      border-left-color: #8B5CF6;
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.15);
+    }
+    
+    .company-summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .company-summary-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .company-summary-title h3 {
+      margin: 0;
+      color: #1E293B;
+      font-size: 22px;
+    }
+    
+    .company-summary-title .company-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+    
+    .expand-indicator {
+      font-size: 24px;
+      color: #7C3AED;
+      transition: transform 0.3s ease;
+    }
+    
+    .company-summary-card.expanded .expand-indicator {
+      transform: rotate(180deg);
+    }
+    
+    .company-summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .summary-stat {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #E9D5FF;
+    }
+    
+    .summary-stat-label {
+      font-size: 13px;
+      color: #64748B;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .summary-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #7C3AED;
+    }
+    
+    .summary-stat-value.amount {
+      color: #059669;
+    }
+    
+    .company-history {
+      display: none;
+      margin-top: 20px;
+      border-top: 2px solid #F1F5F9;
+      padding-top: 20px;
+      animation: slideDown 0.3s ease;
+    }
+    
+    .company-summary-card.expanded .company-history {
+      display: block;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        max-height: 0;
+      }
+      to {
+        opacity: 1;
+        max-height: 3000px;
+      }
+    }
+    
+    .company-history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .company-history-header h4 {
+      margin: 0;
+      color: #7C3AED;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .history-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 15px;
+    }
+    
+    .history-table thead {
+      background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%) !important;
+    }
+    
+    .history-table thead th {
+      color: white !important;
+      background: transparent;
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .history-table thead th:first-child {
+      border-radius: 8px 0 0 0;
+    }
+    
+    .history-table thead th:last-child {
+      border-radius: 0 8px 0 0;
+    }
+    
+    .history-table tbody tr {
+      background: white;
+      transition: all 0.2s ease;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    
+    .history-table tbody tr:hover {
+      background: rgba(124, 58, 237, 0.03);
+      transform: scale(1.01);
+    }
+    
+    .history-table tbody td {
+      padding: 15px;
+      color: #334155;
+      font-size: 14px;
+    }
+    
+    .shipment-ref {
+      font-weight: 600;
+      color: #7C3AED;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.3s ease;
+    }
+    
+    .shipment-ref:hover {
+      color: #8B5CF6;
+      text-decoration: underline;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #94A3B8;
+    }
+    
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+    
+    .product-badge {
+      background: #F1F5F9;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #475569;
+      display: inline-block;
+      margin: 2px;
+    }
+  </style>
+  <script type="module">
+    import { enforcePageAccess, filterSidebarByRole } from './js/auth-utils.js';
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+
+    const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+    let products = [];
+    let companyData = {};
+    let currentView = 'forecasts'; // 'forecasts' or 'company'
+    let userRole = null; // Store user role
+
+    // Searchable Dropdown Implementation
+    function createSearchableDropdown(selectElement, options, placeholder = 'Select an option') {
+      const container = document.createElement('div');
+      container.className = 'searchable-dropdown';
+      
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'dropdown-input';
+      input.placeholder = placeholder;
+      input.readOnly = true;
+      
+      const dropdownList = document.createElement('div');
+      dropdownList.className = 'dropdown-list';
+      
+      container.appendChild(input);
+      container.appendChild(dropdownList);
+      
+      // Replace the original select element
+      selectElement.style.display = 'none';
+      selectElement.parentNode.insertBefore(container, selectElement);
+      
+      let filteredOptions = [...options];
+      let allOptions = [...options];
+      
+      function renderOptions() {
+        dropdownList.innerHTML = '';
+        
+        if (filteredOptions.length === 0) {
+          const noResults = document.createElement('div');
+          noResults.className = 'no-results';
+          noResults.textContent = 'No results found';
+          dropdownList.appendChild(noResults);
+          return;
+        }
+        
+        filteredOptions.forEach(option => {
+          const item = document.createElement('div');
+          item.className = 'dropdown-item';
+          item.textContent = option.text;
+          item.dataset.value = option.value;
+          
+          if (option.value === selectElement.value) {
+            item.classList.add('selected');
+          }
+          
+          item.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            selectElement.value = option.value;
+            input.value = option.text;
+            container.classList.remove('active');
+            input.readOnly = true;
+            
+            // Remove selected and highlighted classes from all items
+            dropdownList.querySelectorAll('.dropdown-item').forEach(el => {
+              el.classList.remove('selected', 'highlighted');
+            });
+            item.classList.add('selected');
+            
+            // Trigger change event on original select
+            const event = new Event('change', { bubbles: true });
+            selectElement.dispatchEvent(event);
+          });
+          
+          dropdownList.appendChild(item);
+        });
+      }
+      
+      function filterOptions(searchTerm) {
+        const term = searchTerm.toLowerCase().trim();
+        if (term === '') {
+          filteredOptions = [...allOptions];
+        } else {
+          filteredOptions = allOptions.filter(option => 
+            option.text.toLowerCase().includes(term)
+          );
+        }
+        renderOptions();
+      }
+      
+      // Set initial value if select has a value
+      const initialSelectedOption = allOptions.find(opt => opt.value === selectElement.value);
+      if (initialSelectedOption) {
+        input.value = initialSelectedOption.text;
+      } else if (allOptions.length > 0 && allOptions[0].value === '') {
+        input.value = allOptions[0].text;
+      }
+      
+      // Input events
+      input.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (input.readOnly) {
+          input.readOnly = false;
+          input.value = '';
+          container.classList.add('active');
+          input.focus();
+          filterOptions('');
+        }
+      });
+      
+      input.addEventListener('input', (e) => {
+        if (!input.readOnly) {
+          filterOptions(e.target.value);
+        }
+      });
+      
+      // Handle clicks outside to close dropdown
+      document.addEventListener('click', (e) => {
+        if (!container.contains(e.target)) {
+          container.classList.remove('active');
+          input.readOnly = true;
+          
+          // Reset input value to selected option or placeholder
+          const selectedOption = allOptions.find(opt => opt.value === selectElement.value);
+          if (selectedOption) {
+            input.value = selectedOption.text;
+          } else {
+            input.value = allOptions[0]?.text || '';
+          }
+          
+          // Remove highlighted items
+          dropdownList.querySelectorAll('.dropdown-item').forEach(el => {
+            el.classList.remove('highlighted');
+          });
+        }
+      });
+      
+      // Add keyboard navigation
+      input.addEventListener('keydown', (e) => {
+        if (!container.classList.contains('active')) return;
+        
+        const items = dropdownList.querySelectorAll('.dropdown-item:not(.no-results)');
+        const currentSelected = dropdownList.querySelector('.dropdown-item.highlighted');
+        let currentIndex = currentSelected ? Array.from(items).indexOf(currentSelected) : -1;
+        
+        switch(e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            if (currentSelected) currentSelected.classList.remove('highlighted');
+            currentIndex = (currentIndex + 1) % items.length;
+            if (items[currentIndex]) items[currentIndex].classList.add('highlighted');
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            if (currentSelected) currentSelected.classList.remove('highlighted');
+            currentIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+            if (items[currentIndex]) items[currentIndex].classList.add('highlighted');
+            break;
+          case 'Enter':
+            e.preventDefault();
+            if (currentSelected) {
+              currentSelected.click();
+            }
+            break;
+          case 'Escape':
+            e.preventDefault();
+            container.classList.remove('active');
+            input.readOnly = true;
+            const selectedOption = allOptions.find(opt => opt.value === selectElement.value);
+            if (selectedOption) {
+              input.value = selectedOption.text;
+            } else {
+              input.value = allOptions[0]?.text || '';
+            }
+            break;
+        }
+      });
+      
+      // Initialize
+      renderOptions();
+      
+      return {
+        updateOptions: (newOptions) => {
+          allOptions = [...newOptions];
+          filteredOptions = [...newOptions];
+          renderOptions();
+          
+          // Update input value if needed
+          const selectedOption = allOptions.find(opt => opt.value === selectElement.value);
+          if (selectedOption) {
+            input.value = selectedOption.text;
+          } else if (allOptions.length > 0) {
+            input.value = allOptions[0].text;
+          }
+        },
+        container,
+        selectElement
+      };
+    }
+
+    function showToast(message, isSuccess = true) {
+        const toast = document.getElementById('toast-message');
+        toast.className = 'toast-notification'; // Reset classes
+        if (isSuccess) {
+            toast.classList.add('success');
+            toast.innerHTML = `<i class="fas fa-check-circle icon"></i> ${message}`;
+        } else {
+            toast.classList.add('error');
+            toast.innerHTML = `<i class="fas fa-exclamation-circle icon"></i> ${message}`;
+        }
+        
+        toast.classList.add('show');
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    function showMessage(id, message, isError = false) {
+        const element = document.getElementById(id);
+        element.textContent = message;
+        element.className = 'message ' + (isError ? 'error-message' : 'success-message');
+        element.style.display = 'block';
+    }
+
+    async function loadForecasts(filters = {}) {
+      let query = supabase
+        .from('v_forecast_with_order_status')
+        .select(`*, product_variety ( product_name, variety_name )`)
+        .order('date_of_sowing', { ascending: true });
+
+      if (filters.product_variety_id) {
+        // Filter by the actual product_variety_id field
+        query = query.eq('product_variety_id', filters.product_variety_id);
+      }
+
+      if (filters.year) {
+        query = query.eq('year', filters.year);
+      }
+
+      if (filters.import_month) {
+        const year = filters.import_month.split('-')[0];
+        const month = filters.import_month.split('-')[1];
+        query = query.gte('date_of_sowing', `${year}-${month}-01`).lte('date_of_sowing', `${year}-${month}-31`);
+      }
+
+      if (filters.enlistment_status != null && filters.enlistment_status !== '') {
+        query = query.eq('enlistment_status', filters.enlistment_status);
+      }
+
+      if (filters.order_status != null && filters.order_status !== '') {
+        query = query.eq('order_status', filters.order_status);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Query error:', error);
+        document.getElementById("forecasts-list").innerHTML = `<p class="error-message">Error loading forecasts: ${error.message}</p>`;
+        return;
+      }
+
+      const tableBody = document.getElementById("forecasts-table-body");
+      let html = "";
+      data.forEach(item => {
+        const productName = item.product_variety ? `${item.product_variety.product_name} - ${item.product_variety.variety_name}` : 'N/A';
+        const supplierName = item.supplier_name || 'N/A';
+        const unit = item.unit || 'N/A';
+        const remainingQtyClass = item.remaining_qty < 0 ? 'text-danger' : 'qty-positive';
+        const remainingQtyValue = item.remaining_qty < 0 
+          ? `<span class="text-danger">${item.remaining_qty}</span>` 
+          : `<span class="qty-positive">${item.remaining_qty}</span>`;
+        
+        html += `<tr>
+          <td>${productName}</td>
+          <td>${supplierName}</td>
+          <td class="text-center"><span class="unit-badge">${unit}</span></td>
+          <td class="text-right">${item.year}</td>
+          <td class="text-center">${new Date(item.date_of_sowing).toLocaleString('default', { month: 'long' })}</td>
+          <td class="text-right">${item.forecast_qty}</td>
+          <td class="text-right">${item.ordered_qty}</td>
+          <td class="text-right">${remainingQtyValue}</td>
+          <td class="text-center" title="${item.dos_alert_sent ? 'Alert Sent' : 'Alert Not Sent'}">
+            ${item.dos_alert_sent 
+              ? '<i class="fas fa-bell status-icon-sent"></i>' 
+              : '<i class="fas fa-bell-slash status-icon-not-sent"></i>'}
+          </td>
+          <td class="text-center" title="${item.enlistment_status ? 'Enlisted' : 'Not Enlisted'}">
+            ${item.enlistment_status 
+              ? '<i class="fas fa-check-circle status-icon-active"></i>' 
+              : '<i class="fas fa-times-circle status-icon-inactive"></i>'}
+          </td>
+          <td class="text-center" title="${item.order_status ? 'Ordered' : 'Not Ordered'}">
+            ${item.order_status 
+              ? '<i class="fas fa-check-circle status-icon-active"></i>' 
+              : '<i class="fas fa-times-circle status-icon-inactive"></i>'}
+          </td>
+          <td class="action-cell text-center">
+            <button title="Edit" onclick='openForecastModal(${JSON.stringify(item)})'><i class="fas fa-pencil-alt"></i></button>
+            <button title="Delete" onclick='deleteForecast("${item.id}")'><i class="fas fa-trash"></i></button>
+            <button title="YoY History" onclick='openYoYHistoryModal(${JSON.stringify(item.product_variety_id)}, ${JSON.stringify(productName)})'><i class="fas fa-chart-bar"></i></button>
+          </td>
+        </tr>`;
+      });
+      tableBody.innerHTML = html;
+    }
+
+    async function deleteForecast(id) {
+      if (!confirm('Are you sure you want to delete this forecast?')) {
+        return;
+      }
+
+      const { error } = await supabase.from('forecast').delete().eq('id', id);
+
+      if (error) {
+        showMessage('modal-message', `Error deleting forecast: ${error.message}`, true);
+      } else {
+        loadForecasts();
+      }
+    }
+
+    async function openForecastModal(forecast = null) {
+      showMessage('modal-message', '');
+      const form = document.getElementById('forecast-form');
+      form.reset();
+      document.getElementById('forecast-id').value = forecast ? forecast.id : '';
+
+      const productSelect = document.getElementById('product_variety_id');
+      
+      // Remove existing searchable dropdown if it exists
+      const existingDropdown = productSelect.previousElementSibling;
+      if (existingDropdown && existingDropdown.classList.contains('searchable-dropdown')) {
+        existingDropdown.remove();
+        productSelect.style.display = '';
+      }
+      
+      productSelect.innerHTML = '<option value="">Select a Product</option>';
+      
+      const productOptions = [
+        { value: '', text: 'Select a Product' },
+        ...products.map(p => ({
+          value: p.id,
+          text: `${p.product_name} - ${p.variety_name}`
+        }))
+      ];
+      
+      // Add options to original select
+      products.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = `${p.product_name} - ${p.variety_name}`;
+        productSelect.appendChild(option);
+      });
+      
+      // Create searchable dropdown
+      const productDropdown = createSearchableDropdown(
+        productSelect,
+        productOptions,
+        'Search products...'
+      );
+
+      if (forecast) {
+        document.getElementById('modal-title').textContent = 'Edit Forecast';
+        productSelect.value = forecast.product_variety_id;
+        document.getElementById('year').value = forecast.year;
+        document.getElementById('forecast_qty').value = forecast.forecast_qty;
+        document.getElementById('date_of_sowing').value = forecast.date_of_sowing;
+        
+        // Update the searchable dropdown input display
+        const selectedProduct = productOptions.find(opt => opt.value === forecast.product_variety_id);
+        if (selectedProduct && productDropdown.container) {
+          const productInput = productDropdown.container.querySelector('.dropdown-input');
+          if (productInput) productInput.value = selectedProduct.text;
+        }
+      } else {
+        document.getElementById('modal-title').textContent = 'Create New Forecast';
+      }
+
+      document.getElementById('forecast-modal').style.display = 'flex';
+    }
+
+    async function saveForecast() {
+      const id = document.getElementById('forecast-id').value;
+      const forecastData = {
+        product_variety_id: document.getElementById('product_variety_id').value,
+        year: document.getElementById('year').value,
+        forecast_qty: document.getElementById('forecast_qty').value,
+        date_of_sowing: document.getElementById('date_of_sowing').value,
+      };
+
+      let query;
+      if (id) {
+        query = supabase.from('forecast').update(forecastData).eq('id', id);
+      } else {
+        query = supabase.from('forecast').insert(forecastData);
+      }
+
+      const { error } = await query;
+      if (error) {
+        showMessage('modal-message', `Error saving forecast: ${error.message}`, true);
+      } else {
+        closeModal();
+        loadForecasts();
+      }
+    }
+
+    function closeModal(modalId = 'forecast-modal') {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    window.openForecastModal = openForecastModal;
+    window.saveForecast = saveForecast;
+    window.closeModal = closeModal;
+    window.deleteForecast = deleteForecast;
+    window.openYoYHistoryModal = openYoYHistoryModal;
+    let yoyChart = null; // Variable to hold the chart instance
+
+    async function openYoYHistoryModal(productId, productName) {
+      const modalTitle = document.getElementById('yoy-history-modal-title');
+      modalTitle.textContent = `YoY History for ${productName}`;
+      document.getElementById('yoy-history-modal').style.display = 'flex';
+
+      const { data, error } = await supabase.rpc('get_product_yoy_history', { p_product_variety_id: productId });
+
+      if (error) {
+        console.error('Error fetching YoY history:', error);
+        const chartCanvas = document.getElementById('yoy-chart');
+        const ctx = chartCanvas.getContext('2d');
+        ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+        ctx.fillText('Could not load chart data.', 10, 50);
+        return;
+      }
+
+      const labels = data.map(d => d.year);
+      const forecastData = data.map(d => d.forecast_qty);
+      const orderedData = data.map(d => d.ordered_qty);
+
+      const ctx = document.getElementById('yoy-chart').getContext('2d');
+
+      // Create the purple gradient for Forecasted Qty
+      const forecastGradient = ctx.createLinearGradient(0, 0, 0, 400);
+      forecastGradient.addColorStop(0, '#8B5CF6'); // Light purple
+      forecastGradient.addColorStop(1, '#7C3AED'); // Royal purple
+
+      // Create the green gradient for Ordered Qty
+      const orderedGradient = ctx.createLinearGradient(0, 0, 0, 400);
+      orderedGradient.addColorStop(0, 'rgba(40, 167, 69, 0.7)'); // Lighter theme green
+      orderedGradient.addColorStop(1, 'rgba(40, 167, 69, 1)');   // Solid theme green
+
+      const chartData = {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Forecasted Qty',
+            data: forecastData,
+            backgroundColor: forecastGradient,
+            borderColor: '#7C3AED',
+            borderWidth: 1
+          },
+          {
+            label: 'Ordered Qty',
+            data: orderedData,
+            backgroundColor: orderedGradient, // Use the new green gradient
+            borderColor: 'rgba(40, 167, 69, 1)',
+            borderWidth: 1
+          }
+        ]
+      };
+
+      // Destroy existing chart instance if it exists
+      if (yoyChart) {
+        yoyChart.destroy();
+      }
+
+      yoyChart = new Chart(ctx, {
+        type: 'bar',
+        data: chartData,
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    async function refreshEnlistmentStatus() {
+      const { error } = await supabase.rpc('refresh_enlistment_status');
+
+      if (error) {
+        showToast(`Error: ${error.message}`, false);
+      } else {
+        showToast('Enlistment status refreshed successfully!');
+        await loadForecasts();
+      }
+    }
+
+    window.refreshEnlistmentStatus = refreshEnlistmentStatus;
+
+    // Logout functionality
+    async function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          showToast(`Error logging out: ${error.message}`, false);
+        } else {
+          window.location.href = 'login.html';
+        }
+      }
+    }
+    window.handleLogout = handleLogout;
+
+    // Toggle between views
+    window.toggleView = () => {
+      const toggle = document.getElementById('view-toggle');
+      const forecastsView = document.getElementById('forecasts-view');
+      const companyView = document.getElementById('company-view');
+      
+      toggle.classList.toggle('active');
+      
+      if (toggle.classList.contains('active')) {
+        currentView = 'company';
+        forecastsView.classList.remove('active');
+        companyView.classList.add('active');
+        if (Object.keys(companyData).length === 0) {
+          loadCompanyData();
+        }
+      } else {
+        currentView = 'forecasts';
+        companyView.classList.remove('active');
+        forecastsView.classList.add('active');
+      }
+    };
+
+    // Load Company Data (Suppliers with forecasts and shipments)
+    async function loadCompanyData() {
+      const container = document.getElementById('company-container');
+      container.innerHTML = '<p style="text-align:center; padding: 40px;">Loading supplier data...</p>';
+      
+      try {
+        // Fetch suppliers
+        const { data: suppliers, error: suppliersError } = await supabase
+          .from('supplier')
+          .select('*')
+          .order('name');
+
+        if (suppliersError) throw suppliersError;
+
+        // Fetch all product varieties with supplier info
+        const { data: productVarieties, error: productsError } = await supabase
+          .from('product_variety')
+          .select('*');
+
+        if (productsError) throw productsError;
+
+        // Fetch all forecasts
+        const { data: forecasts, error: forecastsError } = await supabase
+          .from('v_forecast_with_order_status')
+          .select('*');
+
+        if (forecastsError) throw forecastsError;
+
+        // Fetch shipments with products
+        const { data: shipments, error: shipmentsError } = await supabase
+          .from('shipment')
+          .select(`
+            id,
+            reference_code,
+            status,
+            created_at,
+            shipment_products(
+              quantity,
+              unit,
+              rate,
+              amount,
+              product_variety_id,
+              product_variety:product_variety_id(
+                product_name,
+                variety_name,
+                supplier_id
+              )
+            ),
+            supplier_payments(
+              total_amount,
+              amount_paid
+            )
+          `)
+          .order('created_at', { ascending: false });
+
+        if (shipmentsError) throw shipmentsError;
+
+        // Process data by supplier
+        const supplierBusinessMap = {};
+        
+        // Initialize all suppliers
+        suppliers.forEach(supplier => {
+          supplierBusinessMap[supplier.id] = {
+            supplier: supplier,
+            forecasts: [],
+            shipments: [],
+            products: [],
+            totalForecasts: 0,
+            totalShipments: 0,
+            totalForecastQty: 0,
+            totalOrderedQty: 0,
+            totalShipmentValue: 0
+          };
+        });
+
+        // Map products to suppliers
+        const productSupplierMap = {};
+        productVarieties.forEach(pv => {
+          if (pv.supplier_id && supplierBusinessMap[pv.supplier_id]) {
+            supplierBusinessMap[pv.supplier_id].products.push(pv);
+            productSupplierMap[pv.id] = pv.supplier_id;
+          }
+        });
+
+        // Map forecasts to suppliers through products
+        forecasts.forEach(forecast => {
+          const supplierId = productSupplierMap[forecast.product_variety_id];
+          if (supplierId && supplierBusinessMap[supplierId]) {
+            supplierBusinessMap[supplierId].forecasts.push(forecast);
+            supplierBusinessMap[supplierId].totalForecasts++;
+            supplierBusinessMap[supplierId].totalForecastQty += parseFloat(forecast.forecast_qty || 0);
+            supplierBusinessMap[supplierId].totalOrderedQty += parseFloat(forecast.ordered_qty || 0);
+          }
+        });
+
+        // Map shipments to suppliers through products
+        shipments.forEach(shipment => {
+          if (shipment.shipment_products && shipment.shipment_products.length > 0) {
+            const shipmentSuppliers = new Set();
+            let shipmentValue = 0;
+
+            shipment.shipment_products.forEach(product => {
+              const supplierId = product.product_variety?.supplier_id;
+              if (supplierId) {
+                shipmentSuppliers.add(supplierId);
+                
+                // Calculate product value
+                const productValue = product.amount 
+                  ? parseFloat(product.amount) 
+                  : (parseFloat(product.quantity || 0) * parseFloat(product.rate || 0));
+                shipmentValue += productValue;
+              }
+            });
+
+            // Add shipment to each supplier involved
+            shipmentSuppliers.forEach(supplierId => {
+              if (supplierBusinessMap[supplierId]) {
+                supplierBusinessMap[supplierId].shipments.push({
+                  ...shipment,
+                  shipmentValue: shipmentValue / shipmentSuppliers.size // Split value if multiple suppliers
+                });
+                supplierBusinessMap[supplierId].totalShipments++;
+                supplierBusinessMap[supplierId].totalShipmentValue += shipmentValue / shipmentSuppliers.size;
+              }
+            });
+          }
+        });
+
+        companyData = supplierBusinessMap;
+        renderCompanyView();
+        
+      } catch (error) {
+        console.error('Error loading company data:', error);
+        container.innerHTML = `<p class="error-message">Error loading company data: ${error.message}</p>`;
+      }
+    }
+
+    function renderCompanyView() {
+      const container = document.getElementById('company-container');
+      
+      const suppliersWithBusiness = Object.values(companyData).filter(s => 
+        s.forecasts.length > 0 || s.shipments.length > 0
+      );
+
+      if (suppliersWithBusiness.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-building"></i>
+            <h3>No Supplier Business Data Yet</h3>
+            <p>Forecasts and shipments will appear here once suppliers are linked to products.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      
+      suppliersWithBusiness.forEach(supplierBusiness => {
+        const supplier = supplierBusiness.supplier;
+        
+        html += `
+          <div class="company-summary-card" id="company-card-${supplier.id}" onclick="toggleCompanyExpand('${supplier.id}')">
+            <div class="company-summary-header">
+              <div class="company-summary-title">
+                <div class="company-icon">
+                  <i class="fas fa-building"></i>
+                </div>
+                <div>
+                  <h3>${supplier.name}</h3>
+                  <p style="margin: 5px 0 0 0; color: #64748B; font-size: 13px;">
+                    ${supplier.email || 'No email'} ${supplier.country ? `• ${supplier.country}` : ''}
+                  </p>
+                </div>
+              </div>
+              <div class="expand-indicator">
+                <i class="fas fa-chevron-down"></i>
+              </div>
+            </div>
+            
+            <!-- Summary Stats -->
+            <div class="company-summary-stats">
+              <div class="summary-stat">
+                <div class="summary-stat-label">
+                  <i class="fas fa-bullhorn"></i>
+                  Total Forecasts
+                </div>
+                <div class="summary-stat-value">${supplierBusiness.totalForecasts}</div>
+              </div>
+              <div class="summary-stat">
+                <div class="summary-stat-label">
+                  <i class="fas fa-box"></i>
+                  Forecast Qty
+                </div>
+                <div class="summary-stat-value">${formatNumber(supplierBusiness.totalForecastQty)}</div>
+              </div>
+              <div class="summary-stat">
+                <div class="summary-stat-label">
+                  <i class="fas fa-ship"></i>
+                  Shipments
+                </div>
+                <div class="summary-stat-value">${supplierBusiness.totalShipments}</div>
+              </div>
+              <div class="summary-stat">
+                <div class="summary-stat-label">
+                  <i class="fas fa-dollar-sign"></i>
+                  Shipment Value
+                </div>
+                <div class="summary-stat-value amount">$${formatNumber(supplierBusiness.totalShipmentValue)}</div>
+              </div>
+              <div class="summary-stat">
+                <div class="summary-stat-label">
+                  <i class="fas fa-tags"></i>
+                  Products
+                </div>
+                <div class="summary-stat-value">${supplierBusiness.products.length}</div>
+              </div>
+            </div>
+
+            <!-- Company History (Expandable) -->
+            <div class="company-history">
+              <div class="company-history-header">
+                <h4><i class="fas fa-history"></i> Business Activity</h4>
+              </div>
+              
+              ${supplierBusiness.products.length > 0 ? `
+                <div style="margin-bottom: 25px;">
+                  <h5 style="margin: 0 0 10px 0; color: #64748B; font-size: 14px; font-weight: 600; text-transform: uppercase;">
+                    Products Supplied (${supplierBusiness.products.length})
+                  </h5>
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${supplierBusiness.products.map(p => `
+                      <span class="product-badge">${p.product_name} - ${p.variety_name}</span>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+
+              ${supplierBusiness.forecasts.length > 0 ? `
+                <div style="margin-bottom: 25px;">
+                  <h5 style="margin: 0 0 15px 0; color: #64748B; font-size: 14px; font-weight: 600; text-transform: uppercase;">
+                    Forecasts (${supplierBusiness.forecasts.length})
+                  </h5>
+                  <table class="history-table">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Year</th>
+                        <th>Import Month</th>
+                        <th>Forecast Qty</th>
+                        <th>Ordered Qty</th>
+                        <th>Remaining</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${supplierBusiness.forecasts.map(forecast => {
+                        const product = supplierBusiness.products.find(p => p.id === forecast.product_variety_id);
+                        const productName = product ? `${product.product_name} - ${product.variety_name}` : 'Unknown';
+                        const importMonth = new Date(forecast.date_of_sowing).toLocaleString('default', { month: 'long' });
+                        
+                        return `
+                          <tr>
+                            <td>${productName}</td>
+                            <td>${forecast.year}</td>
+                            <td>${importMonth}</td>
+                            <td>${formatNumber(forecast.forecast_qty)}</td>
+                            <td>${formatNumber(forecast.ordered_qty)}</td>
+                            <td style="color: ${forecast.remaining_qty < 0 ? '#dc3545' : '#059669'}; font-weight: 600;">
+                              ${formatNumber(forecast.remaining_qty)}
+                            </td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              ` : ''}
+
+              ${supplierBusiness.shipments.length > 0 ? `
+                <div>
+                  <h5 style="margin: 0 0 15px 0; color: #64748B; font-size: 14px; font-weight: 600; text-transform: uppercase;">
+                    Shipments (${supplierBusiness.shipments.length})
+                  </h5>
+                  <table class="history-table">
+                    <thead>
+                      <tr>
+                        <th>Shipment Reference</th>
+                        <th>Products</th>
+                        <th>Value</th>
+                        <th>Status</th>
+                        <th>Created Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${supplierBusiness.shipments.map(shipment => {
+                        const productsText = shipment.shipment_products && shipment.shipment_products.length > 0
+                          ? shipment.shipment_products.map(p => p.product_variety?.product_name || 'Unknown').slice(0, 2).join(', ') + 
+                            (shipment.shipment_products.length > 2 ? ` +${shipment.shipment_products.length - 2}` : '')
+                          : 'No products';
+                        
+                        return `
+                          <tr>
+                            <td>
+                              <a href="shipment-details.html?id=${shipment.id}" class="shipment-ref">
+                                <i class="fas fa-external-link-alt"></i>
+                                ${shipment.reference_code}
+                              </a>
+                            </td>
+                            <td>${productsText}</td>
+                            <td style="font-weight: 600; color: #059669;">$${formatNumber(shipment.shipmentValue)}</td>
+                            <td style="text-transform: capitalize;">${shipment.status.replace('_', ' ')}</td>
+                            <td>${formatDate(shipment.created_at)}</td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function formatNumber(num) {
+      if (!num && num !== 0) return '0';
+      return parseFloat(num).toLocaleString('en-US', { maximumFractionDigits: 2 });
+    }
+
+    // Toggle company expansion
+    window.toggleCompanyExpand = (supplierId) => {
+      const card = document.getElementById(`company-card-${supplierId}`);
+      if (card) {
+        card.classList.toggle('expanded');
+      }
+    };
+
+    async function initializeProductFilter() {
+      const productFilter = document.getElementById('product-name-filter');
+      
+      // Remove existing searchable dropdown if it exists
+      const existingDropdown = productFilter.previousElementSibling;
+      if (existingDropdown && existingDropdown.classList.contains('searchable-dropdown')) {
+        existingDropdown.remove();
+        productFilter.style.display = '';
+      }
+      
+      productFilter.innerHTML = '<option value="">All Products</option>';
+      
+      const productOptions = [
+        { value: '', text: 'All Products' },
+        ...products.map(p => ({
+          value: p.id,
+          text: `${p.product_name} - ${p.variety_name}`
+        }))
+      ];
+      
+      // Add options to original select
+      products.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = `${p.product_name} - ${p.variety_name}`;
+        productFilter.appendChild(option);
+      });
+      
+      // Create searchable dropdown
+      createSearchableDropdown(
+        productFilter,
+        productOptions,
+        'Search products...'
+      );
+    }
+
+    window.onload = async () => {
+      const loader = document.getElementById("loader");
+      loader.style.display = "block";
+
+      // Enforce page access and get user role
+      const authData = await enforcePageAccess();
+      if (!authData) {
+          return; // enforcePageAccess handles redirection
+      }
+      
+      userRole = authData.role;
+      
+      // Filter sidebar based on user role
+      filterSidebarByRole(userRole);
+
+      const { data: productData, error: productError } = await supabase.from('product_variety').select('*');
+      if (productError) {
+        console.error("Failed to load products for form");
+      } else {
+        products = productData;
+        // Initialize the product filter dropdown
+        await initializeProductFilter();
+      }
+
+      document.getElementById('filter-toggle-btn').addEventListener('click', () => {
+        const filterPane = document.getElementById('filter-pane');
+        const toggleBtn = document.getElementById('filter-toggle-btn');
+        
+        if (filterPane.classList.contains('open')) {
+          filterPane.classList.remove('open');
+          toggleBtn.classList.remove('active');
+        } else {
+          filterPane.classList.add('open');
+          toggleBtn.classList.add('active');
+        }
+      });
+
+
+
+      document.getElementById('apply-filters-btn').addEventListener('click', () => {
+
+        const filters = {
+
+            product_variety_id: document.getElementById('product-name-filter').value || null,
+
+            year: document.getElementById('year-filter').value || null,
+
+            import_month: document.getElementById('import-month-filter').value || null,
+
+            enlistment_status: document.getElementById('enlistment-status-filter').value,
+
+            order_status: document.getElementById('order-status-filter').value
+
+        };
+
+        loadForecasts(filters);
+
+        updateFilterBadge();
+
+      });
+
+
+
+      document.getElementById('clear-filters-btn').addEventListener('click', () => {
+
+        document.getElementById('product-name-filter').value = '';
+
+        document.getElementById('year-filter').value = '';
+
+        document.getElementById('import-month-filter').value = '';
+
+        document.getElementById('enlistment-status-filter').value = '';
+
+        document.getElementById('order-status-filter').value = '';
+
+        // Clear searchable dropdown input for product filter
+        const productDropdownInput = document.querySelector('#product-name-filter').previousElementSibling?.querySelector('.dropdown-input');
+        if (productDropdownInput) {
+          productDropdownInput.value = 'All Products';
+          productDropdownInput.readOnly = true;
+        }
+
+        loadForecasts();
+
+        updateFilterBadge();
+
+      });
+
+
+
+      function updateFilterBadge() {
+
+        const filters = {
+
+            product_variety_id: document.getElementById('product-name-filter').value,
+
+            year: document.getElementById('year-filter').value,
+
+            import_month: document.getElementById('import-month-filter').value,
+
+            enlistment_status: document.getElementById('enlistment-status-filter').value,
+
+            order_status: document.getElementById('order-status-filter').value
+
+        };
+
+        let activeFilters = 0;
+
+        if (filters.product_variety_id) activeFilters++;
+
+        if (filters.year) activeFilters++;
+
+        if (filters.import_month) activeFilters++;
+
+        if (filters.enlistment_status !== '' && filters.enlistment_status !== null) activeFilters++;
+
+        if (filters.order_status !== '' && filters.order_status !== null) activeFilters++;
+
+
+
+        const badge = document.getElementById('filter-count-badge');
+
+        if (activeFilters > 0) {
+
+          badge.textContent = activeFilters;
+
+          badge.style.display = 'inline';
+
+        } else {
+
+          badge.style.display = 'none';
+
+        }
+
+      }
+
+
+
+      await loadForecasts();      loader.style.display = "none";
+    };
+  </script>
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+  </div>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="documents.html" class="nav-link"><span class="text">Document Management</span></a></li>
+            <li><a href="admin-document-requirements.html" class="nav-link"><span class="text">Document Requirements</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link active">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu open">
+            <li><a href="send-freight-queries.html" class="nav-link"><span class="text">Send Freight Queries</span></a></li>
+            <li><a href="freight-query-response.html" class="nav-link"><span class="text">Freight Query Response</span></a></li>
+            <li><a href="manage-freight-queries.html" class="nav-link"><span class="text">Manage Freight Queries</span></a></li>
+            <li><a href="award-shipment.html" class="nav-link"><span class="text">Award Shipment</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Forecasts</h1>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button id="filter-toggle-btn" class="button button-secondary">
+          <i class="fas fa-filter"></i>
+          <span>Filters</span>
+          <span id="filter-count-badge" class="badge" style="display: none;"></span>
+        </button>
+        <button onclick="openForecastModal()">Create New Forecast</button>
+        <button onclick="refreshEnlistmentStatus()" class="button-secondary ml-2">Refresh Enlistment Status</button>
+        <button onclick="handleLogout()" class="button-secondary" style="background: #dc3545; color: white; border-color: #dc3545;" title="Logout">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- View Toggle -->
+    <div class="view-toggle-container">
+      <span class="view-toggle-label">
+        <i class="fas fa-list"></i>
+        Forecasts View
+      </span>
+      <div class="toggle-switch" id="view-toggle" onclick="toggleView()">
+        <div class="toggle-slider"></div>
+      </div>
+      <span class="view-toggle-label">
+        <i class="fas fa-building"></i>
+        Company View
+      </span>
+    </div>
+
+    <!-- Forecasts View (Default) -->
+    <div id="forecasts-view" class="view-section active">
+      <div class="panel">
+      <div id="filter-pane" class="filter-pane">
+        <div class="filter-group">
+          <label for="product-name-filter">Product Name</label>
+          <select id="product-name-filter">
+            <option value="">All Products</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="year-filter">Year</label>
+          <input type="number" id="year-filter" placeholder="Enter year">
+        </div>
+        <div class="filter-group">
+          <label for="import-month-filter">Import Month</label>
+          <input type="month" id="import-month-filter">
+        </div>
+        <div class="filter-group">
+          <label for="enlistment-status-filter">Enlistment Status</label>
+          <select id="enlistment-status-filter">
+            <option value="">All</option>
+            <option value="true">Enlisted</option>
+            <option value="false">Not Enlisted</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="order-status-filter">Order Status</label>
+          <select id="order-status-filter">
+            <option value="">All</option>
+            <option value="true">Ordered</option>
+            <option value="false">Not Ordered</option>
+          </select>
+        </div>
+        <div class="button-container">
+          <button id="apply-filters-btn" class="button">Apply</button>
+          <button id="clear-filters-btn" class="button button-secondary">Clear</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="forecasts-list" class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Supplier</th>
+                <th class="text-center">Unit</th>
+                <th class="text-right">Year</th>
+                <th class="text-center">Import Month</th>
+                <th class="text-right">Forecast Qty</th>
+                <th class="text-right">Ordered Qty</th>
+                <th class="text-right">Remaining Qty</th>
+                <th class="text-center">Alert Sent?</th>
+                <th class="text-center">Enlistment Status</th>
+                <th class="text-center">Order Status</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="forecasts-table-body">
+              <!-- Data will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </div>
+    <!-- End Forecasts View -->
+
+    <!-- Company View -->
+    <div id="company-view" class="view-section">
+      <div style="margin-bottom: 20px;">
+        <h2 style="margin: 0 0 8px 0; color: #1E293B; font-size: 28px; font-weight: 700;">
+          <i class="fas fa-building" style="color: #7C3AED; margin-right: 12px;"></i>
+          Supplier Business Overview
+        </h2>
+        <p style="margin: 0; color: #64748B; font-size: 15px;">
+          Track forecasts, shipments, and products associated with each supplier
+        </p>
+      </div>
+      <div id="company-container">Loading company data...</div>
+    </div>
+    <!-- End Company View -->
+
+  </div>
+
+  <div id="forecast-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeModal('forecast-modal')">&times;</span>
+      <h2 id="modal-title">Create New Forecast</h2>
+      <div id="modal-message"></div>
+      <form id="forecast-form" onsubmit="event.preventDefault(); saveForecast();">
+        <input type="hidden" id="forecast-id">
+        <div>
+          <label for="product_variety_id">Product</label>
+          <select id="product_variety_id" required></select>
+        </div>
+        <div>
+          <label for="year">Year</label>
+          <input type="number" id="year" placeholder="e.g., 2025" required>
+        </div>
+        <div>
+          <label for="forecast_qty">Forecast Quantity</label>
+          <input type="number" id="forecast_qty" required>
+        </div>
+        <div>
+          <label for="date_of_sowing">Import Month</label>
+          <input type="date" id="date_of_sowing" required>
+        </div>
+        <div class="button-container">
+          <button type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+    // Standard sidebar and responsive logic
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.querySelector('.sidebar');
+      const sidebarToggle = document.querySelector('.sidebar-toggle');
+      const navLinks = document.querySelectorAll('.nav-link');
+      const hasSubmenus = document.querySelectorAll('.has-submenu');
+      const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+      function handleMediaQueryChange(e) {
+        if (e.matches) {
+          sidebar.classList.remove('collapsed');
+          sidebar.classList.remove('open');
+        } else {
+          sidebar.classList.remove('open');
+        }
+      }
+
+      handleMediaQueryChange(mediaQuery);
+      mediaQuery.addListener(handleMediaQueryChange);
+
+      sidebarToggle.addEventListener('click', () => {
+        if (mediaQuery.matches) {
+          sidebar.classList.toggle('open');
+        } else {
+          sidebar.classList.toggle('collapsed');
+        }
+      });
+
+      hasSubmenus.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const submenu = item.nextElementSibling;
+          if (submenu && submenu.classList.contains('submenu')) {
+            submenu.classList.toggle('open');
+            item.classList.toggle('open');
+          }
+        });
+      });
+
+      const currentPath = window.location.pathname.split('/').pop();
+      navLinks.forEach(link => {
+        if (link.href.split('/').pop() === currentPath) {
+          link.classList.add('active');
+          let parentSubmenu = link.closest('.submenu');
+          if (parentSubmenu) {
+            parentSubmenu.classList.add('open');
+            let parentHasSubmenu = parentSubmenu.previousElementSibling;
+            if (parentHasSubmenu && parentHasSubmenu.classList.contains('has-submenu')) {
+              parentHasSubmenu.classList.add('open');
+            }
+          }
+        }
+      });
+    });
+</script>
+  <div id="yoy-history-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <span class="close-button" onclick="closeModal('yoy-history-modal')">&times;</span>
+      <h2 id="yoy-history-modal-title">Year-over-Year History</h2>
+      <div>
+        <canvas id="yoy-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-message"></div>
+</body>
+</html>

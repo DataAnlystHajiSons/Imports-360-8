@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shipment Details</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    /* Main content already has proper sidebar spacing from style.css */
+    /* Just add additional padding for breathing room */
+    .main-content {
+      padding: 20px 40px 20px 60px; /* Extra left padding for breathing space */
+    }
+    .shipment-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 40px rgba(102, 126, 234, 0.2);
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    .shipment-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: pulse 15s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 0.3; }
+    }
+    .shipment-header h1 {
+      margin-top: 0;
+      color: white;
+      font-size: 2rem;
+      font-weight: 700;
+      position: relative;
+      z-index: 1;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 25px;
+      position: relative;
+      z-index: 1;
+    }
+    .summary-item {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .summary-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .summary-item .label {
+      font-weight: 600;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .summary-item .value {
+      color: white;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    
+    /* Progress Timeline */
+    .progress-timeline {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      overflow-x: auto;
+    }
+    .timeline-wrapper {
+      display: flex;
+      align-items: center;
+      min-width: max-content;
+      gap: 10px;
+      padding: 10px 0;
+    }
+    .timeline-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      min-width: 100px;
+      position: relative;
+    }
+    .timeline-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #94a3b8;
+      transition: all 0.3s ease;
+      position: relative;
+      z-index: 2;
+      border: 3px solid #e2e8f0;
+    }
+    .timeline-step.completed .timeline-icon {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border-color: #10b981;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    .timeline-step.current .timeline-icon {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border-color: #3b82f6;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+      animation: bounce 2s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .timeline-connector {
+      flex: 1;
+      height: 3px;
+      background: #e2e8f0;
+      position: relative;
+      z-index: 1;
+      margin: 0 -5px;
+    }
+    .timeline-step.completed + .timeline-connector {
+      background: linear-gradient(to right, #10b981, #e2e8f0);
+    }
+    .timeline-label {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      text-align: center;
+      color: #64748b;
+      font-weight: 500;
+      max-width: 100px;
+      line-height: 1.2;
+    }
+    .timeline-step.completed .timeline-label,
+    .timeline-step.current .timeline-label {
+      color: #1e293b;
+      font-weight: 600;
+    }
+    
+    /* Filters Container */
+    .filters-container {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 25px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+      box-shadow: 
+        0 1px 3px rgba(0,0,0,0.04),
+        0 4px 8px rgba(0,0,0,0.04);
+      border: 1px solid rgba(226, 232, 240, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+    .filters-container::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent 0%, #7c3aed 50%, transparent 100%);
+      opacity: 0.3;
+    }
+    .filters-container select {
+      padding: 10px 15px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #1e293b;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .filters-container select:hover,
+    .filters-container select:focus {
+      border-color: #7c3aed;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+    .filters-container label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #475569;
+      font-weight: 500;
+    }
+    .filters-container input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    .filters-container button {
+      padding: 10px 25px;
+      font-size: 14px;
+    }
+    .filters-container .btn {
+      padding: 10px 20px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+    
+    /* Products Table */
+    .products-section {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 16px;
+      padding: 28px;
+      margin-top: 20px;
+      box-shadow: 
+        0 1px 3px rgba(0,0,0,0.04),
+        0 4px 8px rgba(0,0,0,0.04),
+        0 8px 16px rgba(0,0,0,0.04);
+      border: 1px solid rgba(226, 232, 240, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+    .products-section::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      height: 4px;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        #667eea 25%, 
+        #764ba2 75%, 
+        transparent 100%);
+      opacity: 0.6;
+    }
+    .products-section h3 {
+      margin: 0 0 20px 0;
+      color: #1e293b;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    .products-section table {
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .products-section thead {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    .products-section th {
+      color: white !important;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      padding: 15px;
+      background: transparent !important;
+    }
+    .products-section tbody tr {
+      transition: background-color 0.2s ease;
+    }
+    .products-section tbody tr:hover {
+      background-color: #f8fafc;
+    }
+    .products-section tfoot td {
+      background: #f1f5f9;
+      font-weight: 700;
+      color: #1e293b;
+      font-size: 1.05rem;
+    }
+    
+    /* Stages Container */
+    .stages-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .stage-card {
+      background: white;
+      border-radius: 16px;
+      padding: 0;
+      box-shadow: 
+        0 1px 3px rgba(0,0,0,0.04),
+        0 4px 8px rgba(0,0,0,0.04),
+        0 8px 16px rgba(0,0,0,0.04);
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      border: 1px solid rgba(226, 232, 240, 0.6);
+    }
+    .stage-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 100%);
+      opacity: 0.5;
+    }
+    .stage-card.completed::before {
+      background: linear-gradient(90deg, #10b981 0%, #059669 50%, #047857 100%);
+      opacity: 1;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+    .stage-card.current::before {
+      background: linear-gradient(90deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+      opacity: 1;
+      box-shadow: 0 2px 12px rgba(59, 130, 246, 0.4);
+      animation: shimmer 2s infinite;
+    }
+    @keyframes shimmer {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    .stage-card:hover {
+      box-shadow: 
+        0 2px 4px rgba(0,0,0,0.06),
+        0 8px 16px rgba(0,0,0,0.06),
+        0 16px 32px rgba(0,0,0,0.08);
+      transform: translateY(-3px);
+      border-color: rgba(124, 58, 237, 0.2);
+    }
+    .stage-card.current {
+      box-shadow: 
+        0 2px 4px rgba(59, 130, 246, 0.1),
+        0 8px 16px rgba(59, 130, 246, 0.12),
+        0 16px 32px rgba(59, 130, 246, 0.14);
+    }
+    .stage-card-header {
+      padding: 20px 25px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(to right, rgba(0,0,0,0.01), transparent);
+      transition: background 0.3s ease;
+    }
+    .stage-card-header:hover {
+      background: linear-gradient(to right, rgba(124, 58, 237, 0.05), transparent);
+    }
+    .stage-card-title {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex: 1;
+    }
+    .stage-icon {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    .stage-card.completed .stage-icon {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+    }
+    .stage-card.current .stage-icon {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+    }
+    .stage-card h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: #1e293b;
+      font-weight: 700;
+    }
+    .stage-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      margin-right: 10px;
+    }
+    .stage-badge.completed {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .stage-badge.current {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .stage-badge.pending {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    .stage-collapse-icon {
+      font-size: 18px;
+      color: #94a3b8;
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+    }
+    .stage-card.expanded .stage-collapse-icon {
+      transform: rotate(180deg);
+    }
+    .stage-card-body {
+      padding: 0 25px 25px 25px;
+      display: none;
+      position: relative;
+      z-index: 1;
+    }
+    .stage-card.expanded .stage-card-body {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .stage-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 15px;
+    }
+    .detail-item {
+      padding: 16px;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(226, 232, 240, 0.6);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      position: relative;
+      overflow: hidden;
+    }
+    .detail-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at bottom left, rgba(124, 58, 237, 0.03) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .detail-item:hover {
+      background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+      border-color: rgba(124, 58, 237, 0.2);
+      box-shadow: 
+        0 2px 4px rgba(0,0,0,0.04),
+        0 4px 8px rgba(124, 58, 237, 0.08);
+      transform: translateY(-2px);
+    }
+    .detail-item:hover::before {
+      opacity: 1;
+    }
+    .detail-item .label {
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .detail-item .value {
+      color: #1e293b;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    .document-link {
+      color: #7c3aed;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      word-break: break-word;
+      max-width: 100%;
+      flex-wrap: wrap;
+      padding: 8px 12px;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(124, 58, 237, 0.02) 100%);
+      border-radius: 8px;
+      border: 1px solid rgba(124, 58, 237, 0.15);
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      z-index: 10;
+    }
+    .document-link:hover {
+      color: #6d28d9;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+      border-color: rgba(124, 58, 237, 0.3);
+      transform: translateX(4px);
+    }
+    .document-link::before {
+      content: '📄';
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .document-link-text {
+      word-break: break-all;
+      overflow-wrap: break-word;
+      line-height: 1.4;
+    }
+    
+    /* Empty State */
+    .empty-stage {
+      text-align: center;
+      padding: 40px 20px;
+      color: #94a3b8;
+    }
+    .empty-stage i {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.3;
+    }
+    
+    /* Document Modal */
+    .document-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.7);
+      backdrop-filter: blur(5px);
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .document-modal-content {
+      background-color: #fefefe;
+      margin: 3% auto;
+      padding: 0;
+      border: none;
+      width: 90%;
+      max-width: 1200px;
+      border-radius: 12px;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    .document-modal-close {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+      color: #fff;
+      background: rgba(0,0,0,0.5);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 1001;
+      transition: all 0.3s ease;
+    }
+    .document-modal-close:hover {
+      background: rgba(0,0,0,0.8);
+      transform: rotate(90deg);
+    }
+    .document-viewer {
+      width: 100%;
+      height: 80vh;
+      border-radius: 12px;
+    }
+    
+    /* Communications Section */
+    .communications-section {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 25px;
+      box-shadow: 
+        0 1px 3px rgba(0,0,0,0.04),
+        0 4px 8px rgba(0,0,0,0.04),
+        0 8px 16px rgba(0,0,0,0.04);
+      border: 1px solid rgba(226, 232, 240, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+    .communications-section::after {
+      content: '';
+      position: absolute;
+      top: -100px;
+      left: -100px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.03) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .communications-section h3 {
+      margin: 0 0 20px 0;
+      color: #1e293b;
+      font-size: 1.3rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .communication-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .communication-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(226, 232, 240, 0.6);
+      box-shadow: 
+        0 1px 3px rgba(0,0,0,0.04),
+        0 4px 8px rgba(0,0,0,0.04);
+    }
+    .communication-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top right, rgba(124, 58, 237, 0.05) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .communication-card::after {
+      content: '';
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .communication-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 
+        0 4px 8px rgba(124, 58, 237, 0.08),
+        0 12px 24px rgba(124, 58, 237, 0.12),
+        0 24px 48px rgba(124, 58, 237, 0.16);
+      border-color: rgba(124, 58, 237, 0.3);
+    }
+    .communication-card:hover::before,
+    .communication-card:hover::after {
+      opacity: 1;
+    }
+    .communication-card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 5px;
+      position: relative;
+      box-shadow: 
+        0 4px 12px rgba(124, 58, 237, 0.25),
+        inset 0 -2px 8px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    .communication-card-icon::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      right: 2px;
+      height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+      border-radius: 14px 14px 0 0;
+    }
+    .communication-card:hover .communication-card-icon {
+      transform: scale(1.05) rotate(-5deg);
+      box-shadow: 
+        0 6px 16px rgba(124, 58, 237, 0.35),
+        inset 0 -2px 8px rgba(0,0,0,0.1);
+    }
+    .communication-card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 5px;
+    }
+    .communication-card-desc {
+      font-size: 0.9rem;
+      color: #64748b;
+      line-height: 1.5;
+    }
+    
+    /* Supplier Payment Section */
+    #supplier-payment-container {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 25px;
+      box-shadow: 
+        0 1px 3px rgba(0,0,0,0.04),
+        0 4px 8px rgba(0,0,0,0.04),
+        0 8px 16px rgba(0,0,0,0.04);
+      border: 1px solid rgba(226, 232, 240, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+    #supplier-payment-container::after {
+      content: '';
+      position: absolute;
+      bottom: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.05) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    #supplier-payment-container:empty {
+      display: none;
+    }
+    #supplier-payment-container h3 {
+      margin: 0 0 20px 0;
+      color: #1e293b;
+      font-size: 1.3rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #supplier-payment-container .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    #supplier-payment-container .summary-item {
+      background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(226, 232, 240, 0.6);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    #supplier-payment-container .summary-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #supplier-payment-container .summary-item:hover {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(124, 58, 237, 0.06);
+      transform: translateY(-2px);
+      border-color: rgba(124, 58, 237, 0.2);
+    }
+    #supplier-payment-container .summary-item:hover::before {
+      opacity: 1;
+    }
+    #supplier-payment-container .summary-item .label {
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+    }
+    #supplier-payment-container .summary-item .value {
+      color: #1e293b;
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: block;
+    }
+    #supplier-payment-container .status-pill {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    #supplier-payment-container .status-pill.status-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    #supplier-payment-container .status-pill.status-partially_paid {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    #supplier-payment-container .status-pill.status-paid {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    #supplier-payment-container .status-pill.status-overdue {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    #supplier-payment-container .payment-progress {
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+    #supplier-payment-container .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+      transition: width 0.3s ease;
+    }
+    #supplier-payment-container .button-secondary {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    #supplier-payment-container .button-secondary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 20px; /* Reduce padding on mobile */
+      }
+      .shipment-header {
+        padding: 20px;
+      }
+      .shipment-header h1 {
+        font-size: 1.5rem;
+      }
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+      .filters-container {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .filters-container .btn {
+        justify-content: center;
+      }
+      .stage-details-grid {
+        grid-template-columns: 1fr;
+      }
+      .timeline-wrapper {
+        overflow-x: auto;
+      }
+      .communication-cards {
+        grid-template-columns: 1fr;
+      }
+      .document-link {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .document-link::before {
+        font-size: 20px;
+      }
+      .detail-item {
+        padding: 12px;
+      }
+      .detail-item .value {
+        font-size: 0.95rem;
+      }
+    }
+    
+    /* Extra small devices */
+    @media (max-width: 480px) {
+      .document-link {
+        padding: 12px;
+        gap: 10px;
+      }
+      .document-link-text {
+        font-size: 0.85rem;
+        line-height: 1.3;
+      }
+      .stage-card-header {
+        padding: 16px 20px;
+        flex-wrap: wrap;
+      }
+      .stage-badge {
+        margin-right: 8px;
+        font-size: 0.65rem;
+        padding: 3px 8px;
+      }
+      .stage-collapse-icon {
+        font-size: 16px;
+      }
+    }
+  </style>
+  <script type="module">
+  import { supabase } from './js/supabase-client.js';
+  import { initPaymentSection } from "./js/supplier-payments.js";
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const shipmentId = urlParams.get("id");
+  let shipmentData = null;
+
+  const STAGE_ORDER = [
+    "enlistment_verification", "availability_confirmation", "proforma", "purchase_order",
+    "invoice", "ip_number", "lc_opening", "shipment_details_from_supplier",
+    "freight_query", "award_shipment", "non_negotiable_docs", "original_docs", "bank_endorsement",
+    "send_to_clearing_agent", "under_clearing_agent", "release_orders", "gate_out", "transportation",
+    "warehouse", "documents", "bills"
+  ];
+
+  const STAGE_CONFIG = {
+    "enlistment_verification": {
+        table: "enlistment_verification",
+        fields: [
+            { name: "verified", type: "boolean", label: "Verified" },
+            { name: "verification_notes", type: "text", label: "Verification Notes" },
+            { name: "verified_at", type: "datetime-local", label: "Verified At" },
+            { name: "verifier_id", type: "uuid", label: "Verifier", fk: { relation: "verifier", displayColumn: "full_name" } },
+            { name: "verification_doc_url", type: "text", label: "Document URL", isDoc: true }
+        ]
+    },
+    "availability_confirmation": {
+        table: "availability_confirmation",
+        fields: [
+            { name: "available", type: "boolean", label: "Available" },
+            { name: "notes", type: "text", label: "Notes" },
+            { name: "confirmed_at", type: "datetime-local", label: "Confirmed At" },
+            { name: "confirmed_by", type: "uuid", label: "Confirmed By", fk: { relation: "confirmed_by", displayColumn: "full_name" } },
+            { name: "supplier_id", type: "uuid", label: "Supplier", fk: { relation: "supplier", displayColumn: "name" } }
+        ]
+    },
+    "proforma": {
+        table: "proforma_invoice",
+        fields: [
+            { name: "proforma_number", type: "text", label: "Proforma Number" },
+            { name: "proforma_date", type: "date", label: "Proforma Date" },
+            { name: "file_url", type: "text", label: "File", isDoc: true }
+        ]
+    },
+    "purchase_order": {
+        table: "purchase_order",
+        fields: [
+            { name: "po_number", type: "text", label: "PO Number" },
+            { name: "po_date", type: "date", label: "PO Date" },
+            { name: "po_file_url", type: "text", label: "File", isDoc: true }
+        ]
+    },
+    "invoice": {
+        table: "commercial_invoice",
+        fields: [
+            { name: "invoice_number", type: "text", label: "Invoice Number" },
+            { name: "invoice_date", type: "date", label: "Invoice Date" },
+            { name: "file_url", type: "text", label: "File", isDoc: true }
+        ]
+    },
+    "ip_number": {
+        table: "ip_number",
+        fields: [
+            { name: "issued_date", type: "date", label: "Issued Date" },
+            { name: "file_url", type: "text", label: "File", isDoc: true }
+        ]
+    },
+    "lc_opening": {
+        table: "letter_of_credit",
+        fields: [
+            { name: "lc_number", type: "text", label: "LC Number" },
+            { name: "opened_date", type: "date", label: "Opened Date" },
+            { name: "shared_date", type: "date", label: "Shared with Supplier Date" },
+            { name: "file_url", type: "text", label: "File", isDoc: true },
+            { name: "notes", type: "textarea", label: "Notes" },
+            { name: "bank_id", type: "uuid", label: "Bank", fk: { relation: "bank", displayColumn: "name" } }
+        ]
+    },
+    "shipment_details_from_supplier": {
+        table: "supplier_shipment_details",
+        fields: [
+            { name: "readiness_date", type: "date", label: "Readiness Date" },
+            { name: "gross_weight", type: "number", label: "Gross Weight" },
+            { name: "cartons_count", type: "number", label: "Cartons Count" },
+            { name: "transport", type: "text", label: "Transport" },
+            { name: "details_received_date", type: "date", label: "Details Received Date" },
+            { name: "length", type: "number", label: "Length" },
+            { name: "width", type: "number", label: "Width" },
+            { name: "height", type: "number", label: "Height" }
+        ]
+    },
+    "freight_query": {
+        table: "freight_query",
+        fields: [
+            { name: "term", type: "text", label: "Term" },
+            { name: "shipment_from", type: "text", label: "From" },
+            { name: "destination", type: "text", label: "Destination" },
+            { name: "origin", type: "text", label: "Origin" },
+            { name: "readiness_date", type: "date", label: "Readiness Date" },
+            { name: "gross_weight", type: "number", label: "Gross Weight" },
+            { name: "net_weight", type: "number", label: "Net Weight" },
+            { name: "chargeable_weight", type: "number", label: "Chargeable Weight" },
+            { name: "no_of_cartoons", type: "number", label: "No of Cartoons" },
+            { name: "pick_up_address", type: "text", label: "Pickup Address" },
+            { name: "remarks", type: "text", label: "Remarks" },
+            { name: "logistics_company_id", type: "uuid", label: "Logistics Company", fk: { relation: "logistics_company", displayColumn: "name" } }
+        ]
+    },
+    "award_shipment": {
+        table: "shipment_awarded",
+        fields: [
+            { name: "awarded", type: "boolean", label: "Awarded" },
+            { name: "notes", type: "text", label: "Notes" },
+            { name: "awarded_at", type: "datetime-local", label: "Awarded At" },
+            { name: "awarded_by", type: "uuid", label: "Awarded By", fk: { relation: "awarded_by", displayColumn: "full_name" } },
+            { name: "freight_quote_response_id", type: "uuid", label: "Freight Quote Response", fk: { relation: "freight_quote_response", displayColumn: "id" } }
+        ]
+    },
+    "non_negotiable_docs": {
+        table: "non_negotiable_docs",
+        fields: [
+            { name: "status", type: "text", label: "Status" },
+            { name: "sended_at", type: "datetime-local", label: "Sended At" },
+            { name: "file_url", type: "text", label: "File", isDoc: true },
+            { name: "uploaded_by", type: "uuid", label: "Uploaded By", fk: { relation: "uploaded_by", displayColumn: "full_name" } },
+            { name: "bank_id", type: "uuid", label: "Bank", fk: { relation: "bank", displayColumn: "name" } }
+        ]
+    },
+    "original_docs": {
+        table: "original_docs",
+        fields: [
+            { name: "status", type: "text", label: "Status" },
+            { name: "received_at", type: "datetime-local", label: "Received At" },
+            { name: "docs_url", type: "text", label: "Docs URL", isDoc: true },
+            { name: "shipping_company", type: "text", label: "Shipping Company" },
+            { name: "tracking_number", type: "text", label: "Tracking Number" },
+            { name: "shipping_guarantee_applied_date", type: "date", label: "Shipping Guarantee Applied Date" },
+            { name: "shipping_guarantee_received_date", type: "date", label: "Shipping Guarantee Received Date" },
+            { name: "dispatch_date", type: "date", label: "Dispatch Date" },
+            { name: "arrival_at_bank", type: "date", label: "Arrival at Bank" },
+            { name: "due_date", type: "date", label: "Due Date" },
+            { name: "payment_date", type: "date", label: "Payment Date" },
+            { name: "uploaded_by", type: "uuid", label: "Uploaded By", fk: { relation: "uploaded_by", displayColumn: "full_name" } },
+            { name: "bank_id", type: "uuid", label: "Bank", fk: { relation: "bank", displayColumn: "name" } }
+        ]
+    },
+    "bank_endorsement": {
+        table: "bank_endorsement",
+        fields: [
+            { name: "endorsed", type: "boolean", label: "Endorsed" },
+            { name: "endorsed_at", type: "datetime-local", label: "Endorsed At" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "updated_by", displayColumn: "full_name" } }
+        ]
+    },
+    "send_to_clearing_agent": {
+        table: "docs_to_clearing_agent",
+        fields: [
+            { name: "name", type: "text", label: "Name" },
+            { name: "shipping_company", type: "text", label: "Shipping Company" },
+            { name: "tracking_number", type: "text", label: "Tracking Number" },
+            { name: "sended_at", type: "date", label: "Sended At" },
+            { name: "expected_arrival_date", type: "date", label: "Expected Arrival Date" },
+            { name: "slip_picture_url", type: "text", label: "Slip Picture", isDoc: true },
+            { name: "clearing_agent_id", type: "uuid", label: "Clearing Agent", fk: { relation: "clearing_agent", displayColumn: "name" } }
+        ]
+    },
+    "under_clearing_agent": {
+        table: "under_clearing_agent",
+        fields: [
+            { name: "is_received", type: "boolean", label: "Received" },
+            { name: "receiving_date", type: "date", label: "Receiving Date" },
+            { name: "destuffed_date", type: "date", label: "Destuffed Date" },
+            { name: "frsd_application_date", type: "date", label: "FRSD Application Date" },
+            { name: "duty_payment_date", type: "date", label: "Duty Payment Date" },
+            { name: "sampling_date", type: "date", label: "Sampling Date" },
+            { name: "do_date", type: "date", label: "DO Date" },
+            { name: "clearing_agent_id", type: "uuid", label: "Clearing Agent", fk: { relation: "clearing_agent", displayColumn: "name" } }
+        ]
+    },
+    "release_orders": {
+        table: "release_orders",
+        fields: [
+            { name: "dpp_ro_number", type: "text", label: "DPP RO Number" },
+            { name: "dpp_date", type: "date", label: "DPP Date" },
+            { name: "fscrd_ro_number", type: "text", label: "FSCRD RO Number" },
+            { name: "fscrd_date", type: "date", label: "FSCRD Date" }
+        ]
+    },
+    "gate_out": {
+        table: "gate_out",
+        fields: [
+            { name: "is_gate_out", type: "boolean", label: "Gate Out" },
+            { name: "gate_out_date", type: "date", label: "Gate Out Date" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "updated_by", displayColumn: "full_name" } }
+        ]
+    },
+    "transportation": {
+        table: "transporter",
+        fields: [
+            { name: "transporter_name", type: "text", label: "Transporter Name" },
+            { name: "bilti_number", type: "text", label: "Bilti Number" },
+            { name: "bilti_date", type: "date", label: "Bilti Date" },
+            { name: "no_of_pieces", type: "number", label: "No of Pieces" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "updated_by", displayColumn: "full_name" } }
+        ]
+    },
+    "warehouse": {
+        table: "warehouse_arrival",
+        fields: [
+            { name: "arrival_date", type: "date", label: "Arrival Date" },
+            { name: "gr_no", type: "text", label: "GR No" },
+            { name: "warehouse_id", type: "uuid", label: "Warehouse", fk: { relation: "warehouse", displayColumn: "warehouse_name" } },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "updated_by", displayColumn: "full_name" } }
+        ]
+    },
+    "documents": {
+        table: "document",
+        fields: [
+            { name: "doc_type", type: "text", label: "Document Type" },
+            { name: "file_name", type: "text", label: "File Name" },
+            { name: "uploaded_at", type: "datetime-local", label: "Uploaded At" }
+        ]
+    },
+    "bills": {
+        table: "bills",
+        fields: [
+            { name: "forwarder_date", type: "date", label: "Forwarder Date" },
+            { name: "clearing_agent_date", type: "date", label: "Clearing Agent Date" },
+            { name: "transporter_date", type: "date", label: "Transporter Date" },
+            { name: "costing", type: "number", label: "Costing" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "updated_by", displayColumn: "full_name" } }
+        ]
+    }
+  };
+
+  function formatValue(value, field, stageData) {
+    if (value === null || value === undefined) return 'N/A';
+    if (field.type === 'boolean') {
+      return value ? 'Yes' : 'No';
+    }
+    if (field.fk) {
+        const relatedObject = stageData[field.fk.relation];
+        return relatedObject ? relatedObject[field.fk.displayColumn] : 'N/A';
+    }
+    if (field.isDoc) {
+      // Ensure URL is valid and properly formatted
+      let docUrl = value;
+      if (!docUrl || docUrl === 'N/A') return 'N/A';
+      
+      // Extract filename from URL for better display
+      let displayText = 'View Document';
+      try {
+        // Check if it's a relative or absolute URL
+        let url;
+        if (docUrl.startsWith('http://') || docUrl.startsWith('https://')) {
+          url = new URL(docUrl);
+        } else {
+          // If it's a relative path, it might be from Supabase storage
+          displayText = docUrl.split('/').pop() || 'View Document';
+          docUrl = docUrl; // Keep as is
+        }
+        
+        if (url) {
+          const pathParts = url.pathname.split('/');
+          const filename = pathParts[pathParts.length - 1];
+          if (filename && filename.length > 0) {
+            displayText = decodeURIComponent(filename).replace(/\+/g, ' ');
+            // Truncate if too long but keep extension
+            if (displayText.length > 40) {
+              const parts = displayText.split('.');
+              const ext = parts.length > 1 ? '.' + parts.pop() : '';
+              const name = parts.join('.');
+              displayText = name.substring(0, 30) + '...' + ext;
+            }
+          }
+        }
+      } catch (e) {
+        console.log('Error parsing document URL:', e);
+        displayText = 'View Document';
+      }
+      
+      // Return the link (click handler will be attached after rendering)
+      return `<a href="${docUrl}" 
+                 target="_blank" 
+                 rel="noopener noreferrer" 
+                 class="document-link" 
+                 title="${docUrl}">
+        <span class="document-link-text">${displayText}</span>
+      </a>`;
+    }
+    return value;
+  }
+
+  const STAGE_ICONS = {
+    "enlistment_verification": "fas fa-check-circle",
+    "availability_confirmation": "fas fa-clipboard-check",
+    "proforma": "fas fa-file-invoice",
+    "purchase_order": "fas fa-shopping-cart",
+    "invoice": "fas fa-receipt",
+    "ip_number": "fas fa-hashtag",
+    "lc_opening": "fas fa-university",
+    "shipment_details_from_supplier": "fas fa-info-circle",
+    "freight_query": "fas fa-question-circle",
+    "award_shipment": "fas fa-award",
+    "non_negotiable_docs": "fas fa-file-alt",
+    "original_docs": "fas fa-file-signature",
+    "bank_endorsement": "fas fa-stamp",
+    "send_to_clearing_agent": "fas fa-paper-plane",
+    "under_clearing_agent": "fas fa-user-shield",
+    "release_orders": "fas fa-file-export",
+    "gate_out": "fas fa-door-open",
+    "transportation": "fas fa-truck",
+    "warehouse": "fas fa-warehouse",
+    "documents": "fas fa-folder-open",
+    "bills": "fas fa-money-bill-wave"
+  };
+
+  function renderProgressTimeline() {
+    const currentStageIndex = STAGE_ORDER.indexOf(shipmentData.current_stage);
+    let timelineHtml = '<div class="progress-timeline"><div class="timeline-wrapper">';
+    
+    STAGE_ORDER.forEach((stage, index) => {
+      const isCompleted = index < currentStageIndex;
+      const isCurrent = index === currentStageIndex;
+      const statusClass = isCompleted ? 'completed' : (isCurrent ? 'current' : 'pending');
+      const icon = STAGE_ICONS[stage] || 'fas fa-circle';
+      const shortLabel = stage.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).split(' ').slice(0, 2).join(' ');
+      
+      timelineHtml += `
+        <div class="timeline-step ${statusClass}">
+          <div class="timeline-icon"><i class="${icon}"></i></div>
+          <div class="timeline-label">${shortLabel}</div>
+        </div>
+      `;
+      
+      if (index < STAGE_ORDER.length - 1) {
+        timelineHtml += `<div class="timeline-connector"></div>`;
+      }
+    });
+    
+    timelineHtml += '</div></div>';
+    return timelineHtml;
+  }
+
+  function renderStages(statusFilter, docsOnlyFilter) {
+    const stagesContainer = document.getElementById('stages-container');
+    stagesContainer.innerHTML = '';
+    const currentStageIndex = STAGE_ORDER.indexOf(shipmentData.current_stage);
+
+    STAGE_ORDER.forEach((stage, index) => {
+      const stageConfig = STAGE_CONFIG[stage];
+      const stageData = shipmentData[stageConfig.table];
+      const isCompleted = index < currentStageIndex;
+      const isCurrent = index === currentStageIndex;
+      const isPending = index > currentStageIndex;
+
+      if (statusFilter === 'completed' && !isCompleted) return;
+      if (statusFilter === 'current' && !isCurrent) return;
+
+      let hasDocs = false;
+      let detailsHtml = '<div class="stage-details-grid">';
+      if (stageData) {
+        stageConfig.fields.forEach(field => {
+          const value = stageData[field.name];
+          if (field.isDoc && value) {
+            hasDocs = true;
+          }
+          detailsHtml += `<div class="detail-item">
+              <span class="label">${field.label}</span>
+              <span class="value">${formatValue(value, field, stageData)}</span>
+            </div>`;
+        });
+      } else {
+        detailsHtml += '<div class="empty-stage"><i class="fas fa-inbox"></i><p>No data available for this stage.</p></div>';
+      }
+      detailsHtml += '</div>';
+
+      if (docsOnlyFilter && !hasDocs) return;
+
+      const statusBadge = isCompleted ? 'completed' : (isCurrent ? 'current' : 'pending');
+      const statusText = isCompleted ? 'Completed' : (isCurrent ? 'In Progress' : 'Pending');
+      const icon = STAGE_ICONS[stage] || 'fas fa-circle';
+      const stageTitle = stage.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      
+      // Auto-expand current and completed stages
+      const shouldExpand = (isCurrent || isCompleted) && stageData;
+
+      const stageCard = document.createElement('div');
+      stageCard.className = `stage-card ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''} ${shouldExpand ? 'expanded' : ''}`;
+      stageCard.innerHTML = `
+        <div class="stage-card-header">
+          <div class="stage-card-title">
+            <div class="stage-icon"><i class="${icon}"></i></div>
+            <h3>${stageTitle}</h3>
+          </div>
+          <span class="stage-badge ${statusBadge}">${statusText}</span>
+          <i class="fas fa-chevron-down stage-collapse-icon"></i>
+        </div>
+        <div class="stage-card-body">
+          ${detailsHtml}
+        </div>
+      `;
+      
+      // Add click handler to header only (not the whole card)
+      const header = stageCard.querySelector('.stage-card-header');
+      header.addEventListener('click', function(e) {
+        // Don't toggle if clicking on a link
+        if (e.target.tagName === 'A' || e.target.closest('a')) {
+          return;
+        }
+        stageCard.classList.toggle('expanded');
+      });
+      
+      stagesContainer.appendChild(stageCard);
+      
+      // Attach click handlers to document links in this card
+      stageCard.querySelectorAll('.document-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.stopPropagation();
+          e.preventDefault();
+          const url = this.getAttribute('href');
+          if (url && url !== '#' && url !== 'N/A') {
+            window.open(url, '_blank', 'noopener,noreferrer');
+          }
+        });
+      });
+    });
+  }
+
+  // No longer needed - using addEventListener instead
+  // window.toggleStageCard = function(header, event) { ... };
+
+  async function loadShipmentDetails() {
+    if (!shipmentId) {
+        document.getElementById("shipment-details-container").innerHTML = "<p>No shipment ID provided.</p>";
+        return;
+    }
+
+    const { data, error } = await supabase
+      .from("shipment")
+      .select(`
+        *,
+        supplier_payments(*, payment_terms(*)),
+        shipment_products (*, product_variety(*, supplier(name))),
+        created_by(full_name),
+        enlistment_verification (*, verifier:verifier_id(full_name)),
+        availability_confirmation (*, confirmed_by(full_name), supplier(name)),
+        purchase_order (*),
+        proforma_invoice (*),
+        commercial_invoice (*),
+        ip_number (*),
+        letter_of_credit (*, bank(name)),
+        supplier_shipment_details (*),
+        freight_query (*, logistics_company(name)),
+        shipment_awarded (*, awarded_by(full_name), freight_quote_response(id, freight_query(logistics_company(name)))),
+        non_negotiable_docs (*, uploaded_by(full_name), bank(name)),
+        original_docs (*, uploaded_by(full_name), bank(name)),
+        bank_endorsement (*, updated_by(full_name)),
+        docs_to_clearing_agent (*, clearing_agent(name)),
+        under_clearing_agent (*, clearing_agent(name)),
+        release_orders (*),
+        gate_out (*, updated_by(full_name)),
+        transporter (*, updated_by(full_name)),
+        warehouse_arrival (*, updated_by(full_name)),
+        bills (*, updated_by(full_name))
+      `)
+      .eq("id", shipmentId);
+
+    if (error) {
+      document.getElementById("stages-container").innerHTML = `<p class=\"error-message\">Error loading shipment details: ${error.message}</p>`;
+      return;
+    }
+
+    shipmentData = data[0];
+
+    let productsHtml = '<div class="products-section"><h3><i class="fas fa-box-open"></i> Products</h3><table><thead><tr><th>Product</th><th>Variety</th><th>Supplier</th><th>Quantity</th><th>Unit</th><th>Rate</th><th>Amount</th></tr></thead><tbody>';
+    let productsTotal = 0;
+    shipmentData.shipment_products.forEach(p => {
+      const rate = p.product_variety.rate_per_unit || 0;
+      const quantity = p.quantity || 0;
+      const amount = rate * quantity;
+      productsTotal += amount;
+      productsHtml += `<tr>
+        <td>${p.product_variety.product_name}</td>
+        <td>${p.product_variety.variety_name}</td>
+        <td>${p.product_variety.supplier.name}</td>
+        <td>${quantity}</td>
+        <td>${p.unit}</td>
+        <td>$${rate.toFixed(2)}</td>
+        <td><strong>$${amount.toFixed(2)}</strong></td>
+      </tr>`;
+    });
+    
+    // Add freight charges to total
+    const freightCharges = parseFloat(shipmentData.freight_charges) || 0;
+    const totalAmount = productsTotal + freightCharges;
+    
+    productsHtml += `</tbody><tfoot>`;
+    productsHtml += `<tr><td colspan=\"6\" style=\"text-align: right; font-weight: bold;\">Products Total:</td><td style=\"font-weight: bold;\">$${productsTotal.toFixed(2)}</td></tr>`;
+    if (freightCharges > 0) {
+      productsHtml += `<tr><td colspan=\"6\" style=\"text-align: right; font-weight: bold; color: #0891b2;\">Freight Charges:</td><td style=\"font-weight: bold; color: #0891b2;\">$${freightCharges.toFixed(2)}</td></tr>`;
+    }
+    productsHtml += `<tr style=\"background: #f8fafc;\"><td colspan=\"6\" style=\"text-align: right; font-weight: bold; font-size: 1.1rem; color: #7C3AED;\">Total Shipment Value:</td><td style=\"font-weight: bold; font-size: 1.1rem; color: #7C3AED;\">$${totalAmount.toFixed(2)}</td></tr>`;
+    productsHtml += `</tfoot></table></div>`;
+
+    const summaryContainer = document.getElementById('shipment-summary');
+    summaryContainer.innerHTML = `
+      <h1><i class="fas fa-ship"></i> Shipment: ${shipmentData.reference_code}</h1>
+      <div class=\"summary-grid\">
+        <div class=\"summary-item\">
+          <span class=\"label\"><i class="fas fa-layer-group"></i> Current Stage</span>
+          <span class=\"value\">${shipmentData.current_stage.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
+        </div>
+        <div class=\"summary-item\">
+          <span class=\"label\"><i class="fas fa-info-circle"></i> Status</span>
+          <span class=\"value\">${shipmentData.status.toUpperCase()}</span>
+        </div>
+        <div class=\"summary-item\">
+          <span class=\"label\"><i class="fas fa-calendar-alt"></i> Created</span>
+          <span class=\"value\">${new Date(shipmentData.created_at).toLocaleDateString()}</span>
+        </div>
+        <div class=\"summary-item\">
+          <span class=\"label\"><i class="fas fa-dollar-sign"></i> Shipment Value</span>
+          <span class=\"value\">$${totalAmount.toFixed(2)}</span>
+        </div>
+      </div>
+    `;
+    
+    // Insert progress timeline after summary
+    const timelineHtml = renderProgressTimeline();
+    summaryContainer.insertAdjacentHTML('afterend', timelineHtml);
+    
+    // Insert products section after timeline
+    const timeline = document.querySelector('.progress-timeline');
+    timeline.insertAdjacentHTML('afterend', productsHtml);
+    
+    // Insert communications section
+    const productsSection = document.querySelector('.products-section');
+    const communicationsHtml = `
+      <div class="communications-section">
+        <h3><i class="fas fa-comments"></i> Communications</h3>
+        <div class="communication-cards">
+          <a href="bank-communication.html?id=${shipmentId}" class="communication-card">
+            <div class="communication-card-icon">
+              <i class="fas fa-university"></i>
+            </div>
+            <div class="communication-card-title">Bank Communications</div>
+            <div class="communication-card-desc">View and send communications with banks regarding this shipment</div>
+          </a>
+          <a href="clearing-agent-communication.html?id=${shipmentId}" class="communication-card">
+            <div class="communication-card-icon">
+              <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="communication-card-title">Clearing Agent Communication</div>
+            <div class="communication-card-desc">Manage communications with clearing agents for this shipment</div>
+          </a>
+          <a href="warehouse-stock-intimation.html?id=${shipmentId}" class="communication-card">
+            <div class="communication-card-icon">
+              <i class="fas fa-warehouse"></i>
+            </div>
+            <div class="communication-card-title">Warehouse Stock Intimation</div>
+            <div class="communication-card-desc">Notify warehouse about incoming stock and view communication history</div>
+          </a>
+        </div>
+      </div>
+    `;
+    productsSection.insertAdjacentHTML('afterend', communicationsHtml);
+    
+    // Insert filters container before stages
+    const stagesTitle = document.querySelector('.container h2');
+    const filtersHtml = `
+      <div class=\"filters-container\">
+        <select id=\"status-filter\">
+          <option value=\"all\">All Stages</option>
+          <option value=\"completed\">Completed Stages</option>
+          <option value=\"current\">Current Stage Only</option>
+        </select>
+        <label>
+          <input type=\"checkbox\" id=\"docs-only-filter\">
+          Show only stages with documents
+        </label>
+        <button id=\"apply-filters-btn\" class="btn"><i class="fas fa-filter"></i> Apply Filters</button>
+      </div>
+    `;
+    stagesTitle.insertAdjacentHTML('beforebegin', filtersHtml);
+
+    initPaymentSection(supabase, shipmentData, totalAmount);
+
+    renderStages('all', false);
+
+    const applyFiltersBtn = document.getElementById('apply-filters-btn');
+    applyFiltersBtn.addEventListener('click', () => {
+      const statusFilter = document.getElementById('status-filter').value;
+      const docsOnlyFilter = document.getElementById('docs-only-filter').checked;
+      renderStages(statusFilter, docsOnlyFilter);
+    });
+  }
+
+  function openDocumentModal(url) {
+    const modal = document.getElementById('document-modal');
+    const viewer = document.getElementById('document-viewer');
+    viewer.innerHTML = `<iframe src="${url}" width="100%" height="100%"></iframe>`;
+    modal.style.display = 'block';
+  }
+
+  function closeDocumentModal() {
+    const modal = document.getElementById('document-modal');
+    modal.style.display = 'none';
+  }
+
+  window.openDocumentModal = openDocumentModal;
+  window.closeDocumentModal = closeDocumentModal;
+
+  window.onload = async () => {
+      const loader = document.getElementById("loader");
+      if (loader) {
+          loader.style.display = "block";
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+          window.location.href = 'login.html';
+      } else {
+          await loadShipmentDetails();
+      }
+
+      if (loader) {
+          loader.style.display = "none";
+      }
+  };
+  </script>
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+  </div>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="documents.html" class="nav-link"><span class="text">Document Management</span></a></li>
+            <li><a href="admin-document-requirements.html" class="nav-link"><span class="text">Document Requirements</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+        <li>
+          <a href="admin-payment-terms.html" class="nav-link">
+            <i class="fas fa-credit-card icon"></i>
+            <span class="text">Payment Terms</span>
+          </a>
+        </li>
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Shipment Details</h1>
+      </div>
+    </header>
+    <div class="container" style="max-width: 100%; padding: 0; background: transparent; box-shadow: none;">
+      <div id="shipment-summary" class="shipment-header"></div>
+      <div id="supplier-payment-container"></div>
+      <h2 style="color: #1e293b; margin: 30px 0 20px 0; font-size: 1.5rem; font-weight: 700;"><i class="fas fa-route"></i> Shipment Stages</h2>
+      <div id="stages-container" class="stages-container"><div style="text-align: center; padding: 40px; color: #94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 15px;"></i><p>Loading shipment details...</p></div></div>
+    </div>
+  </div>
+
+  <div id="document-modal" class="document-modal">
+    <div class="document-modal-content">
+      <span class="document-modal-close" onclick="closeDocumentModal()">&times;</span>
+      <div id="document-viewer"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.querySelector('.sidebar');
+      const sidebarToggle = document.querySelector('.sidebar-toggle');
+      const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+      const hasSubmenus = document.querySelectorAll('.has-submenu');
+
+      // --- Sidebar Toggle Logic ---
+      sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+      });
+
+      // --- Accordion Sub-menus ---
+      hasSubmenus.forEach(item => {
+        item.addEventListener('click', (e) => {
+          const submenu = item.nextElementSibling;
+          if (submenu && submenu.classList.contains('submenu')) {
+            e.preventDefault();
+            submenu.classList.toggle('open');
+            item.classList.toggle('open');
+          }
+        });
+      });
+
+      // --- Active Link Highlighting ---
+      const currentPath = window.location.pathname.split('/').pop();
+      navLinks.forEach(link => {
+        const linkPath = link.getAttribute('href');
+        if (linkPath === currentPath) {
+          link.classList.add('active');
+          let parentSubmenu = link.closest('.submenu');
+          if (parentSubmenu) {
+            parentSubmenu.classList.add('open');
+            let parentMenu = parentSubmenu.previousElementSibling;
+            if (parentMenu && parentMenu.classList.contains('has-submenu')) {
+              parentMenu.classList.add('open');
+            }
+          }
+        }
+      });
+    });
+  </script>
+  <div id="payment-modal" class="modal">
+    <div class="modal-content">
+      <span class="document-modal-close" id="payment-modal-close">&times;</span>
+      <h3>Record Payment</h3>
+      <div class="form-grid" style="margin-top: 20px;">
+        <div class="form-item">
+          <label for="payment-amount">Amount Paid</label>
+          <input type="number" id="payment-amount" placeholder="Enter amount" class="form-control">
+        </div>
+        <div class="form-item">
+          <label for="payment-date">Payment Date</label>
+          <input type="date" id="payment-date" class="form-control">
+        </div>
+      </div>
+      <div style="margin-top: 20px;">
+        <button id="save-payment-btn" class="btn btn-primary">Save Payment</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/supplier-payments.js" type="module"></script>
+</body>
+</html>

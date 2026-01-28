@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Document Requirements - Imports 360</title>
+  <link rel="stylesheet" href="css/shipment-tracker.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .admin-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .page-header h1 {
+      color: #1f2937;
+      font-size: 32px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .add-requirement-btn {
+      background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+
+    .add-requirement-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(124, 58, 237, 0.4);
+    }
+
+    .filters-section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: end;
+    }
+
+    .filter-field {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .filter-field label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+    }
+
+    .filter-field select {
+      width: 100%;
+      padding: 10px 15px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+    }
+
+    .requirements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 20px;
+    }
+
+    .requirement-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .requirement-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .requirement-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 15px;
+    }
+
+    .requirement-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 5px;
+    }
+
+    .requirement-meta {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .meta-badge {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .meta-badge.mode {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .meta-badge.incoterm {
+      background: #e0e7ff;
+      color: #4f46e5;
+    }
+
+    .meta-badge.mandatory {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .meta-badge.optional {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .requirement-desc {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    .requirement-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-edit, .btn-delete {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-edit {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .btn-edit:hover {
+      background: #7C3AED;
+      color: white;
+    }
+
+    .btn-delete {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .btn-delete:hover {
+      background: #dc2626;
+      color: white;
+    }
+
+    .empty-state-admin {
+      text-align: center;
+      padding: 80px 20px;
+      background: white;
+      border-radius: 12px;
+      border: 2px dashed #d1d5db;
+    }
+
+    .empty-state-admin i {
+      font-size: 64px;
+      color: #9ca3af;
+      margin-bottom: 20px;
+    }
+
+    .empty-state-admin h3 {
+      color: #4b5563;
+      margin-bottom: 10px;
+    }
+
+    .empty-state-admin p {
+      color: #9ca3af;
+    }
+
+    /* Modal for add/edit */
+    .form-modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .form-modal.show {
+      display: flex;
+    }
+
+    .form-modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .form-modal h2 {
+      margin-bottom: 30px;
+      color: #1f2937;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 12px 15px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    .btn-primary, .btn-secondary {
+      flex: 1;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      flex: 1;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: 700;
+      color: #7C3AED;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <div class="page-header">
+      <h1>
+        <i class="fas fa-clipboard-list"></i>
+        Document Requirements Management
+      </h1>
+      <button class="add-requirement-btn" onclick="openAddModal()">
+        <i class="fas fa-plus"></i>
+        Add Requirement
+      </button>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-number" id="total-requirements">0</div>
+        <div class="stat-label">Total Requirements</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="mandatory-count">0</div>
+        <div class="stat-label">Mandatory</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="optional-count">0</div>
+        <div class="stat-label">Optional</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="mode-count">0</div>
+        <div class="stat-label">Transport Modes</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+      <div class="filter-field">
+        <label>Filter by Mode of Transport</label>
+        <select id="filter-mode" onchange="loadRequirements()">
+          <option value="">All Modes</option>
+          <option value="sea">Sea</option>
+          <option value="air">Air</option>
+          <option value="land">Land</option>
+          <option value="rail">Rail</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label>Filter by Inco-term</label>
+        <select id="filter-incoterm" onchange="loadRequirements()">
+          <option value="">All Inco-terms</option>
+          <option value="EXW">EXW</option>
+          <option value="FCA">FCA</option>
+          <option value="CPT">CPT</option>
+          <option value="FOB">FOB</option>
+          <option value="CFR">CFR</option>
+          <option value="CIF">CIF</option>
+          <option value="DDP">DDP</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label>Filter by Type</label>
+        <select id="filter-type" onchange="loadRequirements()">
+          <option value="">All Types</option>
+          <option value="mandatory">Mandatory Only</option>
+          <option value="optional">Optional Only</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Requirements Grid -->
+    <div id="requirements-container">
+      <div class="empty-state-admin" id="empty-state">
+        <i class="fas fa-file-alt"></i>
+        <h3>No requirements found</h3>
+        <p>Add document requirements based on mode of transport and inco-terms</p>
+      </div>
+      <div id="requirements-grid" class="requirements-grid" style="display: none;">
+        <!-- Requirements will be dynamically loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div id="requirement-modal" class="form-modal">
+    <div class="form-modal-content">
+      <h2 id="modal-title">
+        <i class="fas fa-plus-circle"></i>
+        Add Document Requirement
+      </h2>
+      
+      <form id="requirement-form">
+        <input type="hidden" id="edit-id" value="">
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Mode of Transport: <span style="color: red;">*</span></label>
+            <select id="mode_of_transport" name="mode_of_transport" required>
+              <option value="">Select mode</option>
+              <option value="sea">Sea</option>
+              <option value="air">Air</option>
+              <option value="land">Land</option>
+              <option value="rail">Rail</option>
+              <option value="multimodal">Multimodal</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Inco-term: <span style="color: gray;">(Leave blank for all inco-terms)</span></label>
+            <select id="inco_term" name="inco_term">
+              <option value="">All Inco-terms</option>
+              <option value="EXW">EXW - Ex Works</option>
+              <option value="FCA">FCA - Free Carrier</option>
+              <option value="CPT">CPT - Carriage Paid To</option>
+              <option value="FOB">FOB - Free On Board</option>
+              <option value="CFR">CFR - Cost and Freight</option>
+              <option value="CIF">CIF - Cost, Insurance and Freight</option>
+              <option value="DDP">DDP - Delivered Duty Paid</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Document Type Code: <span style="color: red;">*</span></label>
+            <input type="text" id="doc_type" name="doc_type" placeholder="e.g., bill_of_lading" required>
+            <small style="color: #6b7280;">Use lowercase with underscores (e.g., bill_of_lading, commercial_invoice)</small>
+          </div>
+
+          <div class="form-group">
+            <label>Document Name: <span style="color: red;">*</span></label>
+            <input type="text" id="doc_name" name="doc_name" placeholder="e.g., Bill of Lading" required>
+          </div>
+
+          <div class="form-group">
+            <label>Description:</label>
+            <textarea id="description" name="description" placeholder="Brief description of this document requirement"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-group">
+              <input type="checkbox" id="is_mandatory" name="is_mandatory" checked>
+              <span>This document is mandatory</span>
+            </label>
+            <small style="color: #6b7280;">Mandatory documents must be uploaded before shipment completion</small>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-save"></i>
+            Save Requirement
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+    const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+    let allRequirements = [];
+    let currentEditId = null;
+
+    // Load requirements on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadRequirements();
+    });
+
+    window.loadRequirements = async function() {
+      const grid = document.getElementById('requirements-grid');
+      const emptyState = document.getElementById('empty-state');
+      
+      // Get filter values
+      const filterMode = document.getElementById('filter-mode').value;
+      const filterIncoterm = document.getElementById('filter-incoterm').value;
+      const filterType = document.getElementById('filter-type').value;
+      
+      try {
+        let query = supabase
+          .from('required_document_config')
+          .select('*')
+          .order('mode_of_transport')
+          .order('is_mandatory', { ascending: false })
+          .order('doc_name');
+        
+        // Apply filters
+        if (filterMode) {
+          query = query.eq('mode_of_transport', filterMode);
+        }
+        
+        if (filterIncoterm) {
+          query = query.eq('inco_term', filterIncoterm);
+        }
+        
+        if (filterType === 'mandatory') {
+          query = query.eq('is_mandatory', true);
+        } else if (filterType === 'optional') {
+          query = query.eq('is_mandatory', false);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        allRequirements = data || [];
+        
+        // Update statistics
+        updateStatistics(allRequirements);
+        
+        // Render grid
+        if (allRequirements.length === 0) {
+          emptyState.style.display = 'block';
+          grid.style.display = 'none';
+        } else {
+          emptyState.style.display = 'none';
+          grid.style.display = 'grid';
+          renderRequirements(allRequirements);
+        }
+        
+      } catch (error) {
+        console.error('Error loading requirements:', error);
+        alert('Error loading requirements: ' + error.message);
+      }
+    };
+
+    function updateStatistics(requirements) {
+      document.getElementById('total-requirements').textContent = requirements.length;
+      document.getElementById('mandatory-count').textContent = requirements.filter(r => r.is_mandatory).length;
+      document.getElementById('optional-count').textContent = requirements.filter(r => !r.is_mandatory).length;
+      
+      const uniqueModes = new Set(requirements.map(r => r.mode_of_transport));
+      document.getElementById('mode-count').textContent = uniqueModes.size;
+    }
+
+    function renderRequirements(requirements) {
+      const grid = document.getElementById('requirements-grid');
+      grid.innerHTML = '';
+      
+      requirements.forEach(req => {
+        const card = document.createElement('div');
+        card.className = 'requirement-card';
+        
+        card.innerHTML = `
+          <div class="requirement-header">
+            <div>
+              <div class="requirement-title">${req.doc_name}</div>
+              <div class="requirement-meta">
+                <span class="meta-badge mode">${req.mode_of_transport.toUpperCase()}</span>
+                ${req.inco_term ? `<span class="meta-badge incoterm">${req.inco_term}</span>` : '<span class="meta-badge incoterm">All Terms</span>'}
+                <span class="meta-badge ${req.is_mandatory ? 'mandatory' : 'optional'}">
+                  ${req.is_mandatory ? 'Mandatory' : 'Optional'}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="requirement-desc">
+            <strong>Type:</strong> ${req.doc_type}<br>
+            ${req.description ? `<strong>Description:</strong> ${req.description}` : ''}
+          </div>
+          
+          <div class="requirement-actions">
+            <button class="btn-edit" onclick="editRequirement('${req.id}')">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn-delete" onclick="deleteRequirement('${req.id}', '${req.doc_name}')">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+          </div>
+        `;
+        
+        grid.appendChild(card);
+      });
+    }
+
+    window.openAddModal = function() {
+      currentEditId = null;
+      document.getElementById('modal-title').innerHTML = '<i class="fas fa-plus-circle"></i> Add Document Requirement';
+      document.getElementById('requirement-form').reset();
+      document.getElementById('edit-id').value = '';
+      document.getElementById('is_mandatory').checked = true;
+      document.getElementById('requirement-modal').classList.add('show');
+    };
+
+    window.editRequirement = async function(id) {
+      currentEditId = id;
+      const req = allRequirements.find(r => r.id === id);
+      
+      if (!req) return;
+      
+      document.getElementById('modal-title').innerHTML = '<i class="fas fa-edit"></i> Edit Document Requirement';
+      document.getElementById('edit-id').value = id;
+      document.getElementById('mode_of_transport').value = req.mode_of_transport;
+      document.getElementById('inco_term').value = req.inco_term || '';
+      document.getElementById('doc_type').value = req.doc_type;
+      document.getElementById('doc_name').value = req.doc_name;
+      document.getElementById('description').value = req.description || '';
+      document.getElementById('is_mandatory').checked = req.is_mandatory;
+      
+      document.getElementById('requirement-modal').classList.add('show');
+    };
+
+    window.deleteRequirement = async function(id, name) {
+      if (!confirm(`Are you sure you want to delete the requirement:\n\n"${name}"?\n\nThis cannot be undone.`)) {
+        return;
+      }
+      
+      try {
+        const { error } = await supabase
+          .from('required_document_config')
+          .delete()
+          .eq('id', id);
+        
+        if (error) throw error;
+        
+        alert('Requirement deleted successfully!');
+        loadRequirements();
+        
+      } catch (error) {
+        console.error('Error deleting requirement:', error);
+        alert('Error deleting requirement: ' + error.message);
+      }
+    };
+
+    window.closeModal = function() {
+      document.getElementById('requirement-modal').classList.remove('show');
+    };
+
+    // Form submission
+    document.getElementById('requirement-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        mode_of_transport: document.getElementById('mode_of_transport').value,
+        inco_term: document.getElementById('inco_term').value || null,
+        doc_type: document.getElementById('doc_type').value,
+        doc_name: document.getElementById('doc_name').value,
+        description: document.getElementById('description').value || null,
+        is_mandatory: document.getElementById('is_mandatory').checked
+      };
+      
+      try {
+        const editId = document.getElementById('edit-id').value;
+        
+        if (editId) {
+          // Update existing
+          const { error } = await supabase
+            .from('required_document_config')
+            .update(formData)
+            .eq('id', editId);
+          
+          if (error) throw error;
+          alert('Requirement updated successfully!');
+          
+        } else {
+          // Insert new
+          const { error } = await supabase
+            .from('required_document_config')
+            .insert(formData);
+          
+          if (error) throw error;
+          alert('Requirement added successfully!');
+        }
+        
+        closeModal();
+        loadRequirements();
+        
+      } catch (error) {
+        console.error('Error saving requirement:', error);
+        alert('Error saving requirement: ' + error.message);
+      }
+    });
+
+    // Close modal when clicking outside
+    document.getElementById('requirement-modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+  </script>
+</body>
+</html>

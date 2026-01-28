@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bank Details</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    .bank-card {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .bank-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 15px;
+      margin-bottom: 15px;
+    }
+    .bank-header h3 {
+      margin: 0;
+      color: #333;
+    }
+    .bank-details p {
+      margin: 4px 0;
+      color: #555;
+    }
+    .bank-actions button, .contact-actions button {
+      margin-left: 10px;
+    }
+    .contacts-section {
+      margin-top: 20px;
+    }
+    .contacts-section h4 {
+      margin-bottom: 10px;
+    }
+    .contacts-section table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .contacts-section th, .contacts-section td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    /* View Toggle Styles */
+    .view-toggle-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+      border-radius: 12px;
+    }
+    
+    .view-toggle-label {
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 60px;
+      height: 30px;
+      background: #ddd;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .toggle-switch.active {
+      background: linear-gradient(to right, #7C3AED, #8B5CF6);
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(30px);
+    }
+    
+    .view-section {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    
+    .view-section.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Business View Styles */
+    .business-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+    }
+    
+    .stat-card h4 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      opacity: 0.9;
+      font-weight: 500;
+    }
+    
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0;
+    }
+    
+    .business-section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .business-section h3 {
+      margin: 0 0 15px 0;
+      color: #7C3AED;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      border-bottom: 2px solid #F1F5F9;
+      padding-bottom: 10px;
+    }
+    
+    .business-item {
+      padding: 15px;
+      border-left: 3px solid #7C3AED;
+      background: #F9FAFB;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+    
+    .business-item:hover {
+      background: #F1F5F9;
+      border-left-color: #8B5CF6;
+      transform: translateX(5px);
+    }
+    
+    .business-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+    
+    .business-item-title {
+      font-weight: 600;
+      color: #333;
+      font-size: 15px;
+    }
+    
+    .business-item-date {
+      color: #64748B;
+      font-size: 13px;
+    }
+    
+    .business-item-details {
+      color: #555;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    .business-item-details p {
+      margin: 5px 0;
+    }
+    
+    .business-item-meta {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .business-meta-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: white;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #7C3AED;
+      border: 1px solid #E9D5FF;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #94A3B8;
+    }
+    
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+    
+    .shipment-link {
+      color: #7C3AED;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    
+    .shipment-link:hover {
+      color: #8B5CF6;
+      text-decoration: underline;
+    }
+    
+    .amount-highlight {
+      font-weight: 700;
+      color: #059669;
+    }
+    
+    /* Shipment-Oriented Business View */
+    .bank-summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-left: 5px solid #7C3AED;
+    }
+    
+    .bank-summary-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.2);
+      border-left-color: #8B5CF6;
+    }
+    
+    .bank-summary-card.expanded {
+      border-left-color: #8B5CF6;
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.15);
+    }
+    
+    .bank-summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .bank-summary-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .bank-summary-title h3 {
+      margin: 0;
+      color: #1E293B;
+      font-size: 22px;
+    }
+    
+    .bank-summary-title .bank-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+    
+    .expand-indicator {
+      font-size: 24px;
+      color: #7C3AED;
+      transition: transform 0.3s ease;
+    }
+    
+    .bank-summary-card.expanded .expand-indicator {
+      transform: rotate(180deg);
+    }
+    
+    .bank-summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .summary-stat {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #E9D5FF;
+    }
+    
+    .summary-stat-label {
+      font-size: 13px;
+      color: #64748B;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .summary-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #7C3AED;
+    }
+    
+    .summary-stat-value.amount {
+      color: #059669;
+    }
+    
+    .shipment-history {
+      display: none;
+      margin-top: 20px;
+      border-top: 2px solid #F1F5F9;
+      padding-top: 20px;
+      animation: slideDown 0.3s ease;
+    }
+    
+    .bank-summary-card.expanded .shipment-history {
+      display: block;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        max-height: 0;
+      }
+      to {
+        opacity: 1;
+        max-height: 2000px;
+      }
+    }
+    
+    .shipment-history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .shipment-history-header h4 {
+      margin: 0;
+      color: #7C3AED;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .shipment-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 15px;
+    }
+    
+    .shipment-table thead {
+      background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%) !important;
+    }
+    
+    .shipment-table thead th {
+      color: white !important;
+      background: transparent;
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .shipment-table thead th:first-child {
+      border-radius: 8px 0 0 0;
+    }
+    
+    .shipment-table thead th:last-child {
+      border-radius: 0 8px 0 0;
+    }
+    
+    .shipment-table tbody tr {
+      background: white;
+      transition: all 0.2s ease;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    
+    .shipment-table tbody tr:hover {
+      background: rgba(124, 58, 237, 0.03);
+      transform: scale(1.01);
+    }
+    
+    .shipment-table tbody tr:last-child {
+      border-bottom: none;
+    }
+    
+    .shipment-table tbody td {
+      padding: 15px;
+      color: #334155;
+      font-size: 14px;
+    }
+    
+    .shipment-ref {
+      font-weight: 600;
+      color: #7C3AED;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.3s ease;
+    }
+    
+    .shipment-ref:hover {
+      color: #8B5CF6;
+      text-decoration: underline;
+    }
+    
+    .shipment-amount {
+      font-weight: 700;
+      color: #059669;
+      font-size: 15px;
+    }
+    
+    .shipment-products {
+      font-size: 13px;
+      color: #64748B;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    
+    .product-badge {
+      background: #F1F5F9;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #475569;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .status-badge.active {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+      border: 1px solid #059669;
+    }
+    
+    .status-badge.completed {
+      background: rgba(99, 102, 241, 0.1);
+      color: #6366F1;
+      border: 1px solid #6366F1;
+    }
+    
+    .status-badge.on_hold {
+      background: rgba(245, 158, 11, 0.1);
+      color: #D97706;
+      border: 1px solid #D97706;
+    }
+    
+    .lc-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      background: rgba(124, 58, 237, 0.1);
+      border: 1px solid #7C3AED;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #7C3AED;
+      font-weight: 600;
+    }
+    
+    .date-display {
+      font-size: 13px;
+      color: #64748B;
+    }
+    
+    .no-shipments {
+      text-align: center;
+      padding: 40px;
+      color: #94A3B8;
+      font-style: italic;
+    }
+    
+    .total-row {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+      font-weight: 700;
+      border-top: 2px solid #7C3AED !important;
+    }
+    
+    .total-row td {
+      padding: 15px !important;
+      font-size: 15px !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+  </div>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="admin-dashboard.html" class="nav-link"><i class="fas fa-home icon"></i><span class="text">Dashboard</span></a></li>
+        <li><a href="documents.html" class="nav-link"><i class="fas fa-file-alt icon"></i><span class="text">Documents</span></a></li>
+        <li><a href="forecast.html" class="nav-link"><i class="fas fa-bullhorn icon"></i><span class="text">Forecasts</span></a></li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu"><i class="fas fa-box icon"></i><span class="text">Shipments</span><span class="arrow"><i class="fas fa-chevron-down"></i></span></a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li><a href="product-details.html" class="nav-link"><i class="fas fa-tags icon"></i><span class="text">Products</span></a></li>
+        <li><a href="supplier-details.html" class="nav-link"><i class="fas fa-truck icon"></i><span class="text">Suppliers</span></a></li>
+        <li><a href="supplier-shipment-responses.html" class="nav-link"><i class="fas fa-inbox icon"></i><span class="text">Supplier Responses</span></a></li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+
+        <li><a href="clearing-agent-details.html" class="nav-link"><i class="fas fa-user-shield icon"></i><span class="text">Clearing Agents</span></a></li>
+        <li><a href="warehouse-details.html" class="nav-link"><i class="fas fa-warehouse icon"></i><span class="text">Warehouses</span></a></li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Manage Banks</h1>
+      </div>
+      <button class="btn" onclick="openBankModal()">Create New Bank</button>
+    </header>
+    
+    <!-- View Toggle -->
+    <div class="view-toggle-container">
+      <span class="view-toggle-label">
+        <i class="fas fa-address-card"></i>
+        Bank Details
+      </span>
+      <div class="toggle-switch" id="view-toggle" onclick="toggleView()">
+        <div class="toggle-slider"></div>
+      </div>
+      <span class="view-toggle-label">
+        <i class="fas fa-chart-line"></i>
+        Business View
+      </span>
+    </div>
+    
+    <!-- Bank Details View (Default) -->
+    <div id="bank-details-view" class="view-section active">
+      <div id="banks-container">Loading...</div>
+    </div>
+    
+    <!-- Business View -->
+    <div id="business-view" class="view-section">
+      <div style="margin-bottom: 20px;">
+        <h2 style="margin: 0 0 8px 0; color: #1E293B; font-size: 28px; font-weight: 700;">
+          <i class="fas fa-chart-line" style="color: #7C3AED; margin-right: 12px;"></i>
+          Bank Business Overview
+        </h2>
+        <p style="margin: 0; color: #64748B; font-size: 15px;">
+          Track Letters of Credit, bank charges, and shipment financial activity per bank
+        </p>
+      </div>
+      <div id="business-container">Loading business data...</div>
+    </div>
+  </div>
+
+  <!-- Bank Modal -->
+  <div id="bank-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeModal('bank-modal')">&times;</span>
+      <h2 id="bank-modal-title">Bank</h2>
+      <div id="bank-form-container"></div>
+    </div>
+  </div>
+
+  <!-- Contact Modal -->
+  <div id="contact-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeModal('contact-modal')">&times;</span>
+      <h2 id="contact-modal-title">Contact</h2>
+      <div id="contact-form-container"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+    const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+    let banksData = [];
+    let businessData = {};
+    let currentView = 'details'; // 'details' or 'business'
+
+    // Toggle between views
+    window.toggleView = () => {
+      const toggle = document.getElementById('view-toggle');
+      const detailsView = document.getElementById('bank-details-view');
+      const businessView = document.getElementById('business-view');
+      
+      toggle.classList.toggle('active');
+      
+      if (toggle.classList.contains('active')) {
+        currentView = 'business';
+        detailsView.classList.remove('active');
+        businessView.classList.add('active');
+        if (Object.keys(businessData).length === 0) {
+          loadBusinessData();
+        }
+      } else {
+        currentView = 'details';
+        businessView.classList.remove('active');
+        detailsView.classList.add('active');
+      }
+    };
+
+    async function loadBanks() {
+      const { data, error } = await supabase
+        .from("bank")
+        .select(`*, bank_contact(*)`)
+        .order('name');
+
+      if (error) {
+        document.getElementById("banks-container").innerHTML = `<p class="error-message">Error loading banks: ${error.message}</p>`;
+        return;
+      }
+      banksData = data;
+      renderBanks();
+    }
+
+    function renderBanks() {
+      const container = document.getElementById("banks-container");
+      if (banksData.length === 0) {
+        container.innerHTML = "<p>No banks found. Click 'Create New Bank' to add one.</p>";
+        return;
+      }
+
+      container.innerHTML = banksData.map(bank => `
+        <div class="bank-card" id="bank-${bank.id}">
+          <div class="bank-header">
+            <div class="bank-details">
+              <h3>${bank.name}</h3>
+              <p><strong>Branch:</strong> ${bank.branch_name || 'N/A'}</p>
+              <p><strong>Address:</strong> ${bank.branch_address || 'N/A'}</p>
+              <p><strong>SWIFT Code:</strong> ${bank.swift_code || 'N/A'}</p>
+            </div>
+            <div class="bank-actions">
+              <button class="btn-secondary" onclick="openBankModal('${bank.id}')">Edit</button>
+              <button class="btn-danger" onclick="deleteBank('${bank.id}')">Delete</button>
+            </div>
+          </div>
+          <div class="contacts-section">
+            <h4>Contacts <button class="btn-sm" onclick="openContactModal(null, '${bank.id}')">+ Add</button></h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Department</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${bank.bank_contact.length > 0 ? bank.bank_contact.map(contact => `
+                  <tr id="contact-${contact.id}">
+                    <td>${contact.contact_name || ''}</td>
+                    <td>${contact.contact_email || ''}</td>
+                    <td>${contact.contact_phone || ''}</td>
+                    <td>${contact.department || ''}</td>
+                    <td class="contact-actions">
+                      <button class="btn-secondary btn-sm" onclick="openContactModal('${contact.id}', '${bank.id}')">Edit</button>
+                      <button class="btn-danger btn-sm" onclick="deleteContact('${contact.id}')">Delete</button>
+                    </td>
+                  </tr>
+                `).join('') : '<tr><td colspan="5">No contacts found.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // --- Bank CRUD ---
+    window.openBankModal = (bankId = null) => {
+      const bank = bankId ? banksData.find(b => b.id === bankId) : {};
+      const title = bankId ? 'Edit Bank' : 'Create New Bank';
+      document.getElementById('bank-modal-title').textContent = title;
+
+      const formHtml = `
+        <form id="bank-form">
+          <input type="hidden" name="id" value="${bank.id || ''}">
+          <div class="form-group"><label>Name:</label><input type="text" name="name" value="${bank.name || ''}" required></div>
+          <div class="form-group"><label>Branch Name:</label><input type="text" name="branch_name" value="${bank.branch_name || ''}"></div>
+          <div class="form-group"><label>Branch Address:</label><input type="text" name="branch_address" value="${bank.branch_address || ''}"></div>
+          <div class="form-group"><label>SWIFT Code:</label><input type="text" name="swift_code" value="${bank.swift_code || ''}"></div>
+          <button type="submit" class="btn">${bankId ? 'Update' : 'Save'}</button>
+        </form>
+      `;
+      document.getElementById('bank-form-container').innerHTML = formHtml;
+      document.getElementById('bank-form').addEventListener('submit', saveBank);
+      document.getElementById('bank-modal').style.display = 'block';
+    }
+
+    async function saveBank(e) {
+      e.preventDefault();
+      const form = new FormData(e.target);
+      const bankData = Object.fromEntries(form.entries());
+      const bankId = bankData.id;
+      delete bankData.id;
+
+      const { error } = bankId
+        ? await supabase.from('bank').update(bankData).eq('id', bankId)
+        : await supabase.from('bank').insert(bankData);
+
+      if (error) {
+        alert('Error saving bank: ' + error.message);
+      } else {
+        closeModal('bank-modal');
+        loadBanks();
+      }
+    }
+
+    window.deleteBank = async (bankId) => {
+      if (!confirm('Are you sure you want to delete this bank and all its contacts?')) return;
+      
+      const { error } = await supabase.from('bank').delete().eq('id', bankId);
+      if (error) {
+        alert('Error deleting bank: ' + error.message);
+      } else {
+        loadBanks();
+      }
+    }
+
+    // --- Contact CRUD ---
+    window.openContactModal = (contactId = null, bankId) => {
+      const bank = banksData.find(b => b.id === bankId);
+      const contact = contactId ? bank.bank_contact.find(c => c.id === contactId) : {};
+      const title = contactId ? 'Edit Contact' : 'Add New Contact';
+      document.getElementById('contact-modal-title').textContent = title;
+
+      const formHtml = `
+        <form id="contact-form">
+          <input type="hidden" name="id" value="${contact.id || ''}">
+          <input type="hidden" name="bank_id" value="${bankId}">
+          <div class="form-group"><label>Name:</label><input type="text" name="contact_name" value="${contact.contact_name || ''}" required></div>
+          <div class="form-group"><label>Email:</label><input type="email" name="contact_email" value="${contact.contact_email || ''}" required></div>
+          <div class="form-group"><label>Phone:</label><input type="text" name="contact_phone" value="${contact.contact_phone || ''}"></div>
+          <div class="form-group"><label>Department:</label><input type="text" name="department" value="${contact.department || ''}"></div>
+          <button type="submit" class="btn">${contactId ? 'Update' : 'Save'}</button>
+        </form>
+      `;
+      document.getElementById('contact-form-container').innerHTML = formHtml;
+      document.getElementById('contact-form').addEventListener('submit', saveContact);
+      document.getElementById('contact-modal').style.display = 'block';
+    }
+
+    async function saveContact(e) {
+      e.preventDefault();
+      const form = new FormData(e.target);
+      const contactData = Object.fromEntries(form.entries());
+      const contactId = contactData.id;
+      delete contactData.id;
+
+      const { error } = contactId
+        ? await supabase.from('bank_contact').update(contactData).eq('id', contactId)
+        : await supabase.from('bank_contact').insert(contactData);
+
+      if (error) {
+        alert('Error saving contact: ' + error.message);
+      } else {
+        closeModal('contact-modal');
+        loadBanks();
+      }
+    }
+
+    window.deleteContact = async (contactId) => {
+      if (!confirm('Are you sure you want to delete this contact?')) return;
+
+      const { error } = await supabase.from('bank_contact').delete().eq('id', contactId);
+      if (error) {
+        alert('Error deleting contact: ' + error.message);
+      } else {
+        loadBanks();
+      }
+    }
+
+    window.closeModal = (modalId) => {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    // Load Shipment-Oriented Business Data
+    async function loadBusinessData() {
+      const container = document.getElementById('business-container');
+      container.innerHTML = '<p style="text-align:center; padding: 40px;">Loading shipment data...</p>';
+      
+      try {
+        // Fetch shipments with LC and bank information
+        const { data: shipments, error: shipmentsError } = await supabase
+          .from('shipment')
+          .select(`
+            id,
+            reference_code,
+            status,
+            created_at,
+            current_stage,
+            letter_of_credit(
+              id,
+              lc_number,
+              opened_date,
+              bank:bank_id(id, name, swift_code)
+            ),
+            bank_charges(
+              id,
+              usd_amount,
+              rate,
+              rs,
+              lc_issuance_date
+            ),
+            shipment_products(
+              quantity,
+              unit,
+              rate,
+              amount,
+              product_variety:product_variety_id(
+                product_name,
+                variety_name
+              )
+            ),
+            supplier_payments(
+              total_amount,
+              amount_paid,
+              status
+            )
+          `)
+          .order('created_at', { ascending: false });
+
+        if (shipmentsError) throw shipmentsError;
+
+        // Process data by bank
+        const bankBusinessMap = {};
+        
+        // Initialize all banks
+        banksData.forEach(bank => {
+          bankBusinessMap[bank.id] = {
+            bank: bank,
+            shipments: [],
+            totalShipments: 0,
+            totalBankCharges: 0,
+            totalShipmentValue: 0,
+            activeLCs: 0
+          };
+        });
+
+        // Group shipments by bank
+        shipments.forEach(shipment => {
+          const bank = shipment.letter_of_credit?.bank;
+          if (bank && bankBusinessMap[bank.id]) {
+            const bankId = bank.id;
+            
+            // Calculate shipment value (from products: quantity × rate)
+            let shipmentValue = 0;
+            if (shipment.shipment_products && shipment.shipment_products.length > 0) {
+              shipmentValue = shipment.shipment_products.reduce((sum, product) => {
+                // Use amount if available, otherwise calculate from quantity × rate
+                const productAmount = product.amount 
+                  ? parseFloat(product.amount) 
+                  : (parseFloat(product.quantity || 0) * parseFloat(product.rate || 0));
+                return sum + productAmount;
+              }, 0);
+            }
+
+            // Calculate bank charges
+            let bankCharges = 0;
+            if (shipment.bank_charges && shipment.bank_charges.length > 0) {
+              bankCharges = shipment.bank_charges.reduce((sum, charge) => {
+                return sum + (parseFloat(charge.rs || 0));
+              }, 0);
+            }
+
+            bankBusinessMap[bankId].shipments.push({
+              ...shipment,
+              shipmentValue,
+              bankCharges
+            });
+            bankBusinessMap[bankId].totalShipments++;
+            bankBusinessMap[bankId].totalBankCharges += bankCharges;
+            bankBusinessMap[bankId].totalShipmentValue += shipmentValue;
+            
+            if (shipment.letter_of_credit) {
+              bankBusinessMap[bankId].activeLCs++;
+            }
+          }
+        });
+
+        businessData = bankBusinessMap;
+        renderBusinessView();
+        
+      } catch (error) {
+        console.error('Error loading business data:', error);
+        container.innerHTML = `<p class="error-message">Error loading business data: ${error.message}</p>`;
+      }
+    }
+
+    function renderBusinessView() {
+      const container = document.getElementById('business-container');
+      
+      const banksWithShipments = Object.values(businessData).filter(b => b.shipments.length > 0);
+
+      if (banksWithShipments.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-ship"></i>
+            <h3>No Shipments Through Banks Yet</h3>
+            <p>Shipment transactions will appear here once banks are involved in Letter of Credits.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      
+      banksWithShipments.forEach(bankBusiness => {
+        const bank = bankBusiness.bank;
+        
+        html += `
+          <div class="bank-summary-card" id="bank-card-${bank.id}" onclick="toggleBankExpand('${bank.id}')">
+            <div class="bank-summary-header">
+              <div class="bank-summary-title">
+                <div class="bank-icon">
+                  <i class="fas fa-university"></i>
+                </div>
+                <div>
+                  <h3>${bank.name}</h3>
+                  <p style="margin: 5px 0 0 0; color: #64748B; font-size: 13px;">
+                    ${bank.swift_code ? `SWIFT: ${bank.swift_code}` : 'No SWIFT code'}
+                  </p>
+                </div>
+              </div>
+              <div class="expand-indicator">
+                <i class="fas fa-chevron-down"></i>
+              </div>
+            </div>
+            
+            <!-- Summary Stats -->
+            <div class="bank-summary-stats">
+              <div class="summary-stat">
+                <div class="summary-stat-label">
+                  <i class="fas fa-ship"></i>
+                  Total Shipments
+                </div>
+                <div class="summary-stat-value">${bankBusiness.totalShipments}</div>
+              </div>
+              <div class="summary-stat">
+                <div class="summary-stat-label">
+                  <i class="fas fa-file-invoice-dollar"></i>
+                  Active LCs
+                </div>
+                <div class="summary-stat-value">${bankBusiness.activeLCs}</div>
+              </div>
+              <div class="summary-stat">
+                <div class="summary-stat-label">
+                  <i class="fas fa-dollar-sign"></i>
+                  Total Shipment Value
+                </div>
+                <div class="summary-stat-value amount">$${formatNumber(bankBusiness.totalShipmentValue)}</div>
+              </div>
+              <div class="summary-stat">
+                <div class="summary-stat-label">
+                  <i class="fas fa-money-bill-wave"></i>
+                  Bank Charges (PKR)
+                </div>
+                <div class="summary-stat-value amount">₨${formatNumber(bankBusiness.totalBankCharges)}</div>
+              </div>
+            </div>
+
+            <!-- Shipment History (Expandable) -->
+            <div class="shipment-history">
+              <div class="shipment-history-header">
+                <h4><i class="fas fa-history"></i> Complete Shipment History</h4>
+                <span style="color: #64748B; font-size: 14px;">${bankBusiness.shipments.length} shipment${bankBusiness.shipments.length !== 1 ? 's' : ''}</span>
+              </div>
+              
+              ${bankBusiness.shipments.length > 0 ? `
+                <table class="shipment-table">
+                  <thead>
+                    <tr>
+                      <th>Shipment Reference</th>
+                      <th>Products</th>
+                      <th>LC Number</th>
+                      <th>Shipment Value</th>
+                      <th>Bank Charges</th>
+                      <th>Status</th>
+                      <th>Created Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${bankBusiness.shipments.map(shipment => {
+                      // Get products summary
+                      const productsText = shipment.shipment_products && shipment.shipment_products.length > 0
+                        ? shipment.shipment_products.map(p => p.product_variety?.product_name || 'Unknown').slice(0, 2).join(', ') + 
+                          (shipment.shipment_products.length > 2 ? ` +${shipment.shipment_products.length - 2}` : '')
+                        : 'No products';
+                      
+                      return `
+                        <tr>
+                          <td>
+                            <a href="shipment-details.html?id=${shipment.id}" class="shipment-ref">
+                              <i class="fas fa-external-link-alt"></i>
+                              ${shipment.reference_code}
+                            </a>
+                          </td>
+                          <td>
+                            <div class="shipment-products">
+                              ${productsText}
+                            </div>
+                          </td>
+                          <td>
+                            ${shipment.letter_of_credit ? `
+                              <div class="lc-badge">
+                                <i class="fas fa-file-signature"></i>
+                                ${shipment.letter_of_credit.lc_number}
+                              </div>
+                            ` : '<span style="color: #94A3B8;">No LC</span>'}
+                          </td>
+                          <td>
+                            <span class="shipment-amount">$${formatNumber(shipment.shipmentValue)}</span>
+                          </td>
+                          <td>
+                            <span class="shipment-amount">₨${formatNumber(shipment.bankCharges)}</span>
+                          </td>
+                          <td>
+                            <span class="status-badge ${shipment.status}">${shipment.status.replace('_', ' ').toUpperCase()}</span>
+                          </td>
+                          <td>
+                            <span class="date-display">${formatDate(shipment.created_at)}</span>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                    <tr class="total-row">
+                      <td colspan="3" style="text-align: right;"><strong>TOTALS:</strong></td>
+                      <td><span class="shipment-amount">$${formatNumber(bankBusiness.totalShipmentValue)}</span></td>
+                      <td><span class="shipment-amount">₨${formatNumber(bankBusiness.totalBankCharges)}</span></td>
+                      <td colspan="2"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              ` : '<div class="no-shipments">No shipment data available</div>'}
+            </div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function formatNumber(num) {
+      if (!num && num !== 0) return '0';
+      return parseFloat(num).toLocaleString('en-US', { maximumFractionDigits: 2 });
+    }
+
+    // Toggle bank expansion to show/hide shipment history
+    window.toggleBankExpand = (bankId) => {
+      const card = document.getElementById(`bank-card-${bankId}`);
+      if (card) {
+        card.classList.toggle('expanded');
+      }
+    };
+
+    window.onload = async () => {
+      const loader = document.getElementById("loader");
+      if (loader) loader.style.display = "block";
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+          window.location.href = 'login.html';
+      } else {
+          await loadBanks();
+      }
+
+      if (loader) loader.style.display = "none";
+    };
+  </script>
+  <script>
+    // Sidebar toggle logic (remains the same)
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.querySelector('.sidebar');
+      const sidebarToggle = document.querySelector('.sidebar-toggle');
+      const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+      function handleMediaQueryChange(e) {
+        if (!e.matches) {
+          sidebar.classList.remove('open');
+        }
+      }
+      mediaQuery.addListener(handleMediaQueryChange);
+      handleMediaQueryChange(mediaQuery);
+
+      sidebarToggle.addEventListener('click', () => {
+        if (mediaQuery.matches) {
+          sidebar.classList.toggle('open');
+        } else {
+          sidebar.classList.toggle('collapsed');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Imports 360 - Supplier Shipment Responses</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    .page-layout {
+      display: flex;
+      gap: 20px;
+    }
+    .filters-pane {
+      width: 250px;
+      flex-shrink: 0;
+    }
+    .content-area {
+      flex-grow: 1;
+    }
+    .filter-group {
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="documents.html" class="nav-link">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+          </a>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link active">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu open">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu open">
+            <li><a href="send-freight-queries.html" class="nav-link"><span class="text">Send Freight Queries</span></a></li>
+            <li><a href="freight-query-response.html" class="nav-link"><span class="text">Freight Query Response</span></a></li>
+            <li><a href="manage-freight-queries.html" class="nav-link"><span class="text">Manage Freight Queries</span></a></li>
+            <li><a href="award-shipment.html" class="nav-link"><span class="text">Award Shipment</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Supplier Shipment Responses</h1>
+      </div>
+    </header>
+
+    <div class="page-layout">
+      <div class="filters-pane panel">
+        <div class="panel-body">
+          <h3>Filters</h3>
+          <div class="filter-group">
+            <label for="shipment-filter">Shipment</label>
+            <select id="shipment-filter"></select>
+          </div>
+          <div class="filter-group">
+            <label for="supplier-filter">Supplier</label>
+            <select id="supplier-filter"></select>
+          </div>
+          <div class="filter-group">
+            <label for="from-date-filter">From Readiness Date</label>
+            <input type="date" id="from-date-filter">
+          </div>
+          <div class="filter-group">
+            <label for="to-date-filter">To Readiness Date</label>
+            <input type="date" id="to-date-filter">
+          </div>
+          <div class="button-container">
+              <button id="apply-filters-btn">Apply Filters</button>
+              <button id="clear-filters-btn" class="button-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-area">
+        <div id="responses-container">
+          <p>Loading responses...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+  const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+  async function loadFilters() {
+    // Load shipments
+    const { data: shipments, error: shipmentError } = await supabase
+      .from('shipment')
+      .select('id, reference_code');
+    if (shipmentError) console.error(shipmentError);
+    else {
+      const shipmentFilter = document.getElementById('shipment-filter');
+      shipmentFilter.innerHTML = '<option value="">All Shipments</option>';
+      shipments.forEach(s => {
+        shipmentFilter.innerHTML += `<option value="${s.id}">${s.reference_code}</option>`;
+      });
+    }
+
+    // Load suppliers
+    const { data: suppliers, error: supplierError } = await supabase
+      .from('supplier')
+      .select('id, name');
+    if (supplierError) console.error(supplierError);
+    else {
+      const supplierFilter = document.getElementById('supplier-filter');
+      supplierFilter.innerHTML = '<option value="">All Suppliers</option>';
+      suppliers.forEach(s => {
+        supplierFilter.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+      });
+    }
+  }
+
+  async function loadResponses() {
+    console.log('🔧 Loading supplier responses with fixed query...');
+    
+    const shipmentFilter = document.getElementById('shipment-filter').value;
+    const supplierFilter = document.getElementById('supplier-filter').value;
+    const fromDate = document.getElementById('from-date-filter').value;
+    const toDate = document.getElementById('to-date-filter').value;
+
+    try {
+      // Step 1: Get supplier shipment details with simple query that works
+      let query = supabase
+        .from('supplier_shipment_details')
+        .select('*')
+        .order('details_received_date', { ascending: false });
+
+      // Apply filters
+      if (shipmentFilter) {
+        query = query.eq('shipment_id', shipmentFilter);
+      }
+
+      if (fromDate) {
+        query = query.gte('details_received_date', fromDate);
+      }
+
+      if (toDate) {
+        query = query.lte('details_received_date', toDate + 'T23:59:59');
+      }
+
+      const { data: responses, error: responsesError } = await query;
+
+      if (responsesError) {
+        console.error('❌ Error loading responses:', responsesError);
+        document.getElementById('responses-container').innerHTML = 
+          `<div class="panel"><div class="panel-body"><p class="error-message">Error: ${responsesError.message}</p></div></div>`;
+        return;
+      }
+
+      console.log('✅ Loaded', responses.length, 'responses');
+
+      if (responses.length === 0) {
+        document.getElementById('responses-container').innerHTML = 
+          '<div class="panel"><div class="panel-body"><p>No supplier responses found for the selected filters.</p></div></div>';
+        return;
+      }
+
+      // Step 2: Get related shipment data
+      const shipmentIds = [...new Set(responses.map(r => r.shipment_id))];
+      console.log('🔍 Getting shipment data for IDs:', shipmentIds);
+
+      const { data: shipmentData, error: shipmentError } = await supabase
+        .from('shipment')
+        .select('id, reference_code')
+        .in('id', shipmentIds);
+
+      if (shipmentError) {
+        console.error('❌ Error loading shipment data:', shipmentError);
+      } else {
+        console.log('✅ Loaded shipment data:', shipmentData);
+      }
+
+      // Step 3: Get related documents/attachments
+      console.log('📎 Getting documents for responses...');
+      const { data: documentsData, error: documentsError } = await supabase
+        .from('document')
+        .select('*')
+        .in('shipment_id', shipmentIds)
+        .eq('doc_type', 'supplier_shipment_details');
+
+      if (documentsError) {
+        console.error('❌ Error loading documents:', documentsError);
+      } else {
+        console.log('✅ Loaded', documentsData?.length || 0, 'documents');
+      }
+
+      // Step 4: Create enriched responses with shipment data and documents
+      const shipmentMap = {};
+      if (shipmentData) {
+        shipmentData.forEach(s => {
+          shipmentMap[s.id] = s;
+        });
+      }
+
+      const documentsMap = {};
+      if (documentsData) {
+        documentsData.forEach(doc => {
+          if (!documentsMap[doc.shipment_id]) {
+            documentsMap[doc.shipment_id] = [];
+          }
+          documentsMap[doc.shipment_id].push(doc);
+        });
+      }
+
+      console.log('📋 Shipment mapping:', shipmentMap);
+      console.log('📎 Documents mapping:', documentsMap);
+
+      const enrichedResponses = responses.map(response => ({
+        ...response,
+        shipment_reference: shipmentMap[response.shipment_id]?.reference_code || `Unknown (${response.shipment_id})`,
+        shipment_data: shipmentMap[response.shipment_id] || null,
+        documents: documentsMap[response.shipment_id] || []
+      }));
+
+      console.log('✅ Enriched responses sample:', enrichedResponses.slice(0, 2));
+      renderResponses(enrichedResponses);
+
+    } catch (error) {
+      console.error('💥 Exception loading responses:', error);
+      document.getElementById('responses-container').innerHTML = 
+        `<div class="panel"><div class="panel-body"><p class="error-message">Exception: ${error.message}</p></div></div>`;
+    }
+  }
+
+  function renderResponses(responses) {
+    const container = document.getElementById('responses-container');
+    if (responses.length === 0) {
+      container.innerHTML = '<div class="panel"><div class="panel-body"><p>No responses found for the selected filters.</p></div></div>';
+      return;
+    }
+
+    console.log('🎨 Rendering', responses.length, 'responses');
+    
+    // Store responses globally for modal access
+    window.currentResponses = responses;
+
+    let html = `
+      <div class="panel">
+        <div class="panel-body">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Shipment Reference</th>
+                  <th>Readiness Date</th>
+                  <th>Gross Weight</th>
+                  <th>Cartons</th>
+                  <th>Transport</th>
+                  <th>Received At</th>
+                  <th>Attachments</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+    `;
+    
+    responses.forEach(res => {
+      html += `
+        <tr>
+          <td><strong>${res.shipment_reference || 'N/A'}</strong></td>
+          <td>${res.readiness_date ? new Date(res.readiness_date).toLocaleDateString() : 'N/A'}</td>
+          <td>${res.gross_weight || 'N/A'}</td>
+          <td>${res.cartons_count || 'N/A'}</td>
+          <td>${res.transport || 'N/A'}</td>
+          <td>${res.details_received_date ? new Date(res.details_received_date).toLocaleString() : 'N/A'}</td>
+          <td>
+            ${res.documents && res.documents.length > 0 ? 
+              `<button onclick="showAttachments('${res.id}')" class="button" style="
+                font-size: 11px; 
+                padding: 4px 8px; 
+                background: var(--success-color); 
+                color: white; 
+                border: none; 
+                border-radius: 4px; 
+                cursor: pointer;
+              ">
+                <i class="fas fa-paperclip"></i> ${res.documents.length}
+              </button>` : 
+              '<span style="color: #999; font-size: 12px;">No files</span>'
+            }
+          </td>
+          <td>
+            <button onclick="showResponseDetails('${res.id}')" class="button" style="
+              font-size: 12px; 
+              padding: 6px 12px; 
+              background: var(--accent-color); 
+              color: white; 
+              border: none; 
+              border-radius: 4px; 
+              cursor: pointer;
+            ">
+              <i class="fas fa-eye"></i> View Details
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+    
+    html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
+    console.log('✅ Successfully rendered responses table');
+  }
+  
+  function clearFilters() {
+    document.getElementById('shipment-filter').value = '';
+    document.getElementById('supplier-filter').value = '';
+    document.getElementById('from-date-filter').value = '';
+    document.getElementById('to-date-filter').value = '';
+    loadResponses();
+  }
+
+  // Global function to show response details in a proper modal
+  window.showResponseDetails = function(responseId) {
+    console.log('🔍 Showing details for response:', responseId);
+    
+    // Find the response data
+    const response = window.currentResponses?.find(r => r.id === responseId);
+    if (!response) {
+      alert('Response not found');
+      return;
+    }
+
+    // Create modal HTML
+    const modalHtml = `
+      <div id="response-modal" class="modal-overlay" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      ">
+        <div class="modal-content" style="
+          background: white;
+          border-radius: 8px;
+          padding: 20px;
+          max-width: 600px;
+          width: 90%;
+          max-height: 80vh;
+          overflow-y: auto;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        ">
+          <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0; color: var(--text-primary-color);">Supplier Response Details</h2>
+            <button onclick="closeResponseModal()" style="
+              background: none;
+              border: none;
+              font-size: 24px;
+              cursor: pointer;
+              color: #666;
+              float: right;
+            ">&times;</button>
+          </div>
+          
+          <div class="response-details">
+            <div class="detail-row" style="display: flex; margin-bottom: 10px;">
+              <strong style="width: 200px; color: var(--text-primary-color);">Shipment Reference:</strong>
+              <span>${response.shipment_reference || 'N/A'}</span>
+            </div>
+            <div class="detail-row" style="display: flex; margin-bottom: 10px;">
+              <strong style="width: 200px; color: var(--text-primary-color);">Readiness Date:</strong>
+              <span>${response.readiness_date ? new Date(response.readiness_date).toLocaleDateString() : 'N/A'}</span>
+            </div>
+            <div class="detail-row" style="display: flex; margin-bottom: 10px;">
+              <strong style="width: 200px; color: var(--text-primary-color);">Gross Weight:</strong>
+              <span>${response.gross_weight || 'N/A'}</span>
+            </div>
+            <div class="detail-row" style="display: flex; margin-bottom: 10px;">
+              <strong style="width: 200px; color: var(--text-primary-color);">Net Weight:</strong>
+              <span>${response.net_weight || 'N/A'}</span>
+            </div>
+            <div class="detail-row" style="display: flex; margin-bottom: 10px;">
+              <strong style="width: 200px; color: var(--text-primary-color);">Cartons Count:</strong>
+              <span>${response.cartons_count || 'N/A'}</span>
+            </div>
+            <div class="detail-row" style="display: flex; margin-bottom: 10px;">
+              <strong style="width: 200px; color: var(--text-primary-color);">Transport:</strong>
+              <span>${response.transport || 'N/A'}</span>
+            </div>
+            <div class="detail-row" style="display: flex; margin-bottom: 10px;">
+              <strong style="width: 200px; color: var(--text-primary-color);">Received At:</strong>
+              <span>${response.details_received_date ? new Date(response.details_received_date).toLocaleString() : 'N/A'}</span>
+            </div>
+            <div class="detail-row" style="display: flex; margin-bottom: 10px;">
+              <strong style="width: 200px; color: var(--text-primary-color);">Shipment ID:</strong>
+              <span style="font-family: monospace; font-size: 12px;">${response.shipment_id || 'N/A'}</span>
+            </div>
+            ${response.additional_notes ? `
+            <div class="detail-row" style="margin-bottom: 10px;">
+              <strong style="color: var(--text-primary-color);">Additional Notes:</strong>
+              <div style="margin-top: 5px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                ${response.additional_notes}
+              </div>
+            </div>
+            ` : ''}
+            ${response.documents && response.documents.length > 0 ? `
+            <div class="detail-row" style="margin-bottom: 10px;">
+              <strong style="color: var(--text-primary-color);">Attachments (${response.documents.length}):</strong>
+              <div style="margin-top: 10px;">
+                ${response.documents.map(doc => `
+                  <div style="
+                    display: flex; 
+                    align-items: center; 
+                    padding: 8px 12px; 
+                    background: #f8f9fa; 
+                    border-radius: 4px; 
+                    margin-bottom: 5px;
+                    border-left: 3px solid var(--accent-color);
+                  ">
+                    <i class="fas fa-file" style="color: var(--accent-color); margin-right: 8px;"></i>
+                    <span style="flex-grow: 1; margin-right: 10px;">${doc.file_url ? doc.file_url.split('/').pop() : 'Document'}</span>
+                    <button onclick="viewAttachment('${doc.file_url}', '${doc.file_url ? doc.file_url.split('/').pop() : 'Document'}')" 
+                            style="
+                              background: var(--accent-color);
+                              color: white;
+                              border: none;
+                              padding: 4px 8px;
+                              border-radius: 3px;
+                              cursor: pointer;
+                              font-size: 11px;
+                            ">
+                      <i class="fas fa-eye"></i> View
+                    </button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            ` : ''}
+          </div>
+          
+          <div style="margin-top: 20px; text-align: right;">
+            ${response.documents && response.documents.length > 0 ? 
+              `<button onclick="showAttachments('${response.id}')" class="button" style="margin-right: 10px;">
+                <i class="fas fa-paperclip"></i> View All Attachments
+              </button>` : ''
+            }
+            <button onclick="closeResponseModal()" class="button button-secondary">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Add click outside to close
+    document.getElementById('response-modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeResponseModal();
+      }
+    });
+  };
+
+  // Function to close the modal
+  window.closeResponseModal = function() {
+    const modal = document.getElementById('response-modal');
+    if (modal) {
+      modal.remove();
+    }
+  };
+
+  // Function to show attachments modal
+  window.showAttachments = function(responseId) {
+    console.log('📎 Showing attachments for response:', responseId);
+    
+    const response = window.currentResponses?.find(r => r.id === responseId);
+    if (!response || !response.documents || response.documents.length === 0) {
+      alert('No attachments found for this response');
+      return;
+    }
+
+    const modalHtml = `
+      <div id="attachments-modal" class="modal-overlay" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1001;
+      ">
+        <div class="modal-content" style="
+          background: white;
+          border-radius: 8px;
+          padding: 20px;
+          max-width: 800px;
+          width: 90%;
+          max-height: 80vh;
+          overflow-y: auto;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        ">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0; color: var(--text-primary-color);">
+              <i class="fas fa-paperclip"></i> Attachments - ${response.shipment_reference}
+            </h2>
+            <button onclick="closeAttachmentsModal()" style="
+              background: none;
+              border: none;
+              font-size: 24px;
+              cursor: pointer;
+              color: #666;
+            ">&times;</button>
+          </div>
+          
+          <div class="attachments-grid" style="display: grid; gap: 15px;">
+            ${response.documents.map((doc, index) => {
+              const fileName = doc.file_url ? doc.file_url.split('/').pop() : `Document ${index + 1}`;
+              const fileExtension = fileName.split('.').pop().toLowerCase();
+              const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
+              const isPdf = fileExtension === 'pdf';
+              
+              return `
+                <div class="attachment-item" style="
+                  border: 1px solid #e0e0e0;
+                  border-radius: 8px;
+                  padding: 15px;
+                  background: #fafafa;
+                  transition: all 0.2s ease;
+                " onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='#fafafa'">
+                  <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <i class="fas fa-${isImage ? 'image' : isPdf ? 'file-pdf' : 'file'}" 
+                       style="color: ${isImage ? '#28a745' : isPdf ? '#dc3545' : '#6c757d'}; margin-right: 10px; font-size: 18px;"></i>
+                    <div style="flex-grow: 1;">
+                      <div style="font-weight: 500; color: var(--text-primary-color);">${fileName}</div>
+                      <div style="font-size: 12px; color: #666;">
+                        ${doc.uploaded_at ? 'Uploaded: ' + new Date(doc.uploaded_at).toLocaleDateString() : ''}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; gap: 8px;">
+                    <button onclick="viewAttachment('${doc.file_url}', '${fileName}')" class="button" style="
+                      flex: 1;
+                      background: var(--accent-color);
+                      color: white;
+                      border: none;
+                      padding: 8px 16px;
+                      border-radius: 4px;
+                      cursor: pointer;
+                      font-size: 13px;
+                    ">
+                      <i class="fas fa-eye"></i> View
+                    </button>
+                    <button onclick="downloadAttachment('${doc.file_url}', '${fileName}')" class="button button-secondary" style="
+                      background: var(--success-color);
+                      color: white;
+                      border: none;
+                      padding: 8px 16px;
+                      border-radius: 4px;
+                      cursor: pointer;
+                      font-size: 13px;
+                    ">
+                      <i class="fas fa-download"></i> Download
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          
+          <div style="margin-top: 20px; text-align: right;">
+            <button onclick="closeAttachmentsModal()" class="button button-secondary">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    document.getElementById('attachments-modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeAttachmentsModal();
+      }
+    });
+  };
+
+  // Function to close attachments modal
+  window.closeAttachmentsModal = function() {
+    const modal = document.getElementById('attachments-modal');
+    if (modal) {
+      modal.remove();
+    }
+  };
+
+  // Function to view attachment in new tab/modal
+  window.viewAttachment = function(fileUrl, fileName) {
+    console.log('👁️ Viewing attachment:', fileName);
+    
+    if (!fileUrl) {
+      alert('File URL not available');
+      return;
+    }
+
+    const fileExtension = fileName.split('.').pop().toLowerCase();
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
+    const isPdf = fileExtension === 'pdf';
+
+    if (isImage || isPdf) {
+      // Create viewer modal for images and PDFs
+      const viewerHtml = `
+        <div id="file-viewer-modal" class="modal-overlay" style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.9);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1002;
+        ">
+          <div style="
+            position: relative;
+            max-width: 95%;
+            max-height: 95%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+          ">
+            <div style="
+              position: absolute;
+              top: 10px;
+              right: 15px;
+              z-index: 1003;
+            ">
+              <button onclick="closeFileViewer()" style="
+                background: rgba(0,0,0,0.7);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+                cursor: pointer;
+              ">&times;</button>
+            </div>
+            
+            <div style="padding: 15px; padding-top: 50px;">
+              <h3 style="margin: 0 0 15px 0; text-align: center;">${fileName}</h3>
+              ${isImage ? 
+                `<img src="${fileUrl}" style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;" alt="${fileName}">` :
+                `<iframe src="${fileUrl}" style="width: 80vw; height: 70vh; border: none;"></iframe>`
+              }
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML('beforeend', viewerHtml);
+      
+      document.getElementById('file-viewer-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeFileViewer();
+        }
+      });
+    } else {
+      // For other file types, open in new tab
+      window.open(fileUrl, '_blank');
+    }
+  };
+
+  // Function to close file viewer
+  window.closeFileViewer = function() {
+    const modal = document.getElementById('file-viewer-modal');
+    if (modal) {
+      modal.remove();
+    }
+  };
+
+  // Function to download attachment
+  window.downloadAttachment = function(fileUrl, fileName) {
+    console.log('💾 Downloading attachment:', fileName);
+    
+    if (!fileUrl) {
+      alert('File URL not available');
+      return;
+    }
+
+    // Create a temporary link element and trigger download
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  window.onload = () => {
+    const userCheck = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = 'login.html';
+        }
+    };
+    userCheck();
+    loadFilters();
+    loadResponses();
+
+    document.getElementById('apply-filters-btn').addEventListener('click', loadResponses);
+    document.getElementById('clear-filters-btn').addEventListener('click', clearFilters);
+
+    // Sidebar logic
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const hasSubmenus = document.querySelectorAll('.has-submenu');
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+    function handleMediaQueryChange(e) {
+      if (e.matches) {
+        sidebar.classList.remove('collapsed');
+        sidebar.classList.remove('open');
+      } else {
+        sidebar.classList.remove('open');
+      }
+    }
+
+    handleMediaQueryChange(mediaQuery);
+    mediaQuery.addListener(handleMediaQueryChange);
+
+    sidebarToggle.addEventListener('click', () => {
+      if (mediaQuery.matches) {
+        sidebar.classList.toggle('open');
+      } else {
+        sidebar.classList.toggle('collapsed');
+      }
+    });
+
+    hasSubmenus.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const submenu = item.nextElementSibling;
+        if (submenu && submenu.classList.contains('submenu')) {
+          submenu.classList.toggle('open');
+          item.classList.toggle('open');
+        }
+      });
+    });
+
+    const currentPath = window.location.pathname.split('/').pop();
+    navLinks.forEach(link => {
+      if (link.href.split('/').pop() === currentPath) {
+        link.classList.add('active');
+        let parentSubmenu = link.closest('.submenu');
+        if (parentSubmenu) {
+          parentSubmenu.classList.add('open');
+          let parentHasSubmenu = parentSubmenu.previousElementSibling;
+          if (parentHasSubmenu && parentHasSubmenu.classList.contains('has-submenu')) {
+            parentHasSubmenu.classList.add('open');
+          }
+        }
+      }
+    });
+  };
+</script>
+</body>
+</html>

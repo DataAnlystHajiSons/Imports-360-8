@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Supplier Details</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+  const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+  async function loadSuppliers(filters = {}) {
+    let query = supabase
+      .from("v_supplier_shipment_summary")
+      .select("*");
+
+    if (filters.name) {
+      query = query.ilike('name', `%${filters.name}%`);
+    }
+
+    if (filters.total_shipments) {
+      query = query.gte('total_shipments', filters.total_shipments);
+    }
+
+    if (filters.product_id) {
+        const { data: productVarieties, error: productVarietiesError } = await supabase
+            .from('product_variety')
+            .select('supplier_id')
+            .eq('id', filters.product_id);
+
+        if (productVarietiesError) {
+            console.error('Error fetching suppliers for product:', productVarietiesError);
+        } else {
+            const supplierIds = productVarieties.map(pv => pv.supplier_id);
+            query = query.in('id', supplierIds);
+        }
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      document.getElementById("suppliers-list").innerHTML = `<p class=\"error-message\">Error loading suppliers: ${error.message}</p>`;
+      return;
+    }
+
+    let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Action</th></tr></thead>';
+    for (const item of data) {
+      html += `<tbody class=\"supplier-container\" data-supplier-id=\" ${item.id} ">
+        <tr class=\"main-row\">
+          <td>${item.name}</td>
+          <td>${item.contact_email || ''}</td>
+          <td>${item.contact_phone || ''}</td>
+          <td><button class=\"button-secondary\" onclick=\"toggleSubRows(this, '${item.id}')">Details</button><button class=\"button-secondary ml-2\" onclick=\"openEditSupplierModal('${item.id}')">Edit</button></td>
+        </tr>
+        <tr class=\"sub-row\" style=\"display: none;">
+          <td colspan="4">
+            <div class=\"sub-row-grid\">
+              <div class=\"sub-row-content\">
+`;
+
+      if (item.contact_persons && item.contact_persons.length > 0 && item.contact_persons[0] !== null) {
+        html += `<h4>Contact Persons</h4>`;
+        item.contact_persons.forEach(person => {
+          html += `<p><b>${person.name}</b> (${person.designation || 'N/A'} - ${person.department || 'N/A'})</p>`;
+        });
+      }
+
+      if (item.supplier_offices && item.supplier_offices.length > 0 && item.supplier_offices[0] !== null) {
+        html += `<h4>Offices</h4>`;
+        item.supplier_offices.forEach(office => {
+          html += `<p><b>${office.office_type}</b>: ${office.address}</p>`;
+        });
+      }
+
+      html += `<div class=\"shipment-insights\">
+        <h4>Shipment Insights</h4>
+        <p><b>Total Shipments:</b> ${item.total_shipments}</p>
+        <p><b>Active Shipments:</b> ${item.active_shipments}</p>
+        <p><b>Completed Shipments:</b> ${item.completed_shipments}</p>
+      </div>`;
+
+      html += `</div><div class=\"shipments-table-container\" id=\"shipments-for-${item.id}"></div></div></td></tr></tbody>`;
+    }
+    html += '</table>';
+
+    document.getElementById("suppliers-list").innerHTML = html;
+  }
+
+  async function loadShipmentsForSupplier(supplierId) {
+    const container = document.getElementById(`shipments-for-${supplierId}`);
+    container.innerHTML = '<p>Loading shipments...</p>';
+
+    const { data: productVarieties, error: productVarietiesError } = await supabase
+      .from('product_variety')
+      .select('id')
+      .eq('supplier_id', supplierId);
+
+    if (productVarietiesError) {
+      container.innerHTML = `<p class=\"error-message\">Error loading shipments: ${productVarietiesError.message}</p>`;
+      return;
+    }
+
+    const productVarietyIds = productVarieties.map(pv => pv.id);
+
+    const { data, error } = await supabase
+      .from('shipment')
+      .select(
+        `id, reference_code, current_stage, status, shipment_products!inner(product_variety(product_name))`
+      )
+      .in('shipment_products.product_variety_id', productVarietyIds)
+
+    if (error) {
+      container.innerHTML = `<p class=\"error-message\">Error loading shipments: ${error.message}</p>`;
+      return;
+    }
+
+    if (data.length === 0) {
+      container.innerHTML = '<p>No shipments found for this supplier.</p>';
+      return;
+    }
+
+    let tableHtml = '<table><thead><tr><th>Reference</th><th>Product</th><th>Stage</th><th>Status</th></tr></thead><tbody>';
+    data.forEach(shipment => {
+      tableHtml += `<tr>
+        <td><a href=\"shipment_tracker.html?id=${shipment.id}">${shipment.reference_code}</a></td>
+        <td>${shipment.shipment_products.map(p => p.product_variety.product_name).join(', ')}</td>
+        <td>${shipment.current_stage}</td>
+        <td>${shipment.status}</td>
+      </tr>`;
+    });
+    tableHtml += '</tbody></table>';
+    container.innerHTML = tableHtml;
+  }
+
+  window.toggleSubRows = function(button, supplierId) {
+    const subRow = button.closest('.main-row').nextElementSibling;
+    const container = button.closest('.supplier-container');
+    if (subRow) {
+      const isHidden = subRow.style.display === 'none';
+      subRow.style.display = isHidden ? 'table-row' : 'none';
+      container.classList.toggle('expanded');
+      if (isHidden) {
+        loadShipmentsForSupplier(supplierId);
+      }
+    }
+  }
+
+  async function openEditSupplierModal(supplierId) {
+    await openSupplierModal(supplierId);
+  }
+
+  async function openSupplierModal(supplierId = null) {
+    let supplier = null;
+    if (supplierId) {
+        const { data, error } = await supabase
+            .from('v_supplier_shipment_summary')
+            .select('*')
+            .eq('id', supplierId)
+            .single();
+        if (error) {
+            console.error('Error fetching supplier data:', error);
+            return;
+        }
+        supplier = data;
+    }
+
+    let formHtml = `
+      <div id=\"new-supplier-message"></div>
+      <form id=\"new-supplier-form">
+        <input type=\"hidden" id=\"supplier_id" name=\"supplier_id" value="${supplier ? supplier.id : ''}"/>
+        <div class=\"form-grid\">
+          <div class=\"form-group\">
+            <label for=\"name\">Name:</label>
+            <input type=\"text\" id=\"name" name=\"name" value="${supplier ? supplier.name : ''}" required>
+          </div>
+          <div class=\"form-group\">
+            <label for=\"contact_email\">Email:</label>
+            <input type=\"email\" id=\"contact_email" name=\"contact_email" value="${supplier ? supplier.contact_email || '' : ''}" >
+          </div>
+          <div class=\"form-group\">
+            <label for=\"contact_phone\">Phone:</label>
+            <input type=\"text\" id=\"contact_phone" name=\"contact_phone" value="${supplier ? supplier.contact_phone || '' : ''}" >
+          </div>
+        </div>
+        
+        <hr>
+        <h4>Contact Persons</h4>
+        <div id=\"contact-persons-container"></div>
+        <button type=\"button\" class=\"button-secondary\" onclick=\"addContactPersonForm()">Add Contact Person</button>
+
+        <hr>
+        <h4>Supplier Offices</h4>
+        <div id=\"supplier-offices-container"></div>
+        <button type=\"button\" class=\"button-secondary\" onclick=\"addOfficeForm()">Add Office</button>
+
+        <div class=\"button-container\">
+          <button type=\"button\" onclick=\"saveSupplier()">Save</button>
+        </div>
+      </form>
+    `;
+
+    document.getElementById('new-supplier-form-container').innerHTML = formHtml;
+    document.getElementById('new-supplier-modal').style.display = 'block';
+
+    if (supplier && supplier.contact_persons) {
+      supplier.contact_persons.forEach(person => {
+        if(person) addContactPersonForm(person);
+      });
+    } else {
+      addContactPersonForm();
+    }
+
+    if (supplier && supplier.supplier_offices) {
+      supplier.supplier_offices.forEach(office => {
+        if(office) addOfficeForm(office);
+      });
+    } else {
+      addOfficeForm();
+    }
+  }
+
+  window.addContactPersonForm = function(person = {}) {
+    const container = document.getElementById('contact-persons-container');
+    const form = document.createElement('div');
+    form.classList.add('contact-person-form');
+    form.innerHTML = `
+      <input type=\"text\" name=\"contact_name\" placeholder=\"Name\" value=\"${person.name || ''}\">
+      <input type=\"text\" name=\"contact_designation\" placeholder=\"Designation\" value=\"${person.designation || ''}\">
+      <input type=\"text\" name=\"contact_department\" placeholder=\"Department\" value=\"${person.department || ''}\">
+      <button type=\"button\" class=\"button-secondary\" onclick=\"this.parentElement.remove()">Remove</button>
+      <hr>
+    `;
+    container.appendChild(form);
+  }
+
+  window.addOfficeForm = function(office = {}) {
+    const container = document.getElementById('supplier-offices-container');
+    const form = document.createElement('div');
+    form.classList.add('office-form');
+    form.innerHTML = `
+      <input type=\"text\" name=\"office_type\" placeholder=\"Office Type\" value=\"${office.office_type || ''}\">
+      <input type=\"text\" name=\"office_address\" placeholder=\"Address\" value=\"${office.address || ''}\">
+      <button type=\"button\" class=\"button-secondary\" onclick=\"this.parentElement.remove()">Remove</button>
+      <hr>
+    `;
+    container.appendChild(form);
+  }
+
+  function closeModal() {
+    document.getElementById('new-supplier-modal').style.display = 'none';
+  }
+
+  async function saveSupplier() {
+    const form = document.getElementById('new-supplier-form');
+    const formData = new FormData(form);
+    const supplierId = formData.get('supplier_id');
+
+    const supplierData = {
+        name: formData.get('name'),
+        contact_email: formData.get('contact_email'),
+        contact_phone: formData.get('contact_phone')
+    };
+
+    let supplier_id = supplierId;
+
+    if (supplierId) {
+        // Update existing supplier
+        const { error } = await supabase
+            .from('supplier')
+            .update(supplierData)
+            .eq('id', supplierId);
+
+        if (error) {
+            document.getElementById('new-supplier-message').innerHTML = `<p class=\"error-message\">Error updating supplier: ${error.message}</p>`;
+            return;
+        }
+    } else {
+        // Create new supplier
+        const { data: newSupplier, error } = await supabase
+            .from('supplier')
+            .insert(supplierData)
+            .select()
+            .single();
+
+        if (error) {
+            document.getElementById('new-supplier-message').innerHTML = `<p class=\"error-message\">Error creating supplier: ${error.message}</p>`;
+            return;
+        }
+        supplier_id = newSupplier.id;
+    }
+
+    // Delete existing contact persons and offices
+    if (supplierId) {
+        const { error: deleteContactsError } = await supabase.from('contact_person').delete().eq('supplier_id', supplierId);
+        const { error: deleteOfficesError } = await supabase.from('supplier_office').delete().eq('supplier_id', supplierId);
+        if (deleteContactsError || deleteOfficesError) {
+            document.getElementById('new-supplier-message').innerHTML = `<p class=\"error-message\">Error deleting existing details: ${deleteContactsError?.message || deleteOfficesError?.message}</p>`;
+            return;
+        }
+    }
+
+    const contactPersons = [];
+    const contactPersonForms = document.querySelectorAll('.contact-person-form');
+    contactPersonForms.forEach(form => {
+        const name = form.querySelector('[name="contact_name"]').value;
+        if (name) { // Only add if name is not empty
+            contactPersons.push({
+                supplier_id: supplier_id,
+                name: name,
+                designation: form.querySelector('[name="contact_designation"]').value,
+                department: form.querySelector('[name="contact_department"]').value
+            });
+        }
+    });
+
+    if (contactPersons.length > 0) {
+      const { error: contactError } = await supabase.from('contact_person').insert(contactPersons);
+      if (contactError) {
+        document.getElementById('new-supplier-message').innerHTML = `<p class=\"error-message\">Error adding contact persons: ${contactError.message}</p>`;
+        return;
+      }
+    }
+
+    const supplierOffices = [];
+    const officeForms = document.querySelectorAll('.office-form');
+    officeForms.forEach(form => {
+        const type = form.querySelector('[name="office_type"]').value;
+        if (type) { // Only add if type is not empty
+            supplierOffices.push({
+                supplier_id: supplier_id,
+                office_type: type,
+                address: form.querySelector('[name="office_address"]').value
+            });
+        }
+    });
+
+    if (supplierOffices.length > 0) {
+      const { error: officeError } = await supabase.from('supplier_office').insert(supplierOffices);
+      if (officeError) {
+        document.getElementById('new-supplier-message').innerHTML = `<p class=\"error-message\">Error adding supplier offices: ${officeError.message}</p>`;
+        return;
+      }
+    }
+
+    closeModal();
+    loadSuppliers();
+  }
+
+  window.openEditSupplierModal = openEditSupplierModal;
+  window.openSupplierModal = openSupplierModal;
+  window.saveSupplier = saveSupplier;
+  window.closeModal = closeModal;
+
+  async function loadShipmentsForSending() {
+    const { data, error } = await supabase
+      .from('shipment')
+      .select('id, reference_code');
+    if (error) {
+      console.error(error);
+      return;
+    }
+    const shipmentSelect = document.getElementById('shipment-select');
+    shipmentSelect.innerHTML = '<option value="">Select a shipment</option>';
+    data.forEach(s => {
+      shipmentSelect.innerHTML += `<option value="${s.id}">${s.reference_code}</option>`;
+    });
+  }
+
+  async function loadSuppliersForSending() {
+    const { data, error } = await supabase
+      .from('supplier')
+      .select('id, name');
+    if (error) {
+      console.error(error);
+      return;
+    }
+    const supplierSelect = document.getElementById('supplier-select');
+    supplierSelect.innerHTML = '<option value="">Select a supplier</option>';
+    data.forEach(s => {
+      supplierSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+    });
+  }
+
+  async function sendDocsToSupplier() {
+    const shipmentId = document.getElementById('shipment-select').value;
+    const supplierId = document.getElementById('supplier-select').value;
+    const messageDiv = document.getElementById('send-docs-message');
+
+    if (!shipmentId || !supplierId) {
+      messageDiv.innerHTML = '<p class=\"error-message\">Please select a shipment and a supplier.</p>';
+      return;
+    }
+
+    messageDiv.innerHTML = '<p class=\"success-message\">Sending documents...</p>';
+
+    const { data: supplierData, error: supplierError } = await supabase
+        .from('supplier')
+        .select('contact_email')
+        .eq('id', supplierId)
+        .single();
+
+    if (supplierError || !supplierData) {
+        messageDiv.innerHTML = '<p class=\"error-message\">Could not find supplier email.</p>';
+        return;
+    }
+
+    const { data: shipmentData, error: shipmentError } = await supabase
+        .from('shipment')
+        .select('reference_code')
+        .eq('id', shipmentId)
+        .single();
+
+    if (shipmentError || !shipmentData) {
+        messageDiv.innerHTML = '<p class=\"error-message\">Could not find shipment details.</p>';
+        return;
+    }
+
+    const { data: lcDoc, error: lcError } = await supabase
+        .from('letter_of_credit')
+        .select('file_url')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+    const { data: ipDoc, error: ipError } = await supabase
+        .from('ip_number')
+        .select('file_url')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+    if (lcError || ipError) {
+        messageDiv.innerHTML = '<p class=\"error-message\">Error fetching document URLs.</p>';
+        return;
+    }
+
+    const attachments = [];
+    if (lcDoc && lcDoc.file_url) {
+        attachments.push(lcDoc.file_url);
+    }
+    if (ipDoc && ipDoc.file_url) {
+        attachments.push(ipDoc.file_url);
+    }
+
+    if (attachments.length === 0) {
+        messageDiv.innerHTML = '<p class=\"error-message\">No documents found for the selected shipment.</p>';
+        return;
+    }
+
+    const { error } = await supabase.functions.invoke('send-supplier-docs', {
+        body: {
+            to: supplierData.contact_email,
+            attachments: attachments,
+            shipment_ref: shipmentData.reference_code,
+            shipment_id: shipmentId // Pass shipment_id
+        }
+    });
+
+    if (error) {
+        messageDiv.innerHTML = `<p class=\"error-message\">Error sending documents: ${error.message}</p>`;
+    } else {
+        messageDiv.innerHTML = '<p class=\"success-message\">Documents sent successfully.</p>';
+    }
+  }
+
+  window.sendDocsToSupplier = sendDocsToSupplier;
+
+  async function handleShipmentSelection() {
+    const shipmentId = document.getElementById('shipment-select').value;
+    const infoCard = document.getElementById('shipment-info-container');
+    const placeholder = infoCard.querySelector('.info-card-placeholder');
+    const loader = infoCard.querySelector('.info-card-loader');
+    const content = infoCard.querySelector('.info-card-content');
+    
+    const supplierGroup = document.getElementById('supplier-select-group');
+    const sendBtn = document.getElementById('send-docs-btn');
+
+    // Reset state
+    content.style.display = 'none';
+    content.innerHTML = '';
+    supplierGroup.style.display = 'none';
+    sendBtn.disabled = true;
+    infoCard.classList.remove('has-data');
+    infoCard.classList.add('is-empty');
+
+    if (!shipmentId) {
+        placeholder.innerHTML = '<i class="fas fa-inbox"></i><p>Select a shipment to view details</p>';
+        placeholder.style.display = 'block';
+        loader.style.display = 'none';
+        return;
+    }
+
+    // Start loading
+    placeholder.style.display = 'none';
+    loader.style.display = 'block';
+
+    const { data, error } = await supabase
+        .from('shipment')
+        .select(`
+            reference_code,
+            shipment_products (
+                product_variety (
+                    product_name,
+                    variety_name,
+                    supplier ( id, name, contact_email )
+                )
+            )
+        `)
+        .eq('id', shipmentId)
+        .single();
+
+    // Stop loading
+    loader.style.display = 'none';
+
+    if (error || !data) {
+        placeholder.style.display = 'block';
+        placeholder.innerHTML = '<i class="fas fa-exclamation-triangle"></i><p>Error loading shipment details.</p>';
+        return;
+    }
+
+    const products = data.shipment_products;
+    if (!products || products.length === 0) {
+        placeholder.style.display = 'block';
+        placeholder.innerHTML = '<i class="fas fa-info-circle"></i><p>This shipment has no products.</p>';
+        return;
+    }
+
+    const supplier = products[0].product_variety.supplier;
+    if (!supplier) {
+        placeholder.style.display = 'block';
+        placeholder.innerHTML = '<i class="fas fa-exclamation-triangle"></i><p>Could not determine supplier for this shipment.</p>';
+        return;
+    }
+
+    // Data is valid, populate and show content
+    let productHtml = '<h4>Products in Shipment</h4><ul class="product-list">';
+    products.forEach(p => {
+        const pv = p.product_variety;
+        productHtml += `<li><i class="fas fa-box"></i> ${pv.product_name} - ${pv.variety_name}</li>`;
+    });
+    productHtml += '</ul>';
+
+    let supplierHtml = `
+        <hr class="info-card-divider">
+        <h4>Supplier Information</h4>
+        <div class="supplier-info-display">
+            <p><strong>Name:</strong> ${supplier.name}</p>
+            <p><strong>Email:</strong> ${supplier.contact_email || 'N/A'}</p>
+        </div>
+    `;
+
+    content.innerHTML = productHtml + supplierHtml;
+    content.style.display = 'block';
+    infoCard.classList.remove('is-empty');
+    infoCard.classList.add('has-data');
+
+    // Auto-select the supplier in the dropdown
+    const supplierSelect = document.getElementById('supplier-select');
+    supplierSelect.value = supplier.id;
+    
+    // Show the supplier dropdown and enable the send button
+    supplierGroup.style.display = 'block';
+    sendBtn.disabled = false;
+  }
+
+  function updateFilterBadge() {
+    const filters = {
+        name: document.getElementById('name-filter').value,
+        total_shipments: document.getElementById('total-shipments-filter').value,
+        product_id: document.getElementById('product-filter').value
+    };
+    let activeFilters = 0;
+    if (filters.name) activeFilters++;
+    if (parseInt(filters.total_shipments) > 0) activeFilters++;
+    if (filters.product_id) activeFilters++;
+
+    const badge = document.getElementById('filter-count-badge');
+    if (activeFilters > 0) {
+      badge.textContent = activeFilters;
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  async function loadProductFilter() {
+      const { data, error} = await supabase
+          .from('product_variety')
+          .select('id, product_name, variety_name');
+
+      if (error) {
+          console.error('Error loading products for filter:', error);
+          return;
+      }
+
+      const select = document.getElementById('product-filter');
+      select.innerHTML = '<option value="">All Products</option>';
+      data.forEach(item => {
+          select.innerHTML += `<option value="${item.id}">${item.product_name} - ${item.variety_name}</option>`;
+      });
+  }
+
+  // Business View Logic
+  let businessData = {};
+  let currentView = 'details';
+  let suppliersData = [];
+
+  window.toggleView = () => {
+    const toggle = document.getElementById('view-toggle');
+    const detailsView = document.getElementById('supplier-details-view');
+    const businessView = document.getElementById('business-view');
+    
+    toggle.classList.toggle('active');
+    
+    if (toggle.classList.contains('active')) {
+      currentView = 'business';
+      detailsView.classList.remove('active');
+      businessView.classList.add('active');
+      if (Object.keys(businessData).length === 0) {
+        loadBusinessData();
+      }
+    } else {
+      currentView = 'details';
+      businessView.classList.remove('active');
+      detailsView.classList.add('active');
+    }
+  };
+
+  async function loadBusinessData() {
+    const container = document.getElementById('business-container');
+    container.innerHTML = '<p style="text-align:center; padding: 40px;">Loading shipment data...</p>';
+    
+    try {
+      // Fetch shipments with supplier information via product varieties
+      const { data: shipments, error: shipmentsError } = await supabase
+        .from('shipment')
+        .select(`
+          id,
+          reference_code,
+          status,
+          created_at,
+          current_stage,
+          shipment_products(
+            quantity,
+            unit,
+            rate,
+            amount,
+            product_variety:product_variety_id(
+              product_name,
+              variety_name,
+              supplier:supplier_id(id, name, contact_email)
+            )
+          ),
+          supplier_payments(
+            total_amount,
+            amount_paid,
+            status,
+            supplier:supplier_id(id, name)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (shipmentsError) throw shipmentsError;
+
+      // Process data by supplier
+      const supplierBusinessMap = {};
+      
+      // Get all suppliers first
+      const { data: allSuppliers, error: suppliersError } = await supabase
+        .from('supplier')
+        .select('id, name, contact_email, contact_phone');
+      
+      if (suppliersError) throw suppliersError;
+      
+      suppliersData = allSuppliers;
+      
+      // Initialize supplier map
+      allSuppliers.forEach(supplier => {
+        supplierBusinessMap[supplier.id] = {
+          supplier: supplier,
+          shipments: [],
+          totalShipments: 0,
+          totalValue: 0,
+          totalPaid: 0,
+          totalPending: 0
+        };
+      });
+
+      // Group shipments by supplier
+      shipments.forEach(shipment => {
+        // Get supplier from products or payments
+        let supplier = null;
+        if (shipment.shipment_products && shipment.shipment_products.length > 0) {
+          supplier = shipment.shipment_products[0].product_variety?.supplier;
+        }
+        
+        if (supplier && supplierBusinessMap[supplier.id]) {
+          const supplierId = supplier.id;
+          
+          // Calculate shipment value
+          let shipmentValue = 0;
+          if (shipment.shipment_products && shipment.shipment_products.length > 0) {
+            shipmentValue = shipment.shipment_products.reduce((sum, product) => {
+              const productAmount = product.amount 
+                ? parseFloat(product.amount) 
+                : (parseFloat(product.quantity || 0) * parseFloat(product.rate || 0));
+              return sum + productAmount;
+            }, 0);
+          }
+
+          // Calculate payments
+          let totalPayment = 0;
+          let paidAmount = 0;
+          if (shipment.supplier_payments && shipment.supplier_payments.length > 0) {
+            const payment = shipment.supplier_payments[0];
+            totalPayment = parseFloat(payment.total_amount || 0);
+            paidAmount = parseFloat(payment.amount_paid || 0);
+          }
+
+          supplierBusinessMap[supplierId].shipments.push({
+            ...shipment,
+            shipmentValue,
+            totalPayment,
+            paidAmount,
+            pendingAmount: totalPayment - paidAmount
+          });
+          supplierBusinessMap[supplierId].totalShipments++;
+          supplierBusinessMap[supplierId].totalValue += shipmentValue;
+          supplierBusinessMap[supplierId].totalPaid += paidAmount;
+          supplierBusinessMap[supplierId].totalPending += (totalPayment - paidAmount);
+        }
+      });
+
+      businessData = supplierBusinessMap;
+      renderBusinessView();
+      
+    } catch (error) {
+      console.error('Error loading business data:', error);
+      container.innerHTML = `<p class="error-message">Error loading business data: ${error.message}</p>`;
+    }
+  }
+
+  function renderBusinessView() {
+    const container = document.getElementById('business-container');
+    
+    const suppliersWithShipments = Object.values(businessData).filter(s => s.shipments.length > 0);
+
+    if (suppliersWithShipments.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-truck"></i>
+          <h3>No Shipments From Suppliers Yet</h3>
+          <p>Shipment transactions will appear here once suppliers provide products.</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    
+    suppliersWithShipments.forEach(supplierBusiness => {
+      const supplier = supplierBusiness.supplier;
+      
+      html += `
+        <div class="supplier-summary-card" id="supplier-card-${supplier.id}" onclick="toggleSupplierExpand('${supplier.id}')">
+          <div class="supplier-summary-header">
+            <div class="supplier-summary-title">
+              <div class="supplier-icon">
+                <i class="fas fa-truck"></i>
+              </div>
+              <div>
+                <h3>${supplier.name}</h3>
+                <p style="margin: 5px 0 0 0; color: #64748B; font-size: 13px;">
+                  ${supplier.contact_email || 'No email'}
+                </p>
+              </div>
+            </div>
+            <div class="expand-indicator">
+              <i class="fas fa-chevron-down"></i>
+            </div>
+          </div>
+          
+          <!-- Summary Stats -->
+          <div class="supplier-summary-stats">
+            <div class="summary-stat">
+              <div class="summary-stat-label">
+                <i class="fas fa-ship"></i>
+                Total Shipments
+              </div>
+              <div class="summary-stat-value">${supplierBusiness.totalShipments}</div>
+            </div>
+            <div class="summary-stat">
+              <div class="summary-stat-label">
+                <i class="fas fa-dollar-sign"></i>
+                Total Value
+              </div>
+              <div class="summary-stat-value amount">$${formatNumber(supplierBusiness.totalValue)}</div>
+            </div>
+            <div class="summary-stat">
+              <div class="summary-stat-label">
+                <i class="fas fa-check-circle"></i>
+                Total Paid
+              </div>
+              <div class="summary-stat-value amount">$${formatNumber(supplierBusiness.totalPaid)}</div>
+            </div>
+            <div class="summary-stat">
+              <div class="summary-stat-label">
+                <i class="fas fa-hourglass-half"></i>
+                Pending Payment
+              </div>
+              <div class="summary-stat-value amount">$${formatNumber(supplierBusiness.totalPending)}</div>
+            </div>
+          </div>
+
+          <!-- Shipment History (Expandable) -->
+          <div class="shipment-history">
+            <div class="shipment-history-header">
+              <h4><i class="fas fa-history"></i> Complete Shipment History</h4>
+              <span style="color: #64748B; font-size: 14px;">${supplierBusiness.shipments.length} shipment${supplierBusiness.shipments.length !== 1 ? 's' : ''}</span>
+            </div>
+            
+            ${supplierBusiness.shipments.length > 0 ? `
+              <table class="shipment-table">
+                <thead>
+                  <tr>
+                    <th>Shipment Reference</th>
+                    <th>Products</th>
+                    <th>Shipment Value</th>
+                    <th>Paid</th>
+                    <th>Pending</th>
+                    <th>Status</th>
+                    <th>Created Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${supplierBusiness.shipments.map(shipment => {
+                    const productsText = shipment.shipment_products && shipment.shipment_products.length > 0
+                      ? shipment.shipment_products.map(p => p.product_variety?.product_name || 'Unknown').slice(0, 2).join(', ') + 
+                        (shipment.shipment_products.length > 2 ? ` +${shipment.shipment_products.length - 2}` : '')
+                      : 'No products';
+                    
+                    return `
+                      <tr>
+                        <td>
+                          <a href="shipment-details.html?id=${shipment.id}" class="shipment-ref">
+                            <i class="fas fa-external-link-alt"></i>
+                            ${shipment.reference_code}
+                          </a>
+                        </td>
+                        <td>
+                          <div class="shipment-products">
+                            ${productsText}
+                          </div>
+                        </td>
+                        <td>
+                          <span class="shipment-amount">$${formatNumber(shipment.shipmentValue)}</span>
+                        </td>
+                        <td>
+                          <span class="shipment-amount">$${formatNumber(shipment.paidAmount)}</span>
+                        </td>
+                        <td>
+                          <span class="shipment-amount">$${formatNumber(shipment.pendingAmount)}</span>
+                        </td>
+                        <td>
+                          <span class="status-badge ${shipment.status}">${shipment.status.replace('_', ' ').toUpperCase()}</span>
+                        </td>
+                        <td>
+                          <span class="date-display">${formatDate(shipment.created_at)}</span>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                  <tr class="total-row">
+                    <td colspan="2" style="text-align: right;"><strong>TOTALS:</strong></td>
+                    <td><span class="shipment-amount">$${formatNumber(supplierBusiness.totalValue)}</span></td>
+                    <td><span class="shipment-amount">$${formatNumber(supplierBusiness.totalPaid)}</span></td>
+                    <td><span class="shipment-amount">$${formatNumber(supplierBusiness.totalPending)}</span></td>
+                    <td colspan="2"></td>
+                  </tr>
+                </tbody>
+              </table>
+            ` : '<div class="no-shipments">No shipment data available</div>'}
+          </div>
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+  }
+
+  function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function formatNumber(num) {
+    if (!num && num !== 0) return '0';
+    return parseFloat(num).toLocaleString('en-US', { maximumFractionDigits: 2 });
+  }
+
+  window.toggleSupplierExpand = (supplierId) => {
+    const card = document.getElementById(`supplier-card-${supplierId}`);
+    if (card) {
+      card.classList.toggle('expanded');
+    }
+  };
+
+  window.onload = async () => {
+      const loader = document.getElementById("loader");
+      if (loader) {
+          loader.style.display = "block";
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+          window.location.href = 'login.html';
+      } else {
+          await Promise.all([
+            loadSuppliers(),
+            loadShipmentsForSending(),
+            loadSuppliersForSending(),
+            loadProductFilter()
+          ]);
+      }
+
+      if (loader) {
+          loader.style.display = "none";
+      }
+
+      // Check URL parameters for auto-navigation to business view
+      const urlParams = new URLSearchParams(window.location.search);
+      const viewParam = urlParams.get('view');
+      const supplierParam = urlParams.get('supplier');
+      
+      if (viewParam === 'business') {
+        // Switch to business view
+        const toggle = document.getElementById('view-toggle');
+        const detailsView = document.getElementById('supplier-details-view');
+        const businessView = document.getElementById('business-view');
+        
+        if (toggle && !toggle.classList.contains('active')) {
+          toggle.classList.add('active');
+          detailsView.classList.remove('active');
+          businessView.classList.add('active');
+          currentView = 'business';
+          
+          // Load business data
+          await loadBusinessData();
+          
+          // If supplier ID provided, expand that supplier's card
+          if (supplierParam) {
+            setTimeout(() => {
+              const card = document.getElementById(`supplier-card-${supplierParam}`);
+              if (card) {
+                card.classList.add('expanded');
+                // Scroll to the card
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }, 500); // Small delay to ensure DOM is ready
+          }
+        }
+      }
+
+      document.getElementById('shipment-select').addEventListener('change', handleShipmentSelection);
+
+      document.getElementById('filter-toggle-btn').addEventListener('click', () => {
+        const filterPane = document.getElementById('filter-pane');
+        filterPane.classList.toggle('open');
+      });
+
+      document.getElementById('apply-filters-btn').addEventListener('click', () => {
+        const filters = {
+            name: document.getElementById('name-filter').value || null,
+            total_shipments: document.getElementById('total-shipments-filter').value || null,
+            product_id: document.getElementById('product-filter').value || null
+        };
+        loadSuppliers(filters);
+        updateFilterBadge();
+      });
+
+      document.getElementById('clear-filters-btn').addEventListener('click', () => {
+        document.getElementById('name-filter').value = '';
+        document.getElementById('total-shipments-filter').value = 0;
+        document.getElementById('total-shipments-value').textContent = 0;
+        document.getElementById('product-filter').value = '';
+        loadSuppliers();
+        updateFilterBadge();
+      });
+
+      document.getElementById('total-shipments-filter').addEventListener('input', (e) => {
+        shipmentsValue.textContent = e.target.value;
+      });
+
+      // Ripple Effect for Create New Supplier button
+      const rippleButton = document.querySelector('.ripple-btn');
+      if (rippleButton) {
+        rippleButton.addEventListener('click', function (e) {
+            const x = e.clientX - e.target.offsetLeft;
+            const y = e.clientY - e.target.offsetTop;
+
+            const ripples = document.createElement('span');
+            ripples.style.left = x + 'px';
+            ripples.style.top = y + 'px';
+            ripples.classList.add('ripple');
+            this.appendChild(ripples);
+
+            setTimeout(() => {
+                ripples.remove();
+            }, 700); // Match animation duration
+        });
+      }
+  };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    .shipment-info-card {
+        background-color: #fdfdfd;
+        border: 1px solid #e9ecef;
+        border-left: 5px solid var(--accent-color); /* Classification Border */
+        border-radius: 8px;
+        padding: 24px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        min-height: 150px; /* Prevent layout jump */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .shipment-info-card.has-data {
+        text-align: left;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    .info-card-placeholder {
+        color: #adb5bd;
+    }
+    .info-card-placeholder .fas {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .info-card-loader {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .info-card-content {
+        width: 100%;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .info-card-content h4 {
+        margin-top: 0;
+        color: #343a40;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    
+    .info-card-divider {
+        border: none;
+        border-top: 1px solid #e9ecef;
+        margin: 24px 0;
+    }
+
+    .product-list {
+        list-style-type: none;
+        padding-left: 0;
+    }
+    .product-list li {
+        background-color: #fff;
+        padding: 12px 15px;
+        border-radius: 5px;
+        margin-bottom: 8px;
+        border: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        font-size: 0.95rem;
+    }
+    .product-list li .fa-box {
+        margin-right: 12px;
+        color: #007bff;
+    }
+    .supplier-info-display {
+        margin-top: 20px;
+        font-size: 0.95rem;
+        color: #495057;
+        background: #fff;
+        border: 1px solid #e9ecef;
+        padding: 15px;
+        border-radius: 5px;
+    }
+    .supplier-info-display p {
+        margin: 0 0 5px 0;
+    }
+
+    /* Ripple Animation Styles */
+    .ripple-btn {
+        position: relative;
+        overflow: hidden;
+    }
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        transform: scale(0);
+        animation: ripple-animation 0.7s linear;
+        background-color: rgba(124, 58, 237, 0.7); /* var(--accent-color) with transparency */
+    }
+    @keyframes ripple-animation {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+
+    /* View Toggle Styles (Same as Banks) */
+    .view-toggle-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+      border-radius: 12px;
+    }
+    .view-toggle-label {
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 60px;
+      height: 30px;
+      background: #ddd;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .toggle-switch.active {
+      background: linear-gradient(to right, #7C3AED, #8B5CF6);
+    }
+    .toggle-slider {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(30px);
+    }
+    .view-section {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .view-section.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Supplier Business View Styles */
+    .supplier-summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-left: 5px solid #059669;
+    }
+    .supplier-summary-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(5, 150, 105, 0.2);
+      border-left-color: #10B981;
+    }
+    .supplier-summary-card.expanded {
+      border-left-color: #10B981;
+      box-shadow: 0 4px 16px rgba(5, 150, 105, 0.15);
+    }
+    .supplier-summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .supplier-summary-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .supplier-summary-title h3 {
+      margin: 0;
+      color: #1E293B;
+      font-size: 22px;
+    }
+    .supplier-summary-title .supplier-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+    .expand-indicator {
+      font-size: 24px;
+      color: #059669;
+      transition: transform 0.3s ease;
+    }
+    .supplier-summary-card.expanded .expand-indicator {
+      transform: rotate(180deg);
+    }
+    .supplier-summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .summary-stat {
+      background: linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #D1FAE5;
+    }
+    .summary-stat-label {
+      font-size: 13px;
+      color: #64748B;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .summary-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #059669;
+    }
+    .summary-stat-value.amount {
+      color: #D97706;
+    }
+    .shipment-history {
+      display: none;
+      margin-top: 20px;
+      border-top: 2px solid #F1F5F9;
+      padding-top: 20px;
+      animation: slideDown 0.3s ease;
+    }
+    .supplier-summary-card.expanded .shipment-history {
+      display: block;
+    }
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        max-height: 0;
+      }
+      to {
+        opacity: 1;
+        max-height: 2000px;
+      }
+    }
+    .shipment-history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .shipment-history-header h4 {
+      margin: 0;
+      color: #059669;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .shipment-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 15px;
+    }
+    .shipment-table thead {
+      background: linear-gradient(135deg, #059669 0%, #10B981 100%) !important;
+    }
+    .shipment-table thead th {
+      color: white !important;
+      background: transparent;
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .shipment-table thead th:first-child {
+      border-radius: 8px 0 0 0;
+    }
+    .shipment-table thead th:last-child {
+      border-radius: 0 8px 0 0;
+    }
+    .shipment-table tbody tr {
+      background: white;
+      transition: all 0.2s ease;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    .shipment-table tbody tr:hover {
+      background: rgba(5, 150, 105, 0.03);
+      transform: scale(1.01);
+    }
+    .shipment-table tbody tr:last-child {
+      border-bottom: none;
+    }
+    .shipment-table tbody td {
+      padding: 15px;
+      color: #334155;
+      font-size: 14px;
+    }
+    .shipment-ref {
+      font-weight: 600;
+      color: #059669;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.3s ease;
+    }
+    .shipment-ref:hover {
+      color: #10B981;
+      text-decoration: underline;
+    }
+    .shipment-amount {
+      font-weight: 700;
+      color: #D97706;
+      font-size: 15px;
+    }
+    .shipment-products {
+      font-size: 13px;
+      color: #64748B;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .product-badge {
+      background: #F1F5F9;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #475569;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-badge.active {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+      border: 1px solid #059669;
+    }
+    .status-badge.completed {
+      background: rgba(99, 102, 241, 0.1);
+      color: #6366F1;
+      border: 1px solid #6366F1;
+    }
+    .status-badge.on_hold {
+      background: rgba(245, 158, 11, 0.1);
+      color: #D97706;
+      border: 1px solid #D97706;
+    }
+    .payment-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      background: rgba(5, 150, 105, 0.1);
+      border: 1px solid #059669;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #059669;
+      font-weight: 600;
+    }
+    .date-display {
+      font-size: 13px;
+      color: #64748B;
+    }
+    .no-shipments {
+      text-align: center;
+      padding: 40px;
+      color: #94A3B8;
+      font-style: italic;
+    }
+    .total-row {
+      background: linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+      font-weight: 700;
+      border-top: 2px solid #059669 !important;
+    }
+    .total-row td {
+      padding: 15px !important;
+      font-size: 15px !important;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #94A3B8;
+    }
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+  </div>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link active">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="documents.html" class="nav-link"><span class="text">Document Management</span></a></li>
+            <li><a href="admin-document-requirements.html" class="nav-link"><span class="text">Document Requirements</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu open">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu open">
+            <li><a href="send-freight-queries.html" class="nav-link"><span class="text">Send Freight Queries</span></a></li>
+            <li><a href="freight-query-response.html" class="nav-link"><span class="text">Freight Query Response</span></a></li>
+            <li><a href="manage-freight-queries.html" class="nav-link"><span class="text">Manage Freight Queries</span></a></li>
+            <li><a href="award-shipment.html" class="nav-link"><span class="text">Award Shipment</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Suppliers</h1>
+      </div>
+    </header>
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Suppliers</h2>
+        <button class="ripple-btn" onclick="openSupplierModal()">Create New Supplier</button>
+      </div>
+      <div class="panel-body">
+        <!-- View Toggle -->
+        <div class="view-toggle-container">
+          <span class="view-toggle-label">
+            <i class="fas fa-address-card"></i>
+            Supplier Details
+          </span>
+          <div class="toggle-switch" id="view-toggle" onclick="toggleView()">
+            <div class="toggle-slider"></div>
+          </div>
+          <span class="view-toggle-label">
+            <i class="fas fa-chart-line"></i>
+            Business View
+          </span>
+        </div>
+
+        <!-- Supplier Details View (Default) -->
+        <div id="supplier-details-view" class="view-section active">
+          <div class="filter-section">
+            <button id="filter-toggle-btn" class="button button-secondary">
+              <i class="fas fa-filter"></i>
+              <span>Filters</span>
+              <span id="filter-count-badge" class="badge" style="display: none;"></span>
+            </button>
+            <div id="filter-pane" class="filter-pane">
+              <div class="filter-group">
+                <label for="name-filter">Supplier Name</label>
+                <input type="text" id="name-filter" placeholder="Enter supplier name">
+              </div>
+              <div class="filter-group">
+                <label for="total-shipments-filter">Min Total Shipments</label>
+                <input type="range" id="total-shipments-filter" min="0" max="100" value="0">
+                <span id="total-shipments-value">0</span>
+              </div>
+              <div class="filter-group">
+                <label for="product-filter">Product</label>
+                <select id="product-filter"></select>
+              </div>
+              <div class="button-container">
+                <button id="apply-filters-btn" class="button">Apply</button>
+                <button id="clear-filters-btn" class="button button-secondary">Clear</button>
+              </div>
+            </div>
+          </div>
+          <div id="suppliers-list">Loading...</div>
+        </div>
+
+        <!-- Business View -->
+        <div id="business-view" class="view-section">
+          <div style="margin-bottom: 20px;">
+            <h2 style="margin: 0 0 8px 0; color: #1E293B; font-size: 28px; font-weight: 700;">
+              <i class="fas fa-chart-line" style="color: #10B981; margin-right: 12px;"></i>
+              Supplier Business Overview
+            </h2>
+            <p style="margin: 0; color: #64748B; font-size: 15px;">
+              Track shipments, product values, payments, and outstanding balances per supplier
+            </p>
+          </div>
+          <div id="business-container">Loading business data...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top: 20px;">
+        <div class="panel-header">
+            <h2>Send Documents to Supplier</h2>
+        </div>
+        <div class="panel-body">
+            <div id="send-docs-message"></div>
+            <form id="send-docs-form">
+                <div class="form-group">
+                    <label for="shipment-select">1. Select Shipment</label>
+                    <select id="shipment-select" required></select>
+                </div>
+
+                <div id="shipment-info-container" class="shipment-info-card is-empty">
+                    <div class="info-card-placeholder">
+                        <i class="fas fa-inbox"></i>
+                        <p>Select a shipment to view details</p>
+                    </div>
+                    <div class="info-card-loader" style="display: none;"></div>
+                    <div class="info-card-content" style="display: none;"></div>
+                </div>
+
+                <div class="form-group" id="supplier-select-group" style="display: none;">
+                    <label for="supplier-select">2. Confirm Supplier</label>
+                    <select id="supplier-select" required></select>
+                </div>
+
+                <div class="button-container">
+                    <button type="button" id="send-docs-btn" onclick="sendDocsToSupplier()" disabled>Send Documents</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <p class="back-link"><a href="admin-dashboard.html">← Back to Dashboard</a></p>
+
+    <div id="new-supplier-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close-button" onclick="closeModal()">×</span>
+        <h2>Create New Supplier</h2>
+        <div id="new-supplier-form-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.querySelector('.sidebar');
+      const sidebarToggle = document.querySelector('.sidebar-toggle');
+      const navLinks = document.querySelectorAll('.nav-link');
+      const hasSubmenus = document.querySelectorAll('.has-submenu');
+
+      // Responsive off-canvas menu (for mobile)
+      const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+      function handleMediaQueryChange(e) {
+        if (e.matches) { // If on mobile
+          sidebar.classList.remove('collapsed'); // Ensure it's not collapsed on mobile
+          sidebar.classList.remove('open'); // Ensure it's closed initially on mobile
+        } else { // If on desktop
+          sidebar.classList.remove('open'); // Ensure it's not open on desktop
+        }
+      }
+
+      // Initial check for mobile responsiveness
+      handleMediaQueryChange(mediaQuery);
+
+      // Listen for changes in media query
+      mediaQuery.addListener(handleMediaQueryChange);
+
+      // Unified sidebar toggle logic
+      sidebarToggle.addEventListener('click', () => {
+        if (mediaQuery.matches) {
+          // If on mobile, toggle 'open' class
+          sidebar.classList.toggle('open');
+        } else {
+          // If on desktop, toggle 'collapsed' class
+          sidebar.classList.toggle('collapsed');
+        }
+      });
+
+      // Accordion sub-menus (no change)
+      hasSubmenus.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const submenu = item.nextElementSibling;
+          if (submenu && submenu.classList.contains('submenu')) {
+            submenu.classList.toggle('open');
+            item.classList.toggle('open');
+          }
+        });
+      });
+
+      // Active link highlighting (no change)
+      const currentPath = window.location.pathname.split('/').pop();
+      navLinks.forEach(link => {
+        if (link.href.split('/').pop() === currentPath) {
+          link.classList.add('active');
+          let parentSubmenu = link.closest('.submenu');
+          if (parentSubmenu) {
+            parentSubmenu.classList.add('open');
+            let parentHasSubmenu = parentSubmenu.previousElementSibling;
+            if (parentHasSubmenu && parentHasSubmenu.classList.contains('has-submenu')) {
+              parentHasSubmenu.classList.add('open');
+            }
+          }
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    });
+    
+  </script>
+</body>
+</html>

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Imports 360 - Dashboard</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/admin-dashboard.css?v=1.1">
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+  </div>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link active">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="documents.html" class="nav-link"><span class="text">Document Management</span></a></li>
+            <li><a href="admin-document-requirements.html" class="nav-link"><span class="text">Document Requirements</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-payments.html" class="nav-link">
+            <i class="fas fa-chart-line icon"></i>
+            <span class="text">Supplier Payments</span>
+          </a>
+        </li>
+
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu open">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu open">
+            <li><a href="send-freight-queries.html" class="nav-link"><span class="text">Send Freight Queries</span></a></li>
+            <li><a href="freight-query-response.html" class="nav-link"><span class="text">Freight Query Response</span></a></li>
+            <li><a href="manage-freight-queries.html" class="nav-link"><span class="text">Manage Freight Queries</span></a></li>
+            <li><a href="award-shipment.html" class="nav-link"><span class="text">Award Shipment</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <h1>Dashboard</h1>
+        <p id="welcome-message">Welcome back!</p>
+      </div>
+      <div class="enhanced-user-menu">
+        <button class="enhanced-user-button" id="user-menu-button" aria-label="User Profile Menu">
+          <div class="user-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="user-preview" id="user-preview">
+            <span class="user-name" id="user-name-preview">Loading...</span>
+            <span class="user-role" id="user-role-preview">...</span>
+          </div>
+          <div class="dropdown-indicator">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </button>
+        
+        <div class="enhanced-dropdown-menu" id="dropdown-menu">
+          <div class="dropdown-header">
+            <div class="user-avatar-large">
+              <i class="fas fa-user"></i>
+              <div class="status-indicator online"></div>
+            </div>
+            <div class="user-details">
+              <h3 id="user-full-name" class="user-full-name">Loading...</h3>
+              <p id="user-role-email" class="user-role-email">...</p>
+              <span class="user-status">
+                <i class="fas fa-circle status-dot"></i>
+                Online
+              </span>
+            </div>
+          </div>
+          
+          <div class="dropdown-divider"></div>
+          
+          <div class="dropdown-actions">
+            <button class="profile-action" onclick="openProfileSettings()">
+              <i class="fas fa-user-edit"></i>
+              <span>Edit Profile</span>
+              <i class="fas fa-chevron-right action-arrow"></i>
+            </button>
+            
+            <button class="profile-action" onclick="openAccountSettings()">
+              <i class="fas fa-cog"></i>
+              <span>Account Settings</span>
+              <i class="fas fa-chevron-right action-arrow"></i>
+            </button>
+            
+            <button class="profile-action" onclick="openNotifications()">
+              <i class="fas fa-bell"></i>
+              <span>Notifications</span>
+              <div class="notification-badge">3</div>
+              <i class="fas fa-chevron-right action-arrow"></i>
+            </button>
+            
+            <button class="profile-action" onclick="openHelp()">
+              <i class="fas fa-question-circle"></i>
+              <span>Help & Support</span>
+              <i class="fas fa-chevron-right action-arrow"></i>
+            </button>
+          </div>
+          
+          <div class="dropdown-divider"></div>
+          
+          <button class="enhanced-logout-button" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="dashboard-stats">
+       <div class="stat-card">
+        <div class="icon-container" style="background-color: #e0e7ff; color: #4f46e5;">
+          <i class="fas fa-boxes-stacked"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Total Shipments</h3>
+          <p id="total-shipments">0</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="icon-container" style="background-color: #dcfce7; color: #166534;">
+          <i class="fas fa-truck-fast"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Active Shipments</h3>
+          <p id="active-shipments">0</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="icon-container" style="background-color: #f3e8ff; color: #86198f;">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Completed</h3>
+          <p id="completed-shipments">0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts, Warnings, and Insights Section -->
+    <div class="insights-section">
+      <div class="insights-container">
+        <!-- Alerts Subsection -->
+        <div class="insight-card alert-card">
+          <div class="insight-header">
+            <div class="insight-icon alert-icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="insight-title">
+              <h3>Alerts</h3>
+              <span class="insight-count" id="alerts-count">0</span>
+            </div>
+          </div>
+          <div class="insight-content" id="alerts-content">
+            <!-- Alerts will be loaded here by JavaScript -->
+          </div>
+          <div class="insight-footer">
+            <button class="view-all-btn" onclick="viewAllAlerts()">
+              <span>View All Alerts</span>
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Warnings Subsection -->
+        <div class="insight-card warning-card">
+          <div class="insight-header">
+            <div class="insight-icon warning-icon">
+              <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="insight-title">
+              <h3>Warnings</h3>
+              <span class="insight-count" id="warnings-count">0</span>
+            </div>
+          </div>
+          <div class="insight-content" id="warnings-content">
+            <!-- Warnings will be loaded here by JavaScript -->
+          </div>
+          <div class="insight-footer">
+            <button class="view-all-btn" onclick="viewAllWarnings()">
+              <span>View All Warnings</span>
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Insights Subsection -->
+        <div class="insight-card insights-card">
+          <div class="insight-header">
+            <div class="insight-icon insights-icon">
+              <i class="fas fa-lightbulb"></i>
+            </div>
+            <div class="insight-title">
+              <h3>Insights</h3>
+              <span class="insight-count" id="insights-count">0</span>
+            </div>
+          </div>
+          <div class="insight-content" id="insights-content">
+            <!-- Insights will be loaded here by JavaScript -->
+          </div>
+          <div class="insight-footer">
+            <button class="view-all-btn" onclick="viewAllInsights()">
+              <span>View All Insights</span>
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2>All Shipments</h2>
+        <div class="search-container">
+          <i class="fas fa-search"></i>
+          <input type="text" id="shipment-search" placeholder="Search shipments...">
+        </div>
+        <button id="filter-toggle-btn" class="button button-secondary">
+          <i class="fas fa-filter"></i>
+          <span>Filters</span>
+          <span id="filter-count-badge" class="badge" style="display: none;"></span>
+        </button>
+        <button id="create-shipment-btn" class="button">Create New Shipment</button>
+      </div>
+      <div class="filter-pane" id="filter-pane">
+        <div class="filter-group">
+          <label for="supplier-filter">Supplier</label>
+          <select id="supplier-filter"></select>
+        </div>
+        <div class="filter-group">
+          <label for="clearing-agent-filter">Clearing Agent</label>
+          <select id="clearing-agent-filter"></select>
+        </div>
+        <div class="filter-group">
+          <label for="bank-filter">Bank</label>
+          <select id="bank-filter"></select>
+        </div>
+        <div class="filter-group">
+            <label for="status-filter">Status</label>
+            <select id="status-filter">
+                <option value="">All</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="on_hold">On Hold</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+        </div>
+        <div class="filter-group">
+          <label for="commodity-filter">Commodity</label>
+          <select id="commodity-filter"></select>
+        </div>
+        <div class="filter-group">
+          <label for="mode-of-transport-filter">Mode of Transport</label>
+          <select id="mode-of-transport-filter">
+            <option value="">All</option>
+            <option value="sea">Sea Freight</option>
+            <option value="air">Air Freight</option>
+            <option value="land">Land Transport</option>
+            <option value="rail">Rail Transport</option>
+            <option value="multimodal">Multimodal Transport</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="lc-number-filter">LC Number</label>
+          <input type="text" id="lc-number-filter" placeholder="Enter LC Number">
+        </div>
+        <div class="filter-group">
+          <label for="product-name-filter">Product Name</label>
+          <input type="text" id="product-name-filter" placeholder="Enter Product Name">
+        </div>
+        <div class="filter-group">
+          <label for="variety-name-filter">Variety Name</label>
+          <input type="text" id="variety-name-filter" placeholder="Enter Variety Name">
+        </div>
+        <div class="button-container">
+            <button id="apply-filters-btn" class="button">Apply</button>
+            <button id="clear-filters-btn" class="button button-secondary">Clear</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="enhanced-table-container">
+          <div class="table-wrapper">
+            <table class="enhanced-table">
+              <thead>
+                <tr>
+                  <th class="sortable" data-sort="reference">
+                    <div class="th-content">
+                      <span>Reference</span>
+                      <i class="fas fa-sort sort-icon"></i>
+                    </div>
+                  </th>
+                  <th class="sortable" data-sort="product">
+                    <div class="th-content">
+                      <span>Product</span>
+                      <i class="fas fa-sort sort-icon"></i>
+                    </div>
+                  </th>
+                  <th class="sortable" data-sort="variety">
+                    <div class="th-content">
+                      <span>Variety</span>
+                      <i class="fas fa-sort sort-icon"></i>
+                    </div>
+                  </th>
+                  <th class="sortable" data-sort="supplier">
+                    <div class="th-content">
+                      <span>Supplier</span>
+                      <i class="fas fa-sort sort-icon"></i>
+                    </div>
+                  </th>
+                  <th class="sortable" data-sort="stage">
+                    <div class="th-content">
+                      <span>Current Stage</span>
+                      <i class="fas fa-sort sort-icon"></i>
+                    </div>
+                  </th>
+                  <th class="sortable" data-sort="status">
+                    <div class="th-content">
+                      <span>Status</span>
+                      <i class="fas fa-sort sort-icon"></i>
+                    </div>
+                  </th>
+                  <th>LC Number</th>
+                  <th class="action-column">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="shipments-table-body">
+                <!-- Rows will be injected by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<div id="create-shipment-modal" class="modal" style="display: none;">
+  <div class="modal-content modal-large">
+    <span class="close-button" id="close-modal-btn">&times;</span>
+    <h2><i class="fas fa-ship"></i> Create New Shipment</h2>
+    
+    <!-- Step Progress Indicator -->
+    <div class="wizard-steps">
+      <div class="wizard-step active" data-step="1">
+        <div class="step-icon">
+          <i class="fas fa-box"></i>
+        </div>
+        <div class="step-label">Products</div>
+      </div>
+      <div class="wizard-step-connector"></div>
+      <div class="wizard-step" data-step="2">
+        <div class="step-icon">
+          <i class="fas fa-info-circle"></i>
+        </div>
+        <div class="step-label">Details</div>
+      </div>
+      <div class="wizard-step-connector"></div>
+      <div class="wizard-step" data-step="3">
+        <div class="step-icon">
+          <i class="fas fa-clipboard-check"></i>
+        </div>
+        <div class="step-label">Review</div>
+      </div>
+    </div>
+    
+    <div id="create-shipment-message"></div>
+    
+    <form id="create-shipment-form">
+      <!-- Step 1: Products Section -->
+      <div class="form-step" id="step-1" data-step="1">
+        <div class="form-section">
+          <h3 class="section-title">
+            <i class="fas fa-box"></i>
+            Add Products to Shipment
+          </h3>
+          <p class="section-description">Select the products you want to include in this shipment. You can add multiple products.</p>
+          <div id="product-list-container"></div>
+          <button type="button" id="add-product-btn" class="button button-secondary">
+            <i class="fas fa-plus"></i>
+            <span>Add Another Product</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Step 2: Shipment Details Section -->
+      <div class="form-step" id="step-2" data-step="2" style="display: none;">
+        <div class="form-section">
+          <h3 class="section-title">
+            <i class="fas fa-info-circle"></i>
+            Shipment Information
+          </h3>
+          <p class="section-description">Provide the essential details for this shipment.</p>
+          <div class="form-row">
+            <div class="form-field">
+              <label>Shipment Type: <span class="required">*</span></label>
+              <select name="type" required>
+                <option value="">Select type</option>
+                <option value="LC">LC (Letter of Credit)</option>
+                <option value="DP">DP (Documents against Payment)</option>
+              </select>
+              <small class="field-hint">Choose the payment method for this shipment</small>
+            </div>
+            <div class="form-field">
+              <label>Mode of Transport: <span class="required">*</span></label>
+              <select name="mode_of_transport" id="mode_of_transport" required>
+                <option value="">Select mode</option>
+                <option value="sea">Sea Freight</option>
+                <option value="air">Air Freight</option>
+                <option value="land">Land Transport</option>
+                <option value="rail">Rail Transport</option>
+                <option value="multimodal">Multimodal Transport</option>
+              </select>
+              <small class="field-hint">How will the products be transported?</small>
+            </div>
+          </div>
+          
+          <!-- NEW: Inco-term and FOB Charges -->
+          <div class="form-row">
+            <div class="form-field">
+              <label>Inco-term: <span class="required">*</span></label>
+              <select name="inco_term" id="inco_term" required disabled>
+                <option value="">Select mode of transport first</option>
+              </select>
+              <small class="field-hint" id="incoterm-hint">Select mode of transport to see available inco-terms</small>
+            </div>
+            <div class="form-field" id="freight-charges-field" style="display: none;">
+              <label>FOB Charges (USD): <span class="required">*</span></label>
+              <input type="number" name="freight_charges" id="freight_charges" step="0.01" min="0" placeholder="Enter FOB charges" />
+              <small class="field-hint">Required for FOB inco-term</small>
+            </div>
+          </div>
+          
+          <div class="form-field">
+            <label>Payment Term: <span class="required">*</span></label>
+            <select name="payment_term_id" required>
+              <option value="">Loading payment terms...</option>
+            </select>
+            <small class="field-hint">Select the agreed payment terms</small>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Step 3: Review Section -->
+      <div class="form-step" id="step-3" data-step="3" style="display: none;">
+        <div class="form-section">
+          <h3 class="section-title">
+            <i class="fas fa-clipboard-check"></i>
+            Review Your Shipment
+          </h3>
+          <p class="section-description">Please review all information before creating the shipment.</p>
+          
+          <div class="review-container">
+            <!-- Products Review -->
+            <div class="review-section">
+              <div class="review-section-header">
+                <i class="fas fa-box"></i>
+                <h4>Products</h4>
+                <button type="button" class="edit-section-btn" data-goto-step="1">
+                  <i class="fas fa-edit"></i>
+                  <span>Edit</span>
+                </button>
+              </div>
+              <div class="review-section-content" id="review-products">
+                <!-- Products will be dynamically inserted here -->
+              </div>
+            </div>
+            
+            <!-- Shipment Details Review -->
+            <div class="review-section">
+              <div class="review-section-header">
+                <i class="fas fa-info-circle"></i>
+                <h4>Shipment Details</h4>
+                <button type="button" class="edit-section-btn" data-goto-step="2">
+                  <i class="fas fa-edit"></i>
+                  <span>Edit</span>
+                </button>
+              </div>
+              <div class="review-section-content" id="review-details">
+                <!-- Details will be dynamically inserted here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Navigation Buttons -->
+      <div class="wizard-navigation">
+        <button type="button" class="button button-secondary" id="wizard-cancel-btn">
+          <i class="fas fa-times"></i>
+          <span>Cancel</span>
+        </button>
+        <div class="wizard-nav-right">
+          <button type="button" class="button button-secondary" id="wizard-back-btn" style="display: none;">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button type="button" class="button" id="wizard-next-btn">
+            <span>Next</span>
+            <i class="fas fa-arrow-right"></i>
+          </button>
+          <button type="submit" class="button" id="wizard-submit-btn" style="display: none;">
+            <i class="fas fa-check"></i>
+            <span>Create Shipment</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<div id="add-commodity-modal" class="modal" style="display: none;">
+  <div class="modal-content modal-small">
+    <span class="close-button" id="close-add-commodity-modal-btn">&times;</span>
+    <h2><i class="fas fa-plus-circle"></i> Add New Commodity</h2>
+    <div id="add-commodity-message"></div>
+    <form id="add-commodity-form">
+      <div class="form-field">
+        <label for="new_commodity_name">Commodity Name: <span class="required">*</span></label>
+        <input type="text" id="new_commodity_name" name="new_commodity_name" required placeholder="e.g., Wheat, Cotton, Rice">
+      </div>
+      <div class="form-actions">
+        <button type="button" class="button button-secondary" onclick="document.getElementById('close-add-commodity-modal-btn').click()">
+          <i class="fas fa-times"></i>
+          <span>Cancel</span>
+        </button>
+        <button type="submit" class="button">
+          <i class="fas fa-save"></i>
+          <span>Save Commodity</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<script type="module" src="js/admin-dashboard.js?v=2.1"></script>
+</body>
+</html>

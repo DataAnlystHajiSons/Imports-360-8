@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Imports 360 - Documents</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+    const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+    // Make supabase globally available
+    window.supabase = supabase;
+
+    // Initialize the page when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeSidebar();
+      loadDimensions();
+      setupEventListeners();
+    });
+
+    // Setup event listeners for dropdowns
+    function setupEventListeners() {
+      const dimensionSelect = document.getElementById('dimension-select');
+      const entitySelect = document.getElementById('entity-select');
+      
+      if (dimensionSelect) {
+        dimensionSelect.addEventListener('change', loadEntities);
+      }
+      
+      if (entitySelect) {
+        entitySelect.addEventListener('change', loadDocuments);
+      }
+    }
+
+    // Sidebar toggle functionality
+    function initializeSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      const toggleButton = document.querySelector('.sidebar-toggle');
+      const mainContent = document.querySelector('.main-content');
+      
+      if (toggleButton) {
+        toggleButton.addEventListener('click', function() {
+          sidebar?.classList.toggle('collapsed');
+          mainContent?.classList.toggle('sidebar-collapsed');
+        });
+      }
+
+      // Handle submenu toggles
+      document.querySelectorAll('.has-submenu').forEach(item => {
+        item.addEventListener('click', function(e) {
+          if (e.target.closest('.nav-link') === this.querySelector('.nav-link')) {
+            e.preventDefault();
+            this.classList.toggle('open');
+          }
+        });
+      });
+    }
+
+    async function loadDimensions() {
+      const dimensionSelect = document.getElementById('dimension-select');
+      if (!dimensionSelect) {
+        console.error('Dimension select element not found');
+        return;
+      }
+      
+      dimensionSelect.innerHTML = '<option value="">Select Dimension</option>';
+      const dimensions = ['Supplier', 'Shipment', 'Bank', 'Clearing Agent'];
+      dimensions.forEach(d => {
+        dimensionSelect.innerHTML += `<option value="${d.toLowerCase().replace(' ', '_')}">${d}</option>`;
+      });
+      
+      console.log('✅ Dimensions loaded successfully');
+    }
+
+    async function loadEntities() {
+      const dimension = document.getElementById('dimension-select').value;
+      const entitySelect = document.getElementById('entity-select');
+      
+      if (!entitySelect) {
+        console.error('Entity select element not found');
+        return;
+      }
+      
+      entitySelect.innerHTML = '<option value="">Select Entity</option>';
+      entitySelect.disabled = true;
+
+      if (!dimension) {
+        console.log('No dimension selected');
+        return;
+      }
+
+      console.log('🔄 Loading entities for dimension:', dimension);
+
+      let tableName, selectColumns;
+      switch (dimension) {
+        case 'supplier':
+          tableName = 'supplier';
+          selectColumns = 'id, name';
+          break;
+        case 'shipment':
+          tableName = 'shipment';
+          selectColumns = 'id, reference_code';
+          break;
+        case 'bank':
+          tableName = 'bank';
+          selectColumns = 'id, name';
+          break;
+        case 'clearing_agent':
+          tableName = 'clearing_agent';
+          selectColumns = 'id, name';
+          break;
+        default:
+          console.error('Unknown dimension:', dimension);
+          return;
+      }
+
+      try {
+        const { data, error } = await supabase.from(tableName).select(selectColumns);
+        if (error) {
+          console.error(`Error loading ${dimension}s:`, error);
+          entitySelect.innerHTML = '<option value="">Error loading data</option>';
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          entitySelect.innerHTML = '<option value="">No data available</option>';
+          console.log(`No ${dimension}s found`);
+          return;
+        }
+
+        data.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item.id;
+          option.textContent = item.name || item.reference_code;
+          entitySelect.appendChild(option);
+        });
+        
+        entitySelect.disabled = false;
+        console.log(`✅ Loaded ${data.length} ${dimension}s`);
+      } catch (err) {
+        console.error(`Unexpected error loading ${dimension}s:`, err);
+        entitySelect.innerHTML = '<option value="">Error occurred</option>';
+      }
+    }
+
+    async function loadDocuments() {
+      const dimension = document.getElementById('dimension-select').value;
+      const entityId = document.getElementById('entity-select').value;
+      const documentsTableBody = document.getElementById('documents-table-body');
+      documentsTableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+
+      if (!dimension || !entityId) {
+        documentsTableBody.innerHTML = '<tr><td colspan="5">Please select a dimension and entity.</td></tr>';
+        return;
+      }
+
+      console.log('🔍 Loading documents for:', { dimension, entityId });
+
+      try {
+        console.log('📊 Attempting to load documents for:', { dimension, entityId });
+        
+        let data = [];
+        let error = null;
+        
+        if (dimension === 'shipment') {
+          // Direct query for shipment documents
+          const result = await supabase
+            .from('document')
+            .select(`
+              *,
+              shipment!inner(reference_code)
+            `)
+            .eq('shipment_id', entityId);
+          
+          data = result.data?.map(doc => ({
+            ...doc,
+            shipment_reference: doc.shipment?.reference_code,
+            entity_name: doc.shipment?.reference_code
+          })) || [];
+          error = result.error;
+          
+        } else if (dimension === 'supplier') {
+          // Query documents for shipments related to this supplier
+          const result = await supabase
+            .from('document')
+            .select(`
+              *,
+              shipment!inner(
+                reference_code,
+                shipment_products!inner(
+                  product_variety!inner(
+                    supplier!inner(name)
+                  )
+                )
+              )
+            `)
+            .eq('shipment.shipment_products.product_variety.supplier.id', entityId);
+            
+          data = result.data?.map(doc => ({
+            ...doc,
+            shipment_reference: doc.shipment?.reference_code,
+            entity_name: doc.shipment?.shipment_products?.[0]?.product_variety?.supplier?.name
+          })) || [];
+          error = result.error;
+          
+        } else if (dimension === 'bank') {
+          // Query documents for shipments with LC from this bank
+          const result = await supabase
+            .from('document')
+            .select(`
+              *,
+              shipment!inner(
+                reference_code,
+                letter_of_credit!inner(
+                  bank!inner(name)
+                )
+              )
+            `)
+            .eq('shipment.letter_of_credit.bank.id', entityId);
+            
+          data = result.data?.map(doc => ({
+            ...doc,
+            shipment_reference: doc.shipment?.reference_code,
+            entity_name: doc.shipment?.letter_of_credit?.bank?.name
+          })) || [];
+          error = result.error;
+          
+        } else if (dimension === 'clearing_agent') {
+          // Query documents for shipments under this clearing agent
+          const result = await supabase
+            .from('document')
+            .select(`
+              *,
+              shipment!inner(
+                reference_code,
+                under_clearing_agent!inner(
+                  clearing_agent!inner(name)
+                )
+              )
+            `)
+            .eq('shipment.under_clearing_agent.clearing_agent.id', entityId);
+            
+          data = result.data?.map(doc => ({
+            ...doc,
+            shipment_reference: doc.shipment?.reference_code,
+            entity_name: doc.shipment?.under_clearing_agent?.clearing_agent?.name
+          })) || [];
+          error = result.error;
+        }
+
+        if (error) {
+          console.error('❌ Database Error:', error);
+          documentsTableBody.innerHTML = `<tr><td colspan="5">Database Error: ${error.message}</td></tr>`;
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          console.log('⚠️ No documents found for:', { dimension, entityId });
+          let noDataMessage = `No documents found for the selected ${dimension}.`;
+          
+          if (dimension === 'supplier') {
+            noDataMessage += '<br><small>This supplier may not have any shipments with documents, or the relationships are not properly set up in shipment_products → product_variety tables.</small>';
+          } else if (dimension === 'bank') {
+            noDataMessage += '<br><small>This bank may not have any letters of credit with associated documents.</small>';
+          } else if (dimension === 'clearing_agent') {
+            noDataMessage += '<br><small>This clearing agent may not have any shipments under clearing with documents.</small>';
+          }
+          
+          documentsTableBody.innerHTML = `<tr><td colspan="5">${noDataMessage}</td></tr>`;
+          return;
+        }
+
+        console.log('📄 Raw documents loaded:', data.length);
+        console.log('📊 Sample document:', data[0]);
+
+        // Group documents by shipment_id and doc_type, then get the latest one for each group
+        const latestDocuments = {};
+        data.forEach(doc => {
+          const key = `${doc.shipment_id}_${doc.doc_type}`;
+          if (!latestDocuments[key] || new Date(doc.uploaded_at) > new Date(latestDocuments[key].uploaded_at)) {
+            latestDocuments[key] = doc;
+          }
+        });
+
+        const filteredData = Object.values(latestDocuments);
+        console.log('📄 Latest documents only:', filteredData.length);
+
+        // Store documents globally for modal access
+        window.currentDocuments = filteredData;
+
+        let html = '';
+        filteredData
+          .sort((a, b) => new Date(b.uploaded_at) - new Date(a.uploaded_at)) // Sort by newest first
+          .forEach(doc => {
+            const fileName = doc.file_url ? doc.file_url.split('/').pop() : 'Document';
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
+            const isPdf = fileExtension === 'pdf';
+            
+            html += `<tr>
+              <td><strong>${doc.shipment_reference || 'N/A'}</strong></td>
+              <td>
+                <div style="display: flex; align-items: center;">
+                  <i class="fas fa-${isImage ? 'image' : isPdf ? 'file-pdf' : 'file'}" 
+                     style="color: ${isImage ? '#28a745' : isPdf ? '#dc3545' : '#6c757d'}; margin-right: 8px;"></i>
+                  ${doc.doc_type}
+                </div>
+              </td>
+              <td>${new Date(doc.uploaded_at).toLocaleString()}</td>
+              <td>
+                <div style="display: flex; gap: 5px;">
+                  <button onclick="viewDocument('${doc.id}')" class="button" style="
+                    background: var(--accent-color); 
+                    color: white; 
+                    padding: 6px 12px; 
+                    font-size: 12px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                  ">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                  <button onclick="downloadDocument('${doc.file_url}', '${fileName}')" class="button" style="
+                    background: var(--success-color); 
+                    color: white; 
+                    padding: 6px 12px; 
+                    font-size: 12px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                  ">
+                    <i class="fas fa-download"></i> Download
+                  </button>
+                </div>
+              </td>
+            </tr>`;
+          });
+        documentsTableBody.innerHTML = html;
+
+        console.log(`✅ Successfully loaded ${filteredData.length} documents for ${dimension}: ${entityId}`);
+
+      } catch (error) {
+        console.error('💥 Error loading documents:', error);
+        documentsTableBody.innerHTML = `<tr><td colspan="5">Unexpected error: ${error.message}. Please check console for details and ensure database functions are created.</td></tr>`;
+      }
+    }
+
+    // Function to view document in modal
+    function viewDocument(documentId) {
+      console.log('👁️ Viewing document:', documentId);
+      
+      // Ensure DOM is ready
+      if (document.readyState !== 'complete') {
+        console.warn('⚠️ DOM not fully loaded, waiting...');
+        setTimeout(() => viewDocument(documentId), 100);
+        return;
+      }
+      
+      const documentData = window.currentDocuments?.find(doc => doc.id === documentId);
+      if (!documentData) {
+        console.error('❌ Document not found with ID:', documentId);
+        console.log('Available documents:', window.currentDocuments);
+        alert('Document not found');
+        return;
+      }
+
+      console.log('✅ Found document:', documentData);
+
+      const fileName = documentData.file_url ? documentData.file_url.split('/').pop() : 'Document';
+      const fileExtension = fileName.split('.').pop().toLowerCase();
+      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
+      const isPdf = fileExtension === 'pdf';
+
+      console.log('📄 File details:', { fileName, fileExtension, isImage, isPdf });
+
+      if (isImage || isPdf) {
+        // Create viewer modal for images and PDFs
+        const viewerHtml = `
+          <div id="document-viewer-modal" class="modal-overlay" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+          ">
+            <div style="
+              position: relative;
+              max-width: 95%;
+              max-height: 95%;
+              background: white;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            ">
+              <div style="
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                z-index: 1001;
+                display: flex;
+                gap: 10px;
+              ">
+                <button onclick="downloadDocument('${documentData.file_url}', '${fileName}')" style="
+                  background: var(--success-color, #28a745);
+                  color: white;
+                  border: none;
+                  border-radius: 4px;
+                  padding: 8px 12px;
+                  font-size: 12px;
+                  cursor: pointer;
+                ">
+                  <i class="fas fa-download"></i> Download
+                </button>
+                <button onclick="closeDocumentViewer()" style="
+                  background: rgba(0,0,0,0.7);
+                  color: white;
+                  border: none;
+                  border-radius: 4px;
+                  padding: 8px 12px;
+                  font-size: 16px;
+                  cursor: pointer;
+                ">&times;</button>
+              </div>
+              
+              <div style="padding: 15px; padding-top: 60px;">
+                <div style="text-align: center; margin-bottom: 15px;">
+                  <h3 style="margin: 0; color: var(--text-primary-color, #333);">${documentData.doc_type}</h3>
+                  <p style="margin: 5px 0; color: #666; font-size: 12px;">${fileName}</p>
+                  <p style="margin: 0; color: #999; font-size: 11px;">
+                    Uploaded: ${new Date(documentData.uploaded_at).toLocaleString()}
+                  </p>
+                </div>
+                
+                ${isImage ? 
+                  `<img src="${documentData.file_url}" style="
+                    max-width: 100%; 
+                    max-height: 70vh; 
+                    display: block; 
+                    margin: 0 auto;
+                    border-radius: 4px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                  " alt="${fileName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                  <div style="display: none; text-align: center; padding: 20px; color: #666;">
+                    <i class="fas fa-exclamation-triangle"></i><br>
+                    Unable to load image<br>
+                    <a href="${documentData.file_url}" target="_blank" style="color: var(--accent-color, #007acc);">Open in new tab</a>
+                  </div>` :
+                  `<iframe src="${documentData.file_url}" style="
+                    width: 85vw; 
+                    height: 70vh; 
+                    border: none;
+                    border-radius: 4px;
+                  " onerror="console.error('Failed to load PDF')"></iframe>`
+                }
+              </div>
+            </div>
+          </div>
+        `;
+        
+        try {
+          // Use a more robust way to add the modal
+          const modalElement = document.createElement('div');
+          modalElement.innerHTML = viewerHtml;
+          document.body.appendChild(modalElement.firstElementChild);
+          
+          console.log('✅ Modal added to DOM');
+          
+          // Add event listeners after a brief delay to ensure DOM is ready
+          setTimeout(() => {
+            const modal = document.getElementById('document-viewer-modal');
+            if (modal) {
+              modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                  closeDocumentViewer();
+                }
+              });
+              
+              // Add keyboard support for closing
+              const keyHandler = function(e) {
+                if (e.key === 'Escape') {
+                  closeDocumentViewer();
+                  document.removeEventListener('keydown', keyHandler);
+                }
+              };
+              document.addEventListener('keydown', keyHandler);
+              
+              console.log('✅ Modal event listeners added');
+            }
+          }, 100);
+          
+        } catch (error) {
+          console.error('❌ Error creating modal:', error);
+          alert('Error creating document viewer. Opening in new tab instead.');
+          window.open(documentData.file_url, '_blank');
+        }
+      } else {
+        // For other file types, open in new tab
+        console.log('🔗 Opening non-image/PDF file in new tab');
+        window.open(documentData.file_url, '_blank');
+      }
+    }
+
+    // Function to close document viewer
+    function closeDocumentViewer() {
+      console.log('🚪 Closing document viewer');
+      const modal = document.getElementById('document-viewer-modal');
+      if (modal) {
+        modal.remove();
+        console.log('✅ Modal removed');
+      } else {
+        console.log('⚠️ Modal not found');
+      }
+    }
+
+    // Function to download document
+    function downloadDocument(fileUrl, fileName) {
+      console.log('💾 Downloading document:', fileName);
+      
+      if (!fileUrl) {
+        alert('File URL not available');
+        return;
+      }
+
+      // Create a temporary link element and trigger download
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Make functions globally available
+    window.viewDocument = viewDocument;
+    window.closeDocumentViewer = closeDocumentViewer;
+    window.downloadDocument = downloadDocument;
+    window.loadDimensions = loadDimensions;
+    window.loadEntities = loadEntities;
+    window.loadDocuments = loadDocuments;
+
+  </script>
+</head>
+<body>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="documents.html" class="nav-link active">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+          </a>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-payments.html" class="nav-link">
+            <i class="fas fa-chart-line icon"></i>
+            <span class="text">Supplier Payments</span>
+          </a>
+        </li>
+
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu open">
+            <li><a href="send-freight-queries.html" class="nav-link"><span class="text">Send Freight Queries</span></a></li>
+            <li><a href="freight-query-response.html" class="nav-link"><span class="text">Freight Query Response</span></a></li>
+            <li><a href="manage-freight-queries.html" class="nav-link"><span class="text">Manage Freight Queries</span></a></li>
+            <li><a href="award-shipment.html" class="nav-link"><span class="text">Award Shipment</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Documents</h1>
+      </div>
+    </header>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Document Query</h2>
+      </div>
+      <div class="panel-body">
+        <div class="filter-pane open">
+          <div class="filter-group">
+            <label for="dimension-select">Dimension</label>
+            <select id="dimension-select"></select>
+          </div>
+          <div class="filter-group">
+            <label for="entity-select">Entity</label>
+            <select id="entity-select" disabled></select>
+          </div>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Shipment</th>
+                <th>Document Type</th>
+                <th>Uploaded At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="documents-table-body">
+              <tr><td colspan="4">Please select a dimension and entity to view documents.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

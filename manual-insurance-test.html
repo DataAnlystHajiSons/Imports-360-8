@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Manual Insurance Test</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; background: #f8fafc; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin: 20px 0; }
+        .code { background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; font-family: monospace; margin: 10px 0; }
+        .success { background: #dcfce7; border-left: 4px solid #16a34a; color: #166534; padding: 15px; border-radius: 6px; }
+        .warning { background: #fef3c7; border-left: 4px solid #f59e0b; color: #92400e; padding: 15px; border-radius: 6px; }
+        button { background: #7c3aed; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin: 5px; }
+        button:hover { background: #6d28d9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Manual Insurance Test & Fix</h1>
+        <p>Use these commands in your shipment tracker console to manually test and fix the rate field issue.</p>
+    </div>
+
+    <div class="container">
+        <h2>🎯 Step 1: Force Set Values After Modal Opens</h2>
+        <p>After opening the insurance modal and clicking Edit, run this:</p>
+        <div class="code">
+// Force set values and trigger calculation
+console.log("🔧 Manual fix: Setting values directly");
+
+// Set the values
+document.getElementById('value').value = 100000;
+document.getElementById('rate').value = 0.5;
+document.getElementById('marine_perc').value = 0.1;
+document.getElementById('war_perc').value = 0.05;
+document.getElementById('asc_1').value = 100;
+document.getElementById('fif_perc').value = 2;
+document.getElementById('sts_perc').value = 1;
+document.getElementById('stamp').value = 50;
+
+// Trigger calculation
+console.log("🚀 Triggering calculation...");
+calculateInsuranceValues();
+
+console.log("✅ Values set and calculation triggered");
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎯 Step 2: Verify Values Before Save</h2>
+        <p>Before clicking Save, verify all values are present:</p>
+        <div class="code">
+// Check all field values
+const fields = ['value', 'rate', 'amount', 'ten_perc', 'total_value', 'grand_total'];
+console.log("🔍 Field values check:");
+fields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    console.log(`${fieldId}: "${field?.value}" (exists: ${!!field})`);
+});
+
+// If rate is empty, set it manually
+if (!document.getElementById('rate').value) {
+    console.log("⚠️ Rate is empty, setting manually");
+    document.getElementById('rate').value = 0.5;
+}
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎯 Step 3: Test Save Function</h2>
+        <p>Now click the Save button and watch the console. You should see:</p>
+        <div class="success">
+            <h3>✅ Expected Success Output:</h3>
+            <ul>
+                <li><code>🆔 Insurance ID check: {hasId: true, ...}</code></li>
+                <li><code>rate: "0.5" (string)</code> ← Should NOT be empty</li>
+                <li><code>🔄 Save strategy: UPDATE</code></li>
+                <li><code>✅ Insurance updated successfully</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎯 Step 4: Permanent Fix Test</h2>
+        <div class="warning">
+            <h3>⚠️ If Manual Method Works:</h3>
+            <p>The issue is that <code>renderInsuranceEdit()</code> is clearing fields. Let's test the auto-trigger fix:</p>
+        </div>
+        
+        <p>After the modal opens, check if auto-calculation triggers:</p>
+        <div class="code">
+// Should see this in console automatically:
+// 🔄 Auto-triggering calculation with existing values
+// 🔄 calculateInsuranceValues called
+// ✅ Calculations received: {amount: 500, ...}
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 Alternative Quick Fix</h2>
+        <p>If the automatic fix doesn't work, here's a manual override:</p>
+        <div class="code">
+// Override the renderInsuranceEdit function temporarily
+const originalRenderInsuranceEdit = renderInsuranceEdit;
+window.renderInsuranceEdit = function() {
+    console.log("🔧 Custom renderInsuranceEdit called");
+    
+    // Call original function
+    originalRenderInsuranceEdit();
+    
+    // Force restore values after a delay
+    setTimeout(() => {
+        console.log("🔧 Restoring values after renderInsuranceEdit");
+        document.getElementById('value').value = 100000;
+        document.getElementById('rate').value = 0.5;
+        calculateInsuranceValues();
+    }, 200);
+};
+
+console.log("✅ Custom override applied - try clicking Edit again");
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Expected Working Flow</h2>
+        <div class="success">
+            <h3>✅ When Everything Works:</h3>
+            <ol>
+                <li><strong>Open Insurance Modal</strong> → Click Edit</li>
+                <li><strong>See auto-calculation trigger</strong> → Fields populate automatically</li>
+                <li><strong>Or manually set values</strong> → Value: 100000, Rate: 0.5</li>
+                <li><strong>Calculated fields fill</strong> → Amount: 500, Total: 550, etc.</li>
+                <li><strong>Click Save</strong> → All values saved to database</li>
+                <li><strong>Success!</strong> → Rate column in database shows 0.5</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        console.log("ℹ️ Manual Insurance Test page loaded");
+        console.log("📋 Copy the code blocks above and paste them in your shipment tracker console");
+    </script>
+</body>
+</html>

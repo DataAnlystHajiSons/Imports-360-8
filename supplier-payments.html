@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Supplier Payments Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/supplier-payments.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader"></div>
+  </div>
+
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="admin-dashboard.html" class="nav-link"><i class="fas fa-home icon"></i><span class="text">Dashboard</span></a></li>
+        <li><a href="documents.html" class="nav-link"><i class="fas fa-file-alt icon"></i><span class="text">Documents</span></a></li>
+        <li><a href="forecast.html" class="nav-link"><i class="fas fa-bullhorn icon"></i><span class="text">Forecasts</span></a></li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu"><i class="fas fa-box icon"></i><span class="text">Shipments</span><span class="arrow"><i class="fas fa-chevron-down"></i></span></a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li><a href="product-details.html" class="nav-link"><i class="fas fa-tags icon"></i><span class="text">Products</span></a></li>
+        <li><a href="supplier-details.html" class="nav-link"><i class="fas fa-truck icon"></i><span class="text">Suppliers</span></a></li>
+        <li><a href="supplier-shipment-responses.html" class="nav-link"><i class="fas fa-inbox icon"></i><span class="text">Supplier Responses</span></a></li>
+        <li><a href="bank-details.html" class="nav-link"><i class="fas fa-university icon"></i><span class="text">Banks</span></a></li>
+        <li><a href="supplier-payments.html" class="nav-link active"><i class="fas fa-chart-line icon"></i><span class="text">Supplier Payments</span></a></li>
+        <li><a href="clearing-agent-details.html" class="nav-link"><i class="fas fa-user-shield icon"></i><span class="text">Clearing Agents</span></a></li>
+        <li><a href="warehouse-details.html" class="nav-link"><i class="fas fa-warehouse icon"></i><span class="text">Warehouses</span></a></li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li><a href="#" class="nav-link has-submenu"><i class="fas fa-truck-ramp-box icon"></i><span class="text">Freight</span><span class="arrow"><i class="fas fa-chevron-down"></i></span></a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <h1>Supplier Payments Dashboard</h1>
+      </div>
+      <a href="admin-payment-terms.html" class="btn button-secondary manage-payment-terms-btn">
+        <i class="fas fa-cog"></i>
+        <span>Manage Payment Terms</span>
+      </a>
+    </header>
+    
+    <div class="dashboard-grid">
+        <div class="stat-card total-payable">
+          <div class="icon-container"><i class="fas fa-file-invoice-dollar"></i></div>
+          <div class="stat-info">
+            <h3>Total Payable</h3>
+            <p id="total-payable">Rs 0</p>
+          </div>
+          <canvas id="payable-spark-chart" class="spark-chart"></canvas>
+        </div>
+        <div class="stat-card total-overdue">
+          <div class="icon-container"><i class="fas fa-exclamation-triangle"></i></div>
+          <div class="stat-info">
+            <h3>Total Overdue</h3>
+            <p id="total-overdue">Rs 0</p>
+          </div>
+          <canvas id="overdue-spark-chart" class="spark-chart"></canvas>
+        </div>
+        <div class="stat-card payable-this-month">
+          <div class="icon-container"><i class="fas fa-calendar-alt"></i></div>
+          <div class="stat-info">
+            <h3>Payable This Month</h3>
+            <p id="payable-this-month">Rs 0</p>
+          </div>
+          <canvas id="payable-month-spark-chart" class="spark-chart"></canvas>
+        </div>
+        <div class="stat-card payments-made">
+          <div class="icon-container"><i class="fas fa-check-circle"></i></div>
+          <div class="stat-info">
+            <h3>Payments Made (YTD)</h3>
+            <p id="payments-made-ytd">Rs 0</p>
+          </div>
+          <canvas id="payments-made-spark-chart" class="spark-chart"></canvas>
+        </div>
+
+        <div class="panel chart-panel-1">
+            <div class="panel-header"><h2>Payments by Status</h2></div>
+            <div class="panel-body"><canvas id="status-chart"></canvas></div>
+        </div>
+        <div class="panel chart-panel-2">
+            <div class="panel-header"><h2>Upcoming & Overdue Payments</h2></div>
+            <div class="panel-body" id="upcoming-payments-list">
+                <!-- Upcoming payments list will be rendered here by JS -->
+            </div>
+        </div>
+
+        <div class="panel table-panel">
+            <div class="panel-header">
+                <h2>All Payments</h2>
+            </div>
+            <div class="panel-body">
+                <div class="table-controls">
+                    <div class="search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-bar" placeholder="Search by Supplier or Shipment...">
+                    </div>
+                    <select id="status-filter">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="partially_paid">Partially Paid</option>
+                        <option value="paid">Paid</option>
+                        <option value="overdue">Overdue</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table id="payments-table">
+                      <thead>
+                        <tr>
+                          <th data-sort="supplier.name">Supplier <i class="fas fa-sort"></i></th>
+                          <th data-sort="shipment.reference_code">Shipment Ref <i class="fas fa-sort"></i></th>
+                          <th data-sort="shipment.letter_of_credit.bank.name">Bank <i class="fas fa-sort"></i></th>
+                          <th data-sort="total_amount">Total Amount <i class="fas fa-sort"></i></th>
+                          <th data-sort="amount_paid">Amount Paid <i class="fas fa-sort"></i></th>
+                          <th data-sort="amount_remaining">Amount Remaining <i class="fas fa-sort"></i></th>
+                          <th data-sort="dollar_rate">Dollar Rate <i class="fas fa-sort"></i></th>
+                          <th data-sort="due_date">Due Date <i class="fas fa-sort"></i></th>
+                          <th data-sort="status">Status <i class="fas fa-sort"></i></th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <!-- Rows will be inserted by JS -->
+                      </tbody>
+                    </table>
+                </div>
+                <div id="pagination-controls" class="pagination-controls"></div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar interaction logic
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.querySelector('.sidebar');
+      const sidebarToggle = document.querySelector('.sidebar-toggle');
+      const hasSubmenus = document.querySelectorAll('.has-submenu');
+
+      if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+          sidebar.classList.toggle('collapsed');
+        });
+      }
+
+      hasSubmenus.forEach(item => {
+        item.addEventListener('click', (e) => {
+          const submenu = item.nextElementSibling;
+          if (submenu && submenu.classList.contains('submenu')) {
+            e.preventDefault();
+            submenu.classList.toggle('open');
+            item.classList.toggle('open');
+          }
+        });
+      });
+    });
+  </script>
+  <script type="module" src="js/supplier-payments.js"></script>
+
+  <div id="payment-log-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <span class="modal-close" id="payment-log-modal-close">&times;</span>
+      <h3 id="payment-log-title">Payment Log</h3>
+      <div id="payment-summary" class="payment-summary">
+        <!-- Summary will be rendered here by JS -->
+      </div>
+      
+      <div class="payment-log-grid">
+        <div class="transaction-list-container">
+          <h4>Transaction History</h4>
+          <div id="transaction-list">
+            <!-- Transactions will be rendered here -->
+          </div>
+        </div>
+        <div class="transaction-form-container">
+          <h4>Log New Payment</h4>
+          <input type="hidden" id="current-supplier-payment-id">
+          <div class="form-item">
+            <label for="payment-amount">Amount Paid</label>
+            <div id="quick-pay-buttons" class="quick-pay-buttons">
+              <!-- Quick pay buttons will be rendered here by JS -->
+            </div>
+            <input type="number" id="payment-amount" placeholder="e.g., 10000.00">
+          </div>
+          <div class="form-item">
+            <label for="payment-date">Payment Date</label>
+            <input type="date" id="payment-date">
+          </div>
+          <div class="form-item">
+            <label for="payment-dollar-rate">Dollar Rate (PKR per USD)</label>
+            <input type="number" id="payment-dollar-rate" placeholder="e.g., 278.50" step="0.01">
+          </div>
+          <div class="form-item">
+            <label for="payment-method">Payment Method</label>
+            <input type="text" id="payment-method" placeholder="e.g., Bank Transfer">
+          </div>
+          <div class="form-item">
+            <label for="payment-reference">Reference / Transaction ID</label>
+            <input type="text" id="payment-reference" placeholder="e.g., TRF123456">
+          </div>
+          <div class="form-item">
+            <label for="payment-attachment">Proof of Payment (PDF, PNG, JPG)</label>
+            <input type="file" id="payment-attachment" accept=".pdf,.png,.jpg,.jpeg">
+          </div>
+          <div class="form-item">
+            <label for="payment-notes">Notes</label>
+            <textarea id="payment-notes" rows="3"></textarea>
+          </div>
+          <button id="save-transaction-btn" class="btn">Save Transaction</button>
+          <div id="transaction-message" class="message" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shipment Documents - Imports 360</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .documents-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .documents-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .documents-header h1 {
+      margin: 0 0 10px 0;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .documents-header p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+
+    .back-button {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 15px;
+      transition: all 0.3s ease;
+    }
+
+    .back-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateX(-5px);
+    }
+
+    .stats-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .stat-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .stat-info h3 {
+      margin: 0;
+      font-size: 0.875rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .stat-info p {
+      margin: 5px 0 0 0;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .documents-grid {
+      display: grid;
+      gap: 25px;
+    }
+
+    .document-category {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .category-header {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      padding: 20px 25px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .category-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0;
+      font-size: 1.25rem;
+      color: #1e293b;
+    }
+
+    .category-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: white;
+    }
+
+    .document-count {
+      background: #667eea;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .documents-list {
+      padding: 0;
+    }
+
+    .document-item {
+      padding: 20px 25px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.3s ease;
+    }
+
+    .document-item:hover {
+      background: #f8fafc;
+    }
+
+    .document-item:last-child {
+      border-bottom: none;
+    }
+
+    .document-info {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .document-type-badge {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .document-details {
+      flex: 1;
+    }
+
+    .document-name {
+      font-weight: 600;
+      color: #1e293b;
+      margin: 0 0 5px 0;
+      font-size: 1rem;
+    }
+
+    .document-meta {
+      color: #64748b;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .document-meta span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .document-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-view {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-view:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-download {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-download:hover {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #94a3b8;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      margin: 0 0 10px 0;
+      color: #64748b;
+      font-size: 1.25rem;
+    }
+
+    .empty-state p {
+      margin: 0;
+      font-size: 0.9375rem;
+    }
+
+    .loader-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .loader {
+      display: flex;
+      gap: 10px;
+    }
+
+    .loader-dot {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #667eea;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .loader-dot:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+
+    .loader-dot:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+
+    @keyframes bounce {
+      0%, 80%, 100% {
+        transform: scale(0);
+      }
+      40% {
+        transform: scale(1);
+      }
+    }
+
+    .search-filter-bar {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 12px 15px 12px 45px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+    }
+
+    .filter-select {
+      padding: 12px 15px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      background: white;
+      transition: all 0.3s ease;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .document-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 10000;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .document-modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content-wrapper {
+      background: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 1200px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s ease;
+    }
+
+    .modal-header {
+      padding: 20px 25px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-radius: 12px 12px 0 0;
+    }
+
+    .modal-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0;
+      font-size: 1.25rem;
+      color: #1e293b;
+    }
+
+    .modal-title i {
+      color: #667eea;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      color: #64748b;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .modal-close:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: #1e293b;
+    }
+
+    .modal-body {
+      flex: 1;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+    }
+
+    .modal-body iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .modal-body img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .modal-loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      color: #64748b;
+    }
+
+    .modal-loader .loader {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-loader .loader-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #667eea;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .modal-loader .loader-dot:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+
+    .modal-loader .loader-dot:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+
+    .modal-footer {
+      padding: 15px 25px;
+      border-top: 2px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      background: white;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .modal-action-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .modal-download-btn {
+      background: #10b981;
+      color: white;
+    }
+
+    .modal-download-btn:hover {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .modal-open-btn {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .modal-open-btn:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .error-message {
+      text-align: center;
+      padding: 40px;
+      color: #64748b;
+    }
+
+    .error-message i {
+      font-size: 3rem;
+      color: #ef4444;
+      margin-bottom: 15px;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .documents-header h1 {
+        font-size: 1.5rem;
+      }
+
+      .stat-box {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .document-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+
+      .document-actions {
+        width: 100%;
+      }
+
+      .action-btn {
+        flex: 1;
+      }
+
+      .modal-content-wrapper {
+        width: 95%;
+        height: 95vh;
+      }
+
+      .modal-footer {
+        flex-direction: column;
+      }
+
+      .modal-action-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+  </div>
+
+  <div class="documents-container">
+    <div class="documents-header">
+      <button class="back-button" onclick="window.history.back()">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+      </button>
+      <h1>
+        <i class="fas fa-folder-open"></i>
+        <span id="shipment-title">Shipment Documents</span>
+      </h1>
+      <p id="shipment-subtitle">All documents related to this shipment</p>
+    </div>
+
+    <div class="stats-overview">
+      <div class="stat-box">
+        <div class="stat-icon" style="background: #dbeafe; color: #1e40af;">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Total Documents</h3>
+          <p id="total-docs">0</p>
+        </div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-icon" style="background: #dcfce7; color: #166534;">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Uploaded</h3>
+          <p id="uploaded-docs">0</p>
+        </div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-icon" style="background: #fee2e2; color: #991b1b;">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Missing</h3>
+          <p id="missing-docs">0</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-filter-bar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="search-documents" placeholder="Search documents by name or type...">
+      </div>
+      <select class="filter-select" id="category-filter">
+        <option value="">All Categories</option>
+        <option value="general">General Documents</option>
+        <option value="stage">Stage Documents</option>
+        <option value="financial">Financial Documents</option>
+        <option value="logistics">Logistics Documents</option>
+      </select>
+    </div>
+
+    <div class="documents-grid" id="documents-grid">
+      <!-- Documents will be dynamically loaded here -->
+    </div>
+  </div>
+
+  <!-- Document Preview Modal -->
+  <div class="document-modal" id="document-modal">
+    <div class="modal-content-wrapper">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-doc-title">
+          <i class="fas fa-file"></i>
+          <span>Document Preview</span>
+        </h2>
+        <button class="modal-close" onclick="closeDocumentModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <div class="modal-loader">
+          <div class="loader">
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+          </div>
+          <p>Loading document...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-action-btn modal-download-btn" id="modal-download-btn">
+          <i class="fas fa-download"></i>
+          Download
+        </button>
+        <button class="modal-action-btn modal-open-btn" id="modal-open-btn">
+          <i class="fas fa-external-link-alt"></i>
+          Open in New Tab
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+    const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const shipmentId = urlParams.get('id');
+
+    if (!shipmentId) {
+      alert('No shipment ID provided');
+      window.location.href = 'admin-dashboard.html';
+    }
+
+    let allDocuments = [];
+
+    // Document categories configuration
+    const documentCategories = {
+      'Stage Documents': {
+        icon: 'fa-list-check',
+        color: '#3b82f6',
+        documents: []
+      },
+      'Financial Documents': {
+        icon: 'fa-file-invoice-dollar',
+        color: '#10b981',
+        documents: []
+      },
+      'Logistics Documents': {
+        icon: 'fa-truck',
+        color: '#f59e0b',
+        documents: []
+      },
+      'General Documents': {
+        icon: 'fa-folder',
+        color: '#8b5cf6',
+        documents: []
+      }
+    };
+
+    let shipmentInfo = null;
+
+    async function loadShipmentInfo() {
+      const { data, error } = await supabase
+        .from('shipment')
+        .select('reference_code, mode_of_transport, inco_term, shipment_products(product_variety(product_name, variety_name))')
+        .eq('id', shipmentId)
+        .single();
+
+      if (data) {
+        shipmentInfo = data;
+        document.getElementById('shipment-title').textContent = `Documents - ${data.reference_code}`;
+        const products = data.shipment_products.map(sp => 
+          `${sp.product_variety.product_name} - ${sp.product_variety.variety_name}`
+        ).join(', ');
+        const modeInfo = data.mode_of_transport ? ` | ${data.mode_of_transport.toUpperCase()}` : '';
+        const incotermInfo = data.inco_term ? ` • ${data.inco_term}` : '';
+        document.getElementById('shipment-subtitle').textContent = (products || 'All documents related to this shipment') + modeInfo + incotermInfo;
+      }
+    }
+
+    async function loadAllDocuments() {
+      const documents = [];
+
+      // 1. Centralized Document Management System
+      const { data: generalDocs } = await supabase
+        .from('document')
+        .select('*')
+        .eq('shipment_id', shipmentId)
+        .eq('status', 'active');
+
+      if (generalDocs) {
+        generalDocs.forEach(doc => {
+          // Determine category based on doc_type
+          let category = 'General Documents';
+          let badgeColor = '#8b5cf6';
+          
+          // Categorize documents intelligently
+          const docTypeLower = (doc.doc_type || '').toLowerCase();
+          if (docTypeLower.includes('invoice') || docTypeLower.includes('payment') || 
+              docTypeLower.includes('lc') || docTypeLower.includes('bank')) {
+            category = 'Financial Documents';
+            badgeColor = '#10b981';
+          } else if (docTypeLower.includes('freight') || docTypeLower.includes('shipping') || 
+                     docTypeLower.includes('transport') || docTypeLower.includes('clearing')) {
+            category = 'Logistics Documents';
+            badgeColor = '#f59e0b';
+          } else if (docTypeLower.includes('proforma') || docTypeLower.includes('po') || 
+                     docTypeLower.includes('ip') || docTypeLower.includes('verification')) {
+            category = 'Stage Documents';
+            badgeColor = '#3b82f6';
+          }
+
+          documents.push({
+            category: category,
+            name: doc.doc_type ? doc.doc_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Document',
+            type: doc.file_name || doc.doc_type || 'General',
+            url: doc.file_url,
+            uploadedAt: doc.uploaded_at,
+            uploadedBy: 'User',
+            badge: doc.doc_type ? doc.doc_type.substring(0, 8).toUpperCase() : 'DOC',
+            badgeColor: badgeColor,
+            metadata: doc.notes
+          });
+        });
+      }
+
+      // 2. Proforma Invoice
+      const { data: proforma } = await supabase
+        .from('proforma_invoice')
+        .select('*')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+      if (proforma?.file_url) {
+        documents.push({
+          category: 'Stage Documents',
+          name: 'Proforma Invoice',
+          type: `No. ${proforma.proforma_number}`,
+          url: proforma.file_url,
+          uploadedAt: proforma.proforma_date,
+          uploadedBy: 'System',
+          badge: 'PROFORMA',
+          badgeColor: '#3b82f6'
+        });
+      }
+
+      // 3. Purchase Order
+      const { data: po } = await supabase
+        .from('purchase_order')
+        .select('*')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+      if (po?.po_file_url) {
+        documents.push({
+          category: 'Stage Documents',
+          name: 'Purchase Order',
+          type: `No. ${po.po_number}`,
+          url: po.po_file_url,
+          uploadedAt: po.po_date,
+          uploadedBy: 'System',
+          badge: 'PO',
+          badgeColor: '#3b82f6'
+        });
+      }
+
+      // 4. Commercial Invoice
+      const { data: invoice } = await supabase
+        .from('commercial_invoice')
+        .select('*')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+      if (invoice?.file_url) {
+        documents.push({
+          category: 'Financial Documents',
+          name: 'Commercial Invoice',
+          type: `No. ${invoice.invoice_number}`,
+          url: invoice.file_url,
+          uploadedAt: invoice.invoice_date,
+          uploadedBy: 'System',
+          badge: 'INVOICE',
+          badgeColor: '#10b981'
+        });
+      }
+
+      // 5. IP Number
+      const { data: ipNumber } = await supabase
+        .from('ip_number')
+        .select('*')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+      if (ipNumber?.file_url) {
+        documents.push({
+          category: 'Stage Documents',
+          name: 'IP Number Document',
+          type: 'IP Number',
+          url: ipNumber.file_url,
+          uploadedAt: ipNumber.issued_date,
+          uploadedBy: 'System',
+          badge: 'IP',
+          badgeColor: '#3b82f6'
+        });
+      }
+
+      // 6. Letter of Credit (merged with LC sharing)
+      const { data: lc } = await supabase
+        .from('letter_of_credit')
+        .select('*, bank(name)')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+      if (lc?.file_url) {
+        documents.push({
+          category: 'Financial Documents',
+          name: 'Letter of Credit',
+          type: `${lc.lc_number} - ${lc.bank?.name || ''}`,
+          url: lc.file_url,
+          uploadedAt: lc.opened_date,
+          uploadedBy: 'System',
+          badge: 'LC',
+          badgeColor: '#10b981',
+          metadata: lc.shared_date ? `Shared with supplier on ${new Date(lc.shared_date).toLocaleDateString()}` : null
+        });
+      }
+
+      // 7. Non-Negotiable Documents
+      const { data: nonNegDocs } = await supabase
+        .from('non_negotiable_docs')
+        .select('*, app_user(full_name)')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+      if (nonNegDocs?.file_url) {
+        documents.push({
+          category: 'Stage Documents',
+          name: 'Non-Negotiable Documents',
+          type: nonNegDocs.status || 'Docs',
+          url: nonNegDocs.file_url,
+          uploadedAt: nonNegDocs.sended_at,
+          uploadedBy: nonNegDocs.app_user?.full_name || 'System',
+          badge: 'NON-NEG',
+          badgeColor: '#f59e0b'
+        });
+      }
+
+      // 8. Original Documents
+      const { data: originalDocs } = await supabase
+        .from('original_docs')
+        .select('*, app_user(full_name)')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+      if (originalDocs?.docs_url) {
+        documents.push({
+          category: 'Stage Documents',
+          name: 'Original Documents',
+          type: originalDocs.status || 'Docs',
+          url: originalDocs.docs_url,
+          uploadedAt: originalDocs.received_at,
+          uploadedBy: originalDocs.app_user?.full_name || 'System',
+          badge: 'ORIGINAL',
+          badgeColor: '#f59e0b'
+        });
+      }
+
+      // 9. Clearing Agent Documents
+      const { data: clearingDocs } = await supabase
+        .from('docs_to_clearing_agent')
+        .select('*')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+      if (clearingDocs?.slip_picture_url) {
+        documents.push({
+          category: 'Logistics Documents',
+          name: 'Clearing Agent Slip',
+          type: clearingDocs.name || 'Slip',
+          url: clearingDocs.slip_picture_url,
+          uploadedAt: clearingDocs.sended_at,
+          uploadedBy: 'System',
+          badge: 'CLEARING',
+          badgeColor: '#f59e0b'
+        });
+      }
+
+      // 10. Bank Charge Documents
+      const { data: bankCharges } = await supabase
+        .from('bank_charges')
+        .select('id')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+      if (bankCharges) {
+        const { data: bankChargeDocs } = await supabase
+          .from('bank_charge_documents')
+          .select('*, app_user(full_name)')
+          .eq('bank_charges_id', bankCharges.id);
+
+        if (bankChargeDocs) {
+          bankChargeDocs.forEach(doc => {
+            documents.push({
+              category: 'Financial Documents',
+              name: doc.file_name || 'Bank Charge Document',
+              type: doc.doc_category || 'Bank Charge',
+              url: doc.file_url,
+              uploadedAt: doc.uploaded_at,
+              uploadedBy: doc.app_user?.full_name || 'System',
+              badge: 'BANK',
+              badgeColor: '#10b981'
+            });
+          });
+        }
+      }
+
+      // 11. Insurance Documents
+      const { data: insurance } = await supabase
+        .from('insurance')
+        .select('id')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+      if (insurance) {
+        const { data: insuranceDocs } = await supabase
+          .from('insurance_documents')
+          .select('*, app_user(full_name)')
+          .eq('insurance_id', insurance.id);
+
+        if (insuranceDocs) {
+          insuranceDocs.forEach(doc => {
+            documents.push({
+              category: 'Financial Documents',
+              name: doc.file_name || 'Insurance Document',
+              type: doc.doc_category || 'Insurance',
+              url: doc.file_url,
+              uploadedAt: doc.uploaded_at,
+              uploadedBy: doc.app_user?.full_name || 'System',
+              badge: 'INSURANCE',
+              badgeColor: '#10b981'
+            });
+          });
+        }
+      }
+
+      // 12. Enlistment Verification
+      const { data: enlistment } = await supabase
+        .from('enlistment_verification')
+        .select('*')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+      if (enlistment?.verification_doc_url) {
+        documents.push({
+          category: 'Stage Documents',
+          name: 'Enlistment Verification',
+          type: 'Verification',
+          url: enlistment.verification_doc_url,
+          uploadedAt: enlistment.verified_at,
+          uploadedBy: 'System',
+          badge: 'VERIFY',
+          badgeColor: '#3b82f6'
+        });
+      }
+
+      allDocuments = documents;
+      return documents;
+    }
+
+    function categorizeDocuments(documents) {
+      // Reset categories
+      Object.keys(documentCategories).forEach(cat => {
+        documentCategories[cat].documents = [];
+      });
+
+      // Categorize
+      documents.forEach(doc => {
+        if (documentCategories[doc.category]) {
+          documentCategories[doc.category].documents.push(doc);
+        }
+      });
+    }
+
+    async function renderDocuments(documents) {
+      categorizeDocuments(documents);
+      const grid = document.getElementById('documents-grid');
+      grid.innerHTML = '';
+
+      let totalDocs = 0;
+      let uploadedDocs = 0;
+
+      Object.keys(documentCategories).forEach(categoryName => {
+        const category = documentCategories[categoryName];
+        if (category.documents.length > 0) {
+          totalDocs += category.documents.length;
+          uploadedDocs += category.documents.length;
+
+          const categoryEl = document.createElement('div');
+          categoryEl.className = 'document-category';
+          
+          categoryEl.innerHTML = `
+            <div class="category-header">
+              <h2 class="category-title">
+                <div class="category-icon" style="background: ${category.color};">
+                  <i class="fas ${category.icon}"></i>
+                </div>
+                ${categoryName}
+              </h2>
+              <span class="document-count">${category.documents.length} ${category.documents.length === 1 ? 'Document' : 'Documents'}</span>
+            </div>
+            <div class="documents-list">
+              ${category.documents.map(doc => `
+                <div class="document-item">
+                  <div class="document-info">
+                    <span class="document-type-badge" style="background: ${doc.badgeColor}20; color: ${doc.badgeColor};">
+                      ${doc.badge}
+                    </span>
+                    <div class="document-details">
+                      <p class="document-name">${doc.name}</p>
+                      <div class="document-meta">
+                        <span><i class="fas fa-tag"></i> ${doc.type}</span>
+                        ${doc.uploadedAt ? `<span><i class="fas fa-calendar"></i> ${new Date(doc.uploadedAt).toLocaleDateString()}</span>` : ''}
+                        <span><i class="fas fa-user"></i> ${doc.uploadedBy}</span>
+                        ${doc.metadata ? `<span><i class="fas fa-info-circle"></i> ${doc.metadata}</span>` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="document-actions">
+                    <button class="action-btn btn-view" onclick="viewDocument('${doc.url}', '${doc.name}')">
+                      <i class="fas fa-eye"></i>
+                      View
+                    </button>
+                    <button class="action-btn btn-download" onclick="downloadDocument('${doc.url}', '${doc.name}')">
+                      <i class="fas fa-download"></i>
+                      Download
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+          
+          grid.appendChild(categoryEl);
+        }
+      });
+
+      if (totalDocs === 0) {
+        grid.innerHTML = `
+          <div class="document-category">
+            <div class="empty-state">
+              <i class="fas fa-folder-open"></i>
+              <h3>No Documents Found</h3>
+              <p>No documents have been uploaded for this shipment yet.</p>
+            </div>
+          </div>
+        `;
+      }
+
+      // Update stats
+      document.getElementById('total-docs').textContent = totalDocs;
+      document.getElementById('uploaded-docs').textContent = uploadedDocs;
+      
+      // Calculate missing required documents
+      if (shipmentInfo) {
+        const { data: requiredDocs } = await supabase
+          .rpc('get_required_documents', { p_shipment_id: shipmentId });
+        
+        if (requiredDocs) {
+          const missingMandatory = requiredDocs.filter(d => d.is_mandatory && !d.is_uploaded).length;
+          document.getElementById('missing-docs').textContent = missingMandatory;
+        } else {
+          document.getElementById('missing-docs').textContent = 0;
+        }
+      } else {
+        document.getElementById('missing-docs').textContent = 0;
+      }
+    }
+
+    window.downloadDocument = function(url, name) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    // View document in modal
+    window.viewDocument = function(url, name) {
+      const modal = document.getElementById('document-modal');
+      const modalBody = document.getElementById('modal-body');
+      const modalTitle = document.getElementById('modal-doc-title').querySelector('span');
+      const downloadBtn = document.getElementById('modal-download-btn');
+      const openBtn = document.getElementById('modal-open-btn');
+
+      // Update modal title
+      modalTitle.textContent = name;
+
+      // Show modal with loader
+      modal.classList.add('show');
+      modalBody.innerHTML = `
+        <div class="modal-loader">
+          <div class="loader">
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+          </div>
+          <p>Loading document...</p>
+        </div>
+      `;
+
+      // Set up action buttons
+      downloadBtn.onclick = () => downloadDocument(url, name);
+      openBtn.onclick = () => window.open(url, '_blank');
+
+      // Determine file type and load accordingly
+      const fileExtension = url.split('.').pop().toLowerCase().split('?')[0];
+      
+      setTimeout(() => {
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(fileExtension)) {
+          // Image file
+          modalBody.innerHTML = `<img src="${url}" alt="${name}" onload="this.style.opacity=1" style="opacity:0; transition: opacity 0.3s;">`;
+        } else if (fileExtension === 'pdf') {
+          // PDF file - use iframe or Google Docs Viewer
+          modalBody.innerHTML = `<iframe src="${url}#toolbar=0" type="application/pdf"></iframe>`;
+        } else {
+          // Other file types - use Google Docs Viewer
+          modalBody.innerHTML = `<iframe src="https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true"></iframe>`;
+        }
+      }, 300);
+    };
+
+    // Close document modal
+    window.closeDocumentModal = function() {
+      const modal = document.getElementById('document-modal');
+      modal.classList.remove('show');
+      
+      // Clear modal content after animation
+      setTimeout(() => {
+        document.getElementById('modal-body').innerHTML = '';
+      }, 300);
+    };
+
+    // Close modal on background click
+    document.getElementById('document-modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeDocumentModal();
+      }
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('document-modal');
+        if (modal.classList.contains('show')) {
+          closeDocumentModal();
+        }
+      }
+    });
+
+    // Search functionality
+    document.getElementById('search-documents').addEventListener('input', async (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const filtered = allDocuments.filter(doc => 
+        doc.name.toLowerCase().includes(searchTerm) ||
+        doc.type.toLowerCase().includes(searchTerm) ||
+        doc.badge.toLowerCase().includes(searchTerm)
+      );
+      await renderDocuments(filtered);
+    });
+
+    // Category filter
+    document.getElementById('category-filter').addEventListener('change', async (e) => {
+      const category = e.target.value;
+      if (!category) {
+        await renderDocuments(allDocuments);
+      } else {
+        const categoryMap = {
+          'general': 'General Documents',
+          'stage': 'Stage Documents',
+          'financial': 'Financial Documents',
+          'logistics': 'Logistics Documents'
+        };
+        const filtered = allDocuments.filter(doc => doc.category === categoryMap[category]);
+        await renderDocuments(filtered);
+      }
+    });
+
+    // Initialize
+    async function init() {
+      document.getElementById('loader').style.display = 'flex';
+      await loadShipmentInfo();
+      await loadAllDocuments();
+      await renderDocuments(allDocuments);
+      document.getElementById('loader').style.display = 'none';
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shipment Details</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #4caf50;
+      color: white;
+      padding: 15px;
+      border-radius: 5px;
+      z-index: 1001;
+      display: none;
+    }
+  </style>
+  <script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+  const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const shipmentId = urlParams.get("id");
+  let currentStageData = {};
+
+  const CHECKLIST_TO_STAGE = {
+    "enlistment_verification": "enlistment_verification",
+    "availability_confirmation": "availability_confirmation",
+    "purchase_order": "purchase_order",
+    "proforma": "proforma_invoice",
+    "invoice": "commercial_invoice",
+    "ip_number": "ip_number",
+    "lc_opening": "letter_of_credit",
+    "lc_shared_with_supplier": "lc_share",
+    "shipment_details_from_supplier": "supplier_shipment_details",
+    "freight_query": "freight_query",
+    "award_shipment": "shipment_awarded",
+    "non_negotiable_docs": "non_negotiable_docs",
+    "original_docs": "original_docs",
+    "bank_endorsement": "bank_endorsement",
+    "send_to_clearing_agent": "docs_to_clearing_agent",
+    "under_clearing_agent": "under_clearing_agent",
+    "release_orders": "release_orders",
+    "gate_out": "gate_out",
+    "transportation": "transporter",
+    "warehouse": "warehouse_arrival",
+    "bills": "bills"
+  };
+
+  const STAGE_ORDER = Object.keys(CHECKLIST_TO_STAGE);
+
+  
+
+  const STAGES_WITHOUT_DOC_UPLOAD = new Set([
+    "availability_confirmation",
+    "lc_shared_with_supplier",
+    "shipment_details_from_supplier",
+    "freight_query",
+    "award_shipment",
+    "bank_endorsement",
+    "under_clearing_agent",
+    "release_orders",
+    "gate_out",
+    "transportation",
+    "warehouse_arrival",
+    "bills"
+  ]);
+
+  const STAGE_CONFIG = {
+    "enlistment_verification": {
+        table: "enlistment_verification",
+        fields: [
+            { name: "verified", type: "boolean", label: "Verified" },
+            { name: "verification_notes", type: "text", label: "Verification Notes" },
+            { name: "verified_at", type: "datetime-local", label: "Verified At" },
+            { name: "verifier_id", type: "uuid", label: "Verifier", fk: { relation: "app_user", displayColumn: "full_name" } },
+            { name: "verification_doc_url", type: "text", label: "Document URL", readonly: true }
+        ]
+    },
+    "availability_confirmation": {
+        table: "availability_confirmation",
+        fields: [
+            { name: "available", type: "boolean", label: "Available" },
+            { name: "notes", type: "text", label: "Notes" },
+            { name: "confirmed_at", type: "datetime-local", label: "Confirmed At" },
+            { name: "confirmed_by", type: "uuid", label: "Confirmed By", fk: { relation: "app_user", displayColumn: "full_name" } },
+            { name: "supplier_id", type: "uuid", label: "Supplier", fk: { relation: "supplier", displayColumn: "name" } }
+        ]
+    },
+    "purchase_order": {
+        table: "purchase_order",
+        fields: [
+            { name: "po_number", type: "text", label: "PO Number" },
+            { name: "po_date", type: "date", label: "PO Date" },
+            { name: "po_file_url", type: "text", label: "PO File URL", readonly: true }
+        ]
+    },
+    "proforma": {
+        table: "proforma_invoice",
+        fields: [
+            { name: "proforma_number", type: "text", label: "Proforma Number" },
+            { name: "proforma_date", type: "date", label: "Proforma Date" },
+            { name: "file_url", type: "text", label: "File URL", readonly: true }
+        ]
+    },
+    "invoice": {
+        table: "commercial_invoice",
+        fields: [
+            { name: "invoice_number", type: "text", label: "Invoice Number" },
+            { name: "invoice_date", type: "date", label: "Invoice Date" },
+            { name: "file_url", type: "text", label: "File URL", readonly: true }
+        ]
+    },
+    "ip_number": {
+        table: "ip_number",
+        fields: [
+            { name: "ip_reference", type: "text", label: "IP Reference" },
+            { name: "issued_date", type: "date", label: "Issued Date" },
+            { name: "file_url", type: "text", label: "File URL", readonly: true }
+        ]
+    },
+    "lc_opening": {
+        table: "letter_of_credit",
+        fields: [
+            { name: "lc_number", type: "text", label: "LC Number" },
+            { name: "opened_date", type: "date", label: "Opened Date" },
+            { name: "file_url", type: "text", label: "File URL", readonly: true },
+            { name: "bank_id", type: "uuid", label: "Bank", fk: { relation: "bank", displayColumn: "name" } }
+        ]
+    },
+    "lc_shared_with_supplier": {
+        table: "lc_share",
+        fields: [
+            { name: "shared_date", type: "date", label: "Shared Date" },
+            { name: "notes", type: "text", label: "Notes" }
+        ]
+    },
+    "shipment_details_from_supplier": {
+        table: "supplier_shipment_details",
+        fields: [
+            { name: "readiness_date", type: "date", label: "Readiness Date" },
+            { name: "dimensions", type: "jsonb", label: "Dimensions" },
+            { name: "gross_weight", type: "number", label: "Gross Weight" },
+            { name: "cartons_count", type: "number", label: "Cartons Count" },
+            { name: "transport", type: "text", label: "Transport" },
+            { name: "details_received_date", type: "date", label: "Details Received Date" }
+        ]
+    },
+    "freight_query": {
+        table: "freight_query",
+        fields: [
+            { name: "sent_at", type: "datetime-local", label: "Sent At" },
+            { name: "query_payload", type: "jsonb", label: "Query Payload" },
+            { name: "logistics_company_id", type: "uuid", label: "Logistics Company", fk: { relation: "logistics_company", displayColumn: "name" } }
+        ]
+    },
+    "award_shipment": {
+        table: "shipment_awarded",
+        fields: [
+            { name: "awarded", type: "boolean", label: "Awarded" },
+            { name: "notes", type: "text", label: "Notes" },
+            { name: "awarded_at", type: "datetime-local", label: "Awarded At" },
+            { name: "awarded_by", type: "uuid", label: "Awarded By", fk: { relation: "app_user", displayColumn: "full_name" } },
+            { name: "freight_quote_response_id", type: "uuid", label: "Freight Quote Response", fk: { relation: "freight_quote_response", displayColumn: "id" } }
+        ]
+    },
+    "non_negotiable_docs": {
+        table: "non_negotiable_docs",
+        fields: [
+            { name: "status", type: "select", label: "Status", options: ["Sended", "Arrived", "Pending"] },
+            { name: "sended_at", type: "datetime-local", label: "Sended At" },
+            { name: "uploaded_by", type: "uuid", label: "Uploaded By", fk: { relation: "app_user", displayColumn: "full_name" } },
+            { name: "docs_url", type: "text", label: "Docs URL", readonly: true },
+            { name: "bank_id", type: "uuid", label: "Bank", fk: { relation: "bank", displayColumn: "name" } }
+        ]
+    },
+    "original_docs": {
+        table: "original_docs",
+        fields: [
+            { name: "status", type: "text", label: "Status" },
+            { name: "received_at", type: "datetime-local", label: "Received At" },
+            { name: "uploaded_by", type: "uuid", label: "Uploaded By", fk: { relation: "app_user", displayColumn: "full_name" } },
+            { name: "docs_url", type: "text", label: "Docs URL", readonly: true },
+            { name: "shipping_company", type: "text", label: "Shipping Company" },
+            { name: "tracking_number", type: "text", label: "Tracking Number" },
+            { name: "shipping_guarantee_applied_date", type: "date", label: "Shipping Guarantee Applied Date" },
+            { name: "shipping_guarantee_received_date", type: "date", label: "Shipping Guarantee Received Date" },
+            { name: "dispatch_date", type: "date", label: "Dispatch Date" },
+            { name: "arrival_at_bank", type: "date", label: "Arrival at Bank" },
+            { name: "due_date", type: "date", label: "Due Date" },
+            { name: "payment_date", type: "date", label: "Payment Date" },
+            { name: "bank_id", type: "uuid", label: "Bank", fk: { relation: "bank", displayColumn: "name" } }
+        ]
+    },
+    "bank_endorsement": {
+        table: "bank_endorsement",
+        fields: [
+            { name: "endorsed", type: "boolean", label: "Endorsed" },
+            { name: "endorsed_at", type: "datetime-local", label: "Endorsed At" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "app_user", displayColumn: "full_name" } }
+        ]
+    },
+    "send_to_clearing_agent": {
+        table: "docs_to_clearing_agent",
+        fields: [
+            { name: "name", type: "text", label: "Name" },
+            { name: "shipping_company", type: "text", label: "Shipping Company" },
+            { name: "tracking_number", type: "text", label: "Tracking Number" },
+            { name: "sended_at", type: "date", label: "Sended At" },
+            { name: "expected_arrival_date", type: "date", label: "Expected Arrival Date" },
+            { name: "slip_picture_url", type: "text", label: "Slip Picture URL", readonly: true },
+            { name: "clearing_agent_id", type: "uuid", label: "Clearing Agent", fk: { relation: "clearing_agent", displayColumn: "name" } }
+        ]
+    },
+    "under_clearing_agent": {
+        table: "under_clearing_agent",
+        fields: [
+            { name: "is_received", type: "boolean", label: "Received" },
+            { name: "receiving_date", type: "date", label: "Receiving Date" },
+            { name: "destuffed_date", type: "date", label: "Destuffed Date" },
+            { name: "frsd_application_date", type: "date", label: "FRSD Application Date" },
+            { name: "duty_payment_date", type: "date", label: "Duty Payment Date" },
+            { name: "sampling_date", type: "date", label: "Sampling Date" },
+            { name: "do_date", type: "date", label: "DO Date" },
+            { name: "clearing_agent_id", type: "uuid", label: "Clearing Agent", fk: { relation: "clearing_agent", displayColumn: "name" } }
+        ]
+    },
+    "release_orders": {
+        table: "release_orders",
+        fields: [
+            { name: "dpp_ro_number", type: "text", label: "DPP RO Number" },
+            { name: "dpp_date", type: "date", label: "DPP Date" },
+            { name: "fscrd_ro_number", type: "text", label: "FSCRD RO Number" },
+            { name: "fscrd_date", type: "date", label: "FSCRD Date" }
+        ]
+    },
+    "gate_out": {
+        table: "gate_out",
+        fields: [
+            { name: "is_gate_out", type: "boolean", label: "Gate Out" },
+            { name: "gate_out_date", type: "date", label: "Gate Out Date" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "app_user", displayColumn: "full_name" } }
+        ]
+    },
+    "transportation": {
+        table: "transporter",
+        fields: [
+            { name: "transporter_name", type: "text", label: "Transporter Name" },
+            { name: "bilti_number", type: "text", label: "Bilti Number" },
+            { name: "bilti_date", type: "date", label: "Bilti Date" },
+            { name: "no_of_pieces", type: "number", label: "No of Pieces" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "app_user", displayColumn: "full_name" } }
+        ]
+    },
+    "warehouse": {
+        table: "warehouse_arrival",
+        fields: [
+            { name: "warehouse_id", type: "fk", label: "Warehouse Name", fk: { relation: "warehouse", displayColumn: "warehouse_name" } },
+            { name: "arrival_date", type: "date", label: "Arrival Date" },
+            { name: "gr_no", type: "text", label: "GR No" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "app_user", displayColumn: "full_name" } }
+        ]
+    },
+    "bills": {
+        table: "bills",
+        fields: [
+            { name: "forwarder_date", type: "date", label: "Forwarder Date" },
+            { name: "clearing_agent_date", type: "date", label: "Clearing Agent Date" },
+            { name: "transporter_date", type: "date", label: "Transporter Date" },
+            { name: "costing", type: "number", label: "Costing" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "app_user", displayColumn: "full_name" } }
+        ]
+    }
+  };
+
+  function showMessage(containerId, message, isError = false) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = `<p class="${isError ? 'error-message' : 'success-message'}">${message}</p>`;
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById('toast-message');
+    toast.textContent = message;
+    toast.style.display = 'block';
+    setTimeout(() => {
+      toast.style.display = 'none';
+    }, 3000);
+  }
+
+  async function loadChecklist() {
+    const { data, error } = await supabase
+      .from("v_shipment_stage_checklist")
+      .select("*, current_stage")
+      .eq("shipment_id", shipmentId)
+      .single();
+
+    if (error) {
+      document.getElementById("checklist").innerText = "Error: " + error.message;
+      return;
+    }
+
+    let html = "<table><tr><th>Stage</th><th>Status</th><th>Action</th></tr>";
+
+    const shipment_current_stage = data.current_stage;
+
+    Object.keys(CHECKLIST_TO_STAGE).forEach(stem => {
+        const stageName = CHECKLIST_TO_STAGE[stem];
+        const doneKey = `${stem}_done`;
+        const isDone = data[doneKey];
+
+        const label = (stem.replace(/_/g, " ")).replace(/\b\w/g, c => c.toUpperCase());
+        
+        const stageIndex = STAGE_ORDER.indexOf(stem);
+        const currentShipmentStageIndex = STAGE_ORDER.indexOf(shipment_current_stage);
+
+        const status = stageIndex < currentShipmentStageIndex || isDone ? "✅ Done" : "⏳ Pending";
+
+        const nextStage = STAGE_ORDER[stageIndex + 1] || null;
+
+        let action = "";
+        if (isDone && nextStage && shipment_current_stage === stageName) {
+            action = `<button onclick="advanceStage('${stageName}', '${nextStage}')">Advance</button>`;
+        }
+
+        html += `<tr onclick="openStageModal('${stem}')">
+            <td>${label}</td>
+            <td>${status}</td>
+            <td>${action}</td>
+        </tr>`;
+    });
+
+    html += "</table>";
+    document.getElementById("checklist").innerHTML = html;
+  }
+
+  async function advanceStage(fromStage, toStage) {
+    const { error } = await supabase.rpc("advance_shipment_stage", {
+        p_shipment_id: shipmentId
+    });
+    
+    if (error) {
+        showMessage("checklist", `<p class="error-message">Error advancing stage: ${error.message}</p>`);
+        return;
+    }
+    
+    await loadChecklist();
+    await loadAuditLog();
+}
+
+  function formatMeta(meta) {
+    if (!meta) return "";
+    let metaHtml = '<ul class="meta-list">';
+    for (const [key, value] of Object.entries(meta)) {
+        const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        if (typeof value === 'object' && value !== null) {
+            metaHtml += `<li><strong>${formattedKey}:</strong> ${formatMeta(value)}</li>`;
+        } else {
+            metaHtml += `<li><strong>${formattedKey}:</strong> ${value}</li>`;
+        }
+    }
+    metaHtml += "</ul>";
+    return metaHtml;
+  }
+
+  function formatAction(action) {
+    if (!action) return '';
+    return action.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function formatStage(stage) {
+    if (!stage) return '';
+    return stage.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  async function loadAuditLog() {
+    const { data, error } = await supabase
+      .from("audit_log")
+      .select("at, action, from_stage, to_stage, meta, actor:app_user(full_name)")
+      .eq("shipment_id", shipmentId)
+      .order("at", { ascending: false });
+
+    if (error) {
+      document.getElementById("auditlog").innerText = "Error: " + error.message;
+      return;
+    }
+    if (!data || data.length === 0) {
+      document.getElementById("auditlog").innerText = "No audit logs yet.";
+      return;
+    }
+
+    let html = '<table class="audit-log-table"><tr><th>Timestamp</th><th>Actor</th><th>Action</th><th>From → To</th><th>Meta</th></tr>';
+    data.forEach(log => {
+      html += `<tr>
+        <td>${new Date(log.at).toLocaleString()}</td>
+        <td>${log.actor ? log.actor.full_name : 'System'}</td>
+        <td><span class="action-badge">${formatAction(log.action)}</span></td>
+        <td><span class="stage-badge from-stage">${formatStage(log.from_stage) || ""}</span> → <span class="stage-badge to-stage">${formatStage(log.to_stage) || ""}</span></td>
+        <td>${formatMeta(log.meta)}</td>
+      </tr>`;
+    });
+    html += "</table>";
+    document.getElementById("auditlog").innerHTML = html;
+  }
+
+  function closeModal() {
+    document.getElementById('stage-modal').classList.remove('show');
+  }
+
+  async function openStageModal(stageName) {
+    console.log('openStageModal called with stageName:', stageName);
+    const { data: shipmentData, error: shipmentError } = await supabase
+      .from('shipment')
+      .select('current_stage')
+      .eq('id', shipmentId)
+      .single();
+
+    if (shipmentError) {
+      showMessage('stage-modal-message', `Error fetching shipment data: ${shipmentError.message}`, true);
+      return;
+    }
+
+    const currentShipmentStage = shipmentData.current_stage;
+    const currentStageIndex = STAGE_ORDER.indexOf(currentShipmentStage);
+    const clickedStageIndex = STAGE_ORDER.indexOf(stageName);
+
+    if (stageName !== 'bills' && clickedStageIndex > currentStageIndex + 1) {
+      showMessage('checklist', 'You must complete the previous stages first.', true);
+      return;
+    }
+
+    if (!stageName || !STAGE_CONFIG[stageName]) {
+        console.error("Invalid stage name or configuration for:", stageName);
+        return;
+    }
+    currentStageData.stageName = stageName;
+    const config = STAGE_CONFIG[stageName];
+    currentStageData.config = config;
+    document.getElementById('modal-title').innerText = stageName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    showMessage('stage-modal-message', '');
+    
+    let selectString = '*';
+
+    const { data, error } = await supabase
+        .from(config.table)
+        .select(selectString)
+        .eq("shipment_id", shipmentId)
+        .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') {
+        showMessage('stage-modal-message', `Error loading stage details: ${error.message}`, true);
+        return;
+    }
+    currentStageData.details = data || {};
+    renderStageView();
+    console.log('Showing stage modal.');
+    document.getElementById('stage-modal').classList.add('show');
+  }
+
+  async function renderStageView() {
+      const viewContainer = document.getElementById('stage-view-container');
+      const editContainer = document.getElementById('stage-edit-container');
+      const table = document.getElementById('stage-details-table');
+      table.innerHTML = ''; // Clear previous data
+
+      for (const field of currentStageData.config.fields) {
+        let value = currentStageData.details[field.name];
+        let displayValue = value;
+
+        if (field.fk) {
+            const relationName = field.name.replace('_id', '');
+            const relatedData = currentStageData.details[relationName];
+            if (relatedData && relatedData[field.fk.displayColumn]) {
+                displayValue = relatedData[field.fk.displayColumn];
+            } 
+        }
+
+        if (value === undefined || value === null) {
+            displayValue = 'N/A';
+        }
+
+        if (field.type === 'boolean') {
+            displayValue = value ? 'Yes' : 'No';
+        }
+
+        if (field.name.endsWith('_url') || field.name.endsWith('_doc')) {
+            if (value) {
+                displayValue = `<a href="${value}" target="_blank" class="button button-secondary">View Document</a>`;
+            } else {
+                displayValue = 'N/A';
+            }
+        }
+
+        const row = table.insertRow();
+        row.innerHTML = `<td>${field.label}</td><td>${displayValue}</td>`;
+      }
+
+      viewContainer.style.display = 'block';
+      editContainer.style.display = 'none';
+      document.getElementById('edit-stage-button').style.display = 'block';
+      document.getElementById('save-stage-button').style.display = 'none';
+      document.getElementById('cancel-edit-button').style.display = 'none';
+  }
+
+    async function renderStageEdit() {
+      const viewContainer = document.getElementById('stage-view-container');
+      const editContainer = document.getElementById('stage-edit-container');
+      const form = document.getElementById('modal-form');
+      form.innerHTML = ''; // Clear previous form
+      const config = currentStageData.config;
+      const data = currentStageData.details;
+
+      for (const field of config.fields) {
+          const value = data ? data[field.name] : '';
+          const formField = document.createElement('div');
+          formField.classList.add('form-field');
+          let fieldHtml = `<label for="${field.name}">${field.label}:</label>`;
+          if (field.type === 'select') {
+              fieldHtml += `<select id="${field.name}" name="${field.name}">`;
+              field.options.forEach(option => {
+                fieldHtml += `<option value="${option}" ${value === option ? 'selected' : ''}>${option}</option>`;
+              });
+              fieldHtml += `</select>`;
+          } else if (field.fk) {
+              fieldHtml += `<select id="${field.name}" name="${field.name}"></select>`;
+          } else if (field.type === 'boolean') {
+              fieldHtml += `<label class="switch">
+                                <input type="checkbox" id="${field.name}" name="${field.name}" ${value ? 'checked' : ''}>
+                                <span class="slider round"></span>
+                            </label>`;
+          } else if (field.type === 'jsonb') {
+              fieldHtml += `<textarea id="${field.name}" name="${field.name}">${value ? JSON.stringify(value, null, 2) : ''}</textarea>`;
+          } else {
+              fieldHtml += `<input type="${field.type}" id="${field.name}" name="${field.name}" value="${value || ''}" ${field.readonly ? 'readonly' : ''}>`;
+          }
+          formField.innerHTML = fieldHtml;
+          form.appendChild(formField);
+      }
+
+      // Populate foreign key dropdowns and special fields
+      for (const field of config.fields) {
+          if (field.fk) {
+              if (currentStageData.stageName === 'award_shipment' && field.name === 'freight_quote_response_id') {
+                  const { data: freightQueries, error: fqError } = await supabase
+                      .from('freight_query')
+                      .select('id')
+                      .eq('shipment_id', shipmentId);
+
+                  if (fqError) {
+                      console.error('Error loading freight queries:', fqError);
+                      continue;
+                  }
+
+                  const freightQueryIds = freightQueries.map(fq => fq.id);
+
+                  const { data: fkData, error: fkError } = await supabase
+                      .from('freight_quote_response')
+                      .select(`id, freight_query (*, logistics_company(name)) `)
+                      .in('freight_query_id', freightQueryIds);
+
+                  if (fkError) {
+                      console.error(`Error loading data for ${field.fk.relation}:`, fkError);
+                      continue;
+                  }
+                  const select = document.getElementById(field.name);
+                  fkData.forEach(item => {
+                      const option = document.createElement('option');
+                      option.value = item.id;
+                      option.textContent = item.freight_query.logistics_company.name;
+                      if (data && data[field.name] === item.id) {
+                          option.selected = true;
+                      }
+                      select.appendChild(option);
+                  });
+              } else {
+                  const { data: fkData, error: fkError } = await supabase.from(field.fk.relation).select(`id, ${field.fk.displayColumn}`);
+                  if (fkError) {
+                      console.error(`Error loading data for ${field.fk.relation}:`, fkError);
+                      continue;
+                  }
+                  const select = document.getElementById(field.name);
+                  fkData.forEach(item => {
+                      const option = document.createElement('option');
+                      option.value = item.id;
+                      option.textContent = item[field.fk.displayColumn];
+                      if (data && data[field.name] === item.id) {
+                          option.selected = true;
+                      }
+                      select.appendChild(option);
+                  });
+              }
+          } else if (currentStageData.stageName === 'award_shipment' && field.name === 'awarded_by') {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              document.getElementById(field.name).value = user.id;
+              document.getElementById(field.name).readOnly = true;
+            }
+          }
+      }
+
+      const docUploadContainer = document.getElementById('document-upload-container');
+      if (STAGES_WITHOUT_DOC_UPLOAD.has(currentStageData.stageName)) {
+        docUploadContainer.style.display = 'none';
+      } else {
+        docUploadContainer.style.display = 'block';
+      }
+
+      viewContainer.style.display = 'none';
+      editContainer.style.display = 'block';
+      document.getElementById('edit-stage-button').style.display = 'none';
+      document.getElementById('save-stage-button').style.display = 'block';
+      document.getElementById('cancel-edit-button').style.display = 'block';
+  }
+
+  async function saveStageDetails() {
+    console.log('saveStageDetails function called.');
+    const stageName = currentStageData.stageName;
+    const config = STAGE_CONFIG[stageName];
+    const form = document.getElementById('modal-form');
+    const formData = new FormData(form);
+    const updates = { 
+        shipment_id: shipmentId
+    };
+
+    const fileUrlField = config.fields.find(f => f.name.endsWith('_url') || f.name.endsWith('_doc'));
+    let file_url = null;
+    if (fileUrlField && currentStageData.details) {
+        file_url = currentStageData.details[fileUrlField.name] || null;
+    }
+
+    for (const field of config.fields) {
+        const key = field.name;
+        if (key === (fileUrlField ? fileUrlField.name : '')) continue;
+
+        let value = formData.get(key);
+
+        if (field.type === 'boolean') {
+            updates[key] = form.querySelector(`[name="${key}"]`).checked;
+        } else if (field.type === 'datetime-local') {
+            updates[key] = value ? new Date(value).toISOString() : null;
+        } else if (field.type === 'jsonb') {
+            try {
+                updates[key] = value ? JSON.parse(value) : null;
+            } catch (e) {
+                showMessage("stage-modal-message", `<p class="error-message">Invalid JSON in ${field.label}</p>`);
+                return;
+            }
+        } else if (field.type === 'uuid' && !value) {
+            continue;
+        } else if (field.type !== 'file') {
+            updates[key] = value || null;
+        }
+    }
+
+    const file = document.getElementById('document').files[0];
+    if (file && file.size > 0) {
+        const { data, error } = await supabase.storage
+            .from('shipment-docs')
+            .upload(`${shipmentId}/${stageName}/${file.name}`, file, {
+                cacheControl: '3600',
+                upsert: true
+            });
+
+        if (error) {
+            showMessage('stage-modal-message', `Error uploading file: ${error.message}`, true);
+            return;
+        }
+
+        const { data: publicUrlData } = supabase.storage.from('shipment-docs').getPublicUrl(data.path);
+        file_url = publicUrlData.publicUrl;
+    }
+
+    if (file_url && fileUrlField) {
+        updates[fileUrlField.name] = file_url;
+    }
+
+    Object.keys(updates).forEach(key => {
+        if (updates[key] === undefined) {
+            delete updates[key];
+        }
+    });
+
+    console.log('Sending updates:', updates);
+
+    // First, upsert the stage details
+    let query;
+    if (stageName === 'freight_query') {
+        query = supabase.from(config.table).insert(updates);
+    } else {
+        query = supabase.from(config.table).upsert(updates, {
+            onConflict: 'shipment_id'
+        });
+    }
+
+    const { error: upsertError } = await query;
+
+    if (upsertError) {
+        showMessage("stage-modal-message", `<p class="error-message">Error saving details: ${upsertError.message}</p>`);
+        return;
+    }
+    console.log('Upsert successful.');
+
+    // Then, advance the stage
+    const { data: checklistData, error: checklistError } = await supabase
+        .from('v_shipment_stage_checklist')
+        .select('current_stage')
+        .eq('shipment_id', shipmentId)
+        .single();
+
+    if (checklistError) {
+        showMessage('stage-modal-message', `Error fetching current stage: ${checklistError.message}`, true);
+        return;
+    }
+
+    if (stageName === 'bills' && checklistData.current_stage !== 'warehouse') {
+        closeModal();
+        await loadChecklist();
+        await loadAuditLog();
+        showToast('Bills updated successfully!');
+        return;
+    }
+
+    const { data: nextStageData, error: nextStageError } = await supabase
+        .from('stage_edge')
+        .select('to_stage')
+        .eq('from_stage', checklistData.current_stage);
+
+    if (nextStageError) {
+        showMessage('stage-modal-message', `Error fetching next stage: ${nextStageError.message}`, true);
+        return;
+    }
+
+    if (!nextStageData || nextStageData.length === 0) {
+        closeModal();
+        await loadChecklist();
+        await loadAuditLog();
+        showToast('Stage updated successfully!');
+        return;
+    }
+
+    const nextStage = nextStageData[0].to_stage;
+
+    console.log('Current stage:', checklistData.current_stage);
+    console.log('Next stage:', nextStage);
+    console.log('Calling advance_stage RPC...');
+
+    const { error: advanceStageError } = await supabase.rpc('advance_stage', {
+        p_shipment_id: shipmentId,
+        p_to_stage: nextStage,
+        p_meta: { manual: true }
+    });
+
+    console.log('advance_stage RPC response:', advanceStageError);
+
+    if (advanceStageError) {
+        if (advanceStageError.message.includes('Requirements not met')) {
+            showMessage("stage-modal-message", `<p class="warning-message">Data saved, but the stage cannot be advanced. Please ensure all required fields are filled. Reason: ${advanceStageError.message}</p>`);
+            await loadChecklist();
+        } else {
+            showMessage("stage-modal-message", `<p class="error-message">Error advancing stage: ${advanceStageError.message}</p>`);
+        }
+    } else {
+        closeModal();
+        await loadChecklist();
+        await loadAuditLog();
+        showToast('Stage updated and advanced successfully!');
+    }
+}
+
+  window.advanceStage = advanceStage;
+  window.openStageModal = openStageModal;
+  window.closeModal = closeModal;
+  window.saveStageDetails = saveStageDetails;
+  window.renderStageEdit = renderStageEdit;
+  window.onload = async () => {
+    const loader = document.getElementById("loader");
+    if (loader) {
+        loader.style.display = "block";
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        window.location.href = 'login.html';
+    } else {
+        await loadChecklist();
+        await loadAuditLog();
+    }
+
+    if (loader) {
+        loader.style.display = "none";
+    }
+  };
+</script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+  </div>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link active">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="documents.html" class="nav-link">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+          </a>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu open">
+            <li><a href="send-freight-queries.html" class="nav-link"><span class="text">Send Freight Queries</span></a></li>
+            <li><a href="freight-query-response.html" class="nav-link"><span class="text">Freight Query Response</span></a></li>
+            <li><a href="manage-freight-queries.html" class="nav-link"><span class="text">Manage Freight Queries</span></a></li>
+            <li><a href="award-shipment.html" class="nav-link"><span class="text">Award Shipment</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Shipment Checklist</h1>
+      </div>
+    </header>
+      <div id="checklist">Loading...</div>
+      <h2>Audit Log</h2>
+      <div id="auditlog">Loading...</div>
+
+      <p class="back-link"><a href="admin-dashboard.html">← Back to Dashboard</a></p>
+      <p class="back-link"><a href="documents.html">→ Go to Documents</a></p>
+
+      <div id="stage-modal" class="modal">
+        <div class="modal-content">
+          <span class="close-button" onclick="closeModal()">&times;</span>
+          <h2 id="modal-title"></h2>
+          <div id="modal-body">
+            <!-- View State -->
+            <div id="stage-view-container">
+              <table id="stage-details-table">
+                <!-- Dynamic content will be injected here -->
+              </table>
+              <div class="button-container">
+                <button id="edit-stage-button" onclick="renderStageEdit()">Edit</button>
+              </div>
+            </div>
+            <!-- Edit State -->
+            <div id="stage-edit-container" style="display: none;">
+              <form id="modal-form">
+                <!-- Dynamic form fields will be injected here -->
+              </form>
+              <div id="document-upload-container">
+                <label for="document">Document</label>
+                <input type="file" id="document" name="document">
+              </div>
+              <div class="button-container">
+                <button id="save-stage-button" onclick="saveStageDetails()" style="display: none;">Save</button>
+                <button id="cancel-edit-button" onclick="renderStageView()" style="display: none;">Cancel</button>
+              </div>
+            </div>
+            <div id="stage-modal-message"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="toast-message" class="toast"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.querySelector('.sidebar');
+      const sidebarToggle = document.querySelector('.sidebar-toggle');
+      const navLinks = document.querySelectorAll('.nav-link');
+      const hasSubmenus = document.querySelectorAll('.has-submenu');
+
+      // Responsive off-canvas menu (for mobile)
+      const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+      function handleMediaQueryChange(e) {
+        if (e.matches) { // If on mobile
+          sidebar.classList.remove('collapsed'); // Ensure it's not collapsed on mobile
+          sidebar.classList.remove('open'); // Ensure it's closed initially on mobile
+        } else { // If on desktop
+          sidebar.classList.remove('open'); // Ensure it's not open on desktop
+        }
+      }
+
+      // Initial check for mobile responsiveness
+      handleMediaQueryChange(mediaQuery);
+
+      // Listen for changes in media query
+      mediaQuery.addListener(handleMediaQueryChange);
+
+      // Unified sidebar toggle logic
+      sidebarToggle.addEventListener('click', () => {
+        if (mediaQuery.matches) {
+          // If on mobile, toggle 'open' class
+          sidebar.classList.toggle('open');
+        } else {
+          // If on desktop, toggle 'collapsed' class
+          sidebar.classList.toggle('collapsed');
+        }
+      });
+
+      // Accordion sub-menus (no change)
+      hasSubmenus.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const submenu = item.nextElementSibling;
+          if (submenu && submenu.classList.contains('submenu')) {
+            submenu.classList.toggle('open');
+            item.classList.toggle('open');
+          }
+        });
+      });
+
+      // Active link highlighting (no change)
+      const currentPath = window.location.pathname.split('/').pop();
+      navLinks.forEach(link => {
+        if (link.href.split('/').pop() === currentPath) {
+          link.classList.add('active');
+          let parentSubmenu = link.closest('.submenu');
+          if (parentSubmenu) {
+            parentSubmenu.classList.add('open');
+            let parentHasSubmenu = parentSubmenu.previousElementSibling;
+            if (parentHasSubmenu && parentHasSubmenu.classList.contains('has-submenu')) {
+              parentHasSubmenu.classList.add('open');
+            }
+          }
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    });
+    
+  </script>
+</body>
+</html>

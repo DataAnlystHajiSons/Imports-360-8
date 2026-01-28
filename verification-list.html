@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Verification List</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    @media (max-width: 768px) {
+      .action-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+      }
+
+      .action-cell .button-secondary {
+        width: 100%;
+      }
+
+      .action-cell button.button-secondary:first-child {
+        margin-bottom: 10px !important;
+      }
+
+      .filters-panel {
+        flex-direction: column;
+      }
+
+      .filters-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    /* Filters Panel Styling */
+    .filters-panel {
+      background: var(--primary-color);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+      border: 1px solid var(--secondary-color);
+      transition: all 0.3s ease;
+    }
+
+    .filters-panel.collapsed {
+      padding: 10px 20px;
+    }
+
+    .filters-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .filters-header h3 {
+      color: var(--text-primary-color);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filters-toggle {
+      background: none;
+      border: none;
+      color: var(--accent-color);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .filters-toggle.rotated {
+      transform: rotate(180deg);
+    }
+
+    .filters-content {
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .filters-content.hidden {
+      max-height: 0;
+      opacity: 0;
+      margin: 0;
+      padding: 0;
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .filter-group label {
+      font-weight: 500;
+      color: var(--text-primary-color);
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+    }
+
+    .filter-group input,
+    .filter-group select {
+      padding: 8px 12px;
+      border: 1px solid var(--secondary-color);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: border-color 0.3s ease;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1);
+    }
+
+    .filters-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .filter-btn.primary {
+      background: linear-gradient(135deg, var(--accent-color), var(--highlight-color));
+      color: white;
+    }
+
+    .filter-btn.primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+
+    .filter-btn.secondary {
+      background: var(--secondary-color);
+      color: var(--text-primary-color);
+      border: 1px solid #cbd5e1;
+    }
+
+    .filter-btn.secondary:hover {
+      background: #e2e8f0;
+    }
+
+    .results-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--secondary-color);
+    }
+
+    .results-count {
+      color: var(--text-secondary-color);
+      font-size: 0.9rem;
+    }
+
+    .active-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-tag {
+      background: var(--accent-color);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .filter-tag .remove {
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .filter-tag .remove:hover {
+      color: #ffcccb;
+    }
+  </style>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+    const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+    // Global variables for filters
+    let currentFilters = {};
+    let allVerificationData = [];
+
+    // Searchable Dropdown Implementation
+    function createSearchableDropdown(selectElement, options, placeholder = 'Select an option') {
+      const container = document.createElement('div');
+      container.className = 'searchable-dropdown';
+      
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'dropdown-input';
+      input.placeholder = placeholder;
+      input.readOnly = true;
+      
+      const dropdownList = document.createElement('div');
+      dropdownList.className = 'dropdown-list';
+      
+      container.appendChild(input);
+      container.appendChild(dropdownList);
+      
+      // Replace the original select element
+      selectElement.style.display = 'none';
+      selectElement.parentNode.insertBefore(container, selectElement);
+      
+      let filteredOptions = [...options];
+      let allOptions = [...options];
+      
+      function renderOptions() {
+        dropdownList.innerHTML = '';
+        
+        if (filteredOptions.length === 0) {
+          const noResults = document.createElement('div');
+          noResults.className = 'no-results';
+          noResults.textContent = 'No results found';
+          dropdownList.appendChild(noResults);
+          return;
+        }
+        
+        filteredOptions.forEach(option => {
+          const item = document.createElement('div');
+          item.className = 'dropdown-item';
+          item.textContent = option.text;
+          item.dataset.value = option.value;
+          
+          if (option.value === selectElement.value) {
+            item.classList.add('selected');
+          }
+          
+          item.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            selectElement.value = option.value;
+            input.value = option.text;
+            container.classList.remove('active');
+            input.readOnly = true;
+            
+            // Remove selected and highlighted classes from all items
+            dropdownList.querySelectorAll('.dropdown-item').forEach(el => {
+              el.classList.remove('selected', 'highlighted');
+            });
+            item.classList.add('selected');
+            
+            // Trigger change event on original select
+            const event = new Event('change', { bubbles: true });
+            selectElement.dispatchEvent(event);
+          });
+          
+          dropdownList.appendChild(item);
+        });
+      }
+      
+      function filterOptions(searchTerm) {
+        const term = searchTerm.toLowerCase().trim();
+        if (term === '') {
+          filteredOptions = [...allOptions];
+        } else {
+          filteredOptions = allOptions.filter(option => 
+            option.text.toLowerCase().includes(term)
+          );
+        }
+        renderOptions();
+      }
+      
+      // Set initial value if select has a value
+      const initialSelectedOption = allOptions.find(opt => opt.value === selectElement.value);
+      if (initialSelectedOption) {
+        input.value = initialSelectedOption.text;
+      } else if (allOptions.length > 0 && allOptions[0].value === '') {
+        input.value = allOptions[0].text;
+      }
+      
+      // Input events
+      input.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (input.readOnly) {
+          input.readOnly = false;
+          input.value = '';
+          container.classList.add('active');
+          input.focus();
+          filterOptions('');
+        }
+      });
+      
+      input.addEventListener('input', (e) => {
+        if (!input.readOnly) {
+          filterOptions(e.target.value);
+        }
+      });
+      
+      // Handle clicks outside to close dropdown
+      document.addEventListener('click', (e) => {
+        if (!container.contains(e.target)) {
+          container.classList.remove('active');
+          input.readOnly = true;
+          
+          // Reset input value to selected option or placeholder
+          const selectedOption = allOptions.find(opt => opt.value === selectElement.value);
+          if (selectedOption) {
+            input.value = selectedOption.text;
+          } else {
+            input.value = allOptions[0]?.text || '';
+          }
+          
+          // Remove highlighted items
+          dropdownList.querySelectorAll('.dropdown-item').forEach(el => {
+            el.classList.remove('highlighted');
+          });
+        }
+      });
+      
+      // Add keyboard navigation
+      input.addEventListener('keydown', (e) => {
+        if (!container.classList.contains('active')) return;
+        
+        const items = dropdownList.querySelectorAll('.dropdown-item:not(.no-results)');
+        const currentSelected = dropdownList.querySelector('.dropdown-item.highlighted');
+        let currentIndex = currentSelected ? Array.from(items).indexOf(currentSelected) : -1;
+        
+        switch(e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            if (currentSelected) currentSelected.classList.remove('highlighted');
+            currentIndex = (currentIndex + 1) % items.length;
+            if (items[currentIndex]) items[currentIndex].classList.add('highlighted');
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            if (currentSelected) currentSelected.classList.remove('highlighted');
+            currentIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+            if (items[currentIndex]) items[currentIndex].classList.add('highlighted');
+            break;
+          case 'Enter':
+            e.preventDefault();
+            if (currentSelected) {
+              currentSelected.click();
+            }
+            break;
+          case 'Escape':
+            e.preventDefault();
+            container.classList.remove('active');
+            input.readOnly = true;
+            const selectedOption = allOptions.find(opt => opt.value === selectElement.value);
+            if (selectedOption) {
+              input.value = selectedOption.text;
+            } else {
+              input.value = allOptions[0]?.text || '';
+            }
+            break;
+        }
+      });
+      
+      // Initialize
+      renderOptions();
+      
+      return {
+        updateOptions: (newOptions) => {
+          allOptions = [...newOptions];
+          filteredOptions = [...newOptions];
+          renderOptions();
+          
+          // Update input value if needed
+          const selectedOption = allOptions.find(opt => opt.value === selectElement.value);
+          if (selectedOption) {
+            input.value = selectedOption.text;
+          } else if (allOptions.length > 0) {
+            input.value = allOptions[0].text;
+          }
+        },
+        container,
+        selectElement
+      };
+    }
+
+    async function loadVerificationList(filters = {}) {
+      // Build query based on filters
+      let query = supabase
+        .from('verification_list')
+        .select(`
+          id,
+          sr_no,
+          hs_code,
+          submission_date,
+          description,
+          crop:product_variety(id, product_name, variety_name),
+          exporter:supplier(id, name)
+        `);
+
+      // Apply filters
+      if (filters.hs_code) {
+        query = query.ilike('hs_code', `%${filters.hs_code}%`);
+      }
+      if (filters.description) {
+        query = query.ilike('description', `%${filters.description}%`);
+      }
+      if (filters.crop_id) {
+        query = query.eq('crop_id', filters.crop_id);
+      }
+      if (filters.exporter_id) {
+        query = query.eq('exporter_id', filters.exporter_id);
+      }
+      if (filters.submission_date_from) {
+        query = query.gte('submission_date', filters.submission_date_from);
+      }
+      if (filters.submission_date_to) {
+        query = query.lte('submission_date', filters.submission_date_to);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        document.getElementById("verification-list-body").innerHTML = `<tr><td colspan="7">Error: ${error.message}</td></tr>`;
+        return;
+      }
+
+      allVerificationData = data;
+      renderVerificationTable(data);
+      updateResultsInfo(data.length, filters);
+    }
+
+    function renderVerificationTable(data) {
+      const tableBody = document.getElementById("verification-list-body");
+      
+      if (data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary-color);">
+          <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i><br>
+          No items found matching your criteria.<br>
+          <small>Try adjusting your filters or <a href="#" onclick="clearAllFilters()" style="color: var(--accent-color);">clear all filters</a></small>
+        </td></tr>`;
+        return;
+      }
+
+      let html = "";
+      data.forEach(item => {
+        html += `<tr>
+          <td>${item.sr_no || ''}</td>
+          <td>${item.hs_code}</td>
+          <td>${item.submission_date || ''}</td>
+          <td>${item.description || ''}</td>
+          <td>${item.crop ? `${item.crop.product_name} - ${item.crop.variety_name}` : ''}</td>
+          <td>${item.exporter ? item.exporter.name : ''}</td>
+          <td class="action-cell">
+            <button class="button-secondary" onclick="openModal('${item.id}')">Edit</button>
+            <button class="button-secondary ml-2" onclick="deleteItem('${item.id}')">Delete</button>
+          </td>
+        </tr>`;
+      });
+      tableBody.innerHTML = html;
+    }
+
+    function updateResultsInfo(count, filters) {
+      const resultsInfo = document.getElementById('results-info');
+      const activeFiltersCount = Object.keys(filters).filter(key => filters[key]).length;
+      
+      resultsInfo.innerHTML = `
+        <div class="results-count">
+          <i class="fas fa-list"></i> Showing ${count} item${count !== 1 ? 's' : ''}
+          ${activeFiltersCount > 0 ? `with ${activeFiltersCount} filter${activeFiltersCount !== 1 ? 's' : ''} applied` : ''}
+        </div>
+        <div class="active-filters" id="active-filters">
+          ${renderActiveFilters(filters)}
+        </div>
+      `;
+    }
+
+    function renderActiveFilters(filters) {
+      let html = '';
+      
+      if (filters.hs_code) {
+        html += `<span class="filter-tag">HS Code: ${filters.hs_code} <span class="remove" onclick="removeFilter('hs_code')">×</span></span>`;
+      }
+      if (filters.description) {
+        html += `<span class="filter-tag">Description: ${filters.description} <span class="remove" onclick="removeFilter('description')">×</span></span>`;
+      }
+      if (filters.crop_id) {
+        const cropSelect = document.getElementById('filter-crop');
+        const selectedCrop = cropSelect.options[cropSelect.selectedIndex]?.text;
+        if (selectedCrop && selectedCrop !== 'All Crops') {
+          html += `<span class="filter-tag">Crop: ${selectedCrop} <span class="remove" onclick="removeFilter('crop_id')">×</span></span>`;
+        }
+      }
+      if (filters.exporter_id) {
+        const exporterSelect = document.getElementById('filter-exporter');
+        const selectedExporter = exporterSelect.options[exporterSelect.selectedIndex]?.text;
+        if (selectedExporter && selectedExporter !== 'All Exporters') {
+          html += `<span class="filter-tag">Exporter: ${selectedExporter} <span class="remove" onclick="removeFilter('exporter_id')">×</span></span>`;
+        }
+      }
+      if (filters.submission_date_from || filters.submission_date_to) {
+        const dateRange = `${filters.submission_date_from || 'Start'} - ${filters.submission_date_to || 'End'}`;
+        html += `<span class="filter-tag">Date: ${dateRange} <span class="remove" onclick="removeFilter('date_range')">×</span></span>`;
+      }
+      
+      return html;
+    }
+
+    async function initializeFilters() {
+      // Load crops for filter dropdown
+      const { data: crops, error: cropsError } = await supabase
+        .from('product_variety')
+        .select('id, product_name, variety_name')
+        .order('product_name');
+      
+      if (!cropsError && crops) {
+        const cropSelect = document.getElementById('filter-crop');
+        cropSelect.innerHTML = '<option value="">All Crops</option>';
+        
+        const cropOptions = [
+          { value: '', text: 'All Crops' },
+          ...crops.map(crop => ({
+            value: crop.id,
+            text: `${crop.product_name} - ${crop.variety_name}`
+          }))
+        ];
+        
+        // Add options to original select
+        crops.forEach(crop => {
+          cropSelect.innerHTML += `<option value="${crop.id}">${crop.product_name} - ${crop.variety_name}</option>`;
+        });
+        
+        // Create searchable dropdown
+        createSearchableDropdown(cropSelect, cropOptions, 'Search crops...');
+      }
+
+      // Load exporters for filter dropdown
+      const { data: exporters, error: exportersError } = await supabase
+        .from('supplier')
+        .select('id, name')
+        .order('name');
+      
+      if (!exportersError && exporters) {
+        const exporterSelect = document.getElementById('filter-exporter');
+        exporterSelect.innerHTML = '<option value="">All Exporters</option>';
+        
+        const exporterOptions = [
+          { value: '', text: 'All Exporters' },
+          ...exporters.map(exporter => ({
+            value: exporter.id,
+            text: exporter.name
+          }))
+        ];
+        
+        // Add options to original select
+        exporters.forEach(exporter => {
+          exporterSelect.innerHTML += `<option value="${exporter.id}">${exporter.name}</option>`;
+        });
+        
+        // Create searchable dropdown
+        createSearchableDropdown(exporterSelect, exporterOptions, 'Search exporters...');
+      }
+    }
+
+    function applyFilters() {
+      const filters = {
+        hs_code: document.getElementById('filter-hs-code').value.trim(),
+        description: document.getElementById('filter-description').value.trim(),
+        crop_id: document.getElementById('filter-crop').value,
+        exporter_id: document.getElementById('filter-exporter').value,
+        submission_date_from: document.getElementById('filter-date-from').value,
+        submission_date_to: document.getElementById('filter-date-to').value
+      };
+
+      // Remove empty filters
+      Object.keys(filters).forEach(key => {
+        if (!filters[key]) delete filters[key];
+      });
+
+      currentFilters = filters;
+      loadVerificationList(filters);
+    }
+
+    function clearAllFilters() {
+      document.getElementById('filter-hs-code').value = '';
+      document.getElementById('filter-description').value = '';
+      document.getElementById('filter-crop').value = '';
+      document.getElementById('filter-exporter').value = '';
+      document.getElementById('filter-date-from').value = '';
+      document.getElementById('filter-date-to').value = '';
+      
+      // Clear searchable dropdown inputs
+      const cropDropdownInput = document.querySelector('#filter-crop').previousElementSibling?.querySelector('.dropdown-input');
+      if (cropDropdownInput) {
+        cropDropdownInput.value = 'All Crops';
+        cropDropdownInput.readOnly = true;
+      }
+      
+      const exporterDropdownInput = document.querySelector('#filter-exporter').previousElementSibling?.querySelector('.dropdown-input');
+      if (exporterDropdownInput) {
+        exporterDropdownInput.value = 'All Exporters';
+        exporterDropdownInput.readOnly = true;
+      }
+      
+      currentFilters = {};
+      loadVerificationList();
+    }
+
+    function removeFilter(filterKey) {
+      if (filterKey === 'date_range') {
+        document.getElementById('filter-date-from').value = '';
+        document.getElementById('filter-date-to').value = '';
+        delete currentFilters.submission_date_from;
+        delete currentFilters.submission_date_to;
+      } else {
+        const elementMap = {
+          'hs_code': 'filter-hs-code',
+          'description': 'filter-description',
+          'crop_id': 'filter-crop',
+          'exporter_id': 'filter-exporter'
+        };
+        
+        if (elementMap[filterKey]) {
+          document.getElementById(elementMap[filterKey]).value = '';
+        }
+        delete currentFilters[filterKey];
+      }
+      
+      loadVerificationList(currentFilters);
+    }
+
+    function toggleFilters() {
+      const filtersContent = document.getElementById('filters-content');
+      const filtersToggle = document.getElementById('filters-toggle');
+      const filtersPanel = document.querySelector('.filters-panel');
+      
+      if (filtersContent.classList.contains('hidden')) {
+        filtersContent.classList.remove('hidden');
+        filtersToggle.classList.remove('rotated');
+        filtersPanel.classList.remove('collapsed');
+      } else {
+        filtersContent.classList.add('hidden');
+        filtersToggle.classList.add('rotated');
+        filtersPanel.classList.add('collapsed');
+      }
+    }
+
+    // Add event listeners for real-time filtering
+    function addFilterEventListeners() {
+      const filterInputs = ['filter-hs-code', 'filter-description', 'filter-crop', 'filter-exporter', 'filter-date-from', 'filter-date-to'];
+      
+      filterInputs.forEach(inputId => {
+        const element = document.getElementById(inputId);
+        if (element) {
+          element.addEventListener('input', debounce(applyFilters, 300));
+          element.addEventListener('change', applyFilters);
+        }
+      });
+    }
+
+    // Debounce function for performance
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    async function openModal(id = null) {
+      const modal = document.getElementById('verification-modal');
+      const messageDiv = document.getElementById('modal-message');
+      messageDiv.innerHTML = '';
+
+      // Load crops and exporters for dropdowns
+      const { data: crops, error: cropsError } = await supabase.from('product_variety').select('id, product_name, variety_name');
+      if (cropsError) {
+        messageDiv.innerHTML = `<p class="error-message">Error loading crops: ${cropsError.message}</p>`;
+        return;
+      }
+      
+      const cropSelect = document.getElementById('crop_id');
+      
+      // Remove existing searchable dropdown if it exists
+      const existingCropDropdown = cropSelect.previousElementSibling;
+      if (existingCropDropdown && existingCropDropdown.classList.contains('searchable-dropdown')) {
+        existingCropDropdown.remove();
+        cropSelect.style.display = '';
+      }
+      
+      cropSelect.innerHTML = '<option value="">Select Crop</option>';
+      const cropOptions = [
+        { value: '', text: 'Select Crop' },
+        ...crops.map(crop => ({
+          value: crop.id,
+          text: `${crop.product_name} - ${crop.variety_name}`
+        }))
+      ];
+      
+      // Add options to original select
+      crops.forEach(crop => {
+        cropSelect.innerHTML += `<option value="${crop.id}">${crop.product_name} - ${crop.variety_name}</option>`;
+      });
+      
+      // Create searchable dropdown for crops
+      const cropDropdown = createSearchableDropdown(cropSelect, cropOptions, 'Search crops...');
+
+      const { data: exporters, error: exportersError } = await supabase.from('supplier').select('id, name');
+      if (exportersError) {
+        messageDiv.innerHTML = `<p class="error-message">Error loading exporters: ${exportersError.message}</p>`;
+        return;
+      }
+      
+      const exporterSelect = document.getElementById('exporter_id');
+      
+      // Remove existing searchable dropdown if it exists
+      const existingExporterDropdown = exporterSelect.previousElementSibling;
+      if (existingExporterDropdown && existingExporterDropdown.classList.contains('searchable-dropdown')) {
+        existingExporterDropdown.remove();
+        exporterSelect.style.display = '';
+      }
+      
+      exporterSelect.innerHTML = '<option value="">Select Exporter</option>';
+      const exporterOptions = [
+        { value: '', text: 'Select Exporter' },
+        ...exporters.map(exporter => ({
+          value: exporter.id,
+          text: exporter.name
+        }))
+      ];
+      
+      // Add options to original select
+      exporters.forEach(exporter => {
+        exporterSelect.innerHTML += `<option value="${exporter.id}">${exporter.name}</option>`;
+      });
+      
+      // Create searchable dropdown for exporters
+      const exporterDropdown = createSearchableDropdown(exporterSelect, exporterOptions, 'Search exporters...');
+
+      if (id) {
+        const { data, error } = await supabase
+          .from('verification_list')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) {
+          messageDiv.innerHTML = `<p class="error-message">Error fetching item: ${error.message}</p>`;
+          return;
+        }
+
+        document.getElementById('item_id').value = data.id;
+        document.getElementById('hs_code').value = data.hs_code;
+        document.getElementById('submission_date').value = data.submission_date;
+        document.getElementById('description').value = data.description;
+        
+        // Set values for the searchable dropdowns
+        cropSelect.value = data.crop_id;
+        exporterSelect.value = data.exporter_id;
+        
+        // Update the input displays
+        const selectedCrop = cropOptions.find(opt => opt.value === data.crop_id);
+        if (selectedCrop && cropDropdown.container) {
+          const cropInput = cropDropdown.container.querySelector('.dropdown-input');
+          if (cropInput) cropInput.value = selectedCrop.text;
+        }
+        
+        const selectedExporter = exporterOptions.find(opt => opt.value === data.exporter_id);
+        if (selectedExporter && exporterDropdown.container) {
+          const exporterInput = exporterDropdown.container.querySelector('.dropdown-input');
+          if (exporterInput) exporterInput.value = selectedExporter.text;
+        }
+      } else {
+        document.getElementById('verification-form').reset();
+        document.getElementById('item_id').value = '';
+      }
+
+      modal.style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('verification-modal').style.display = 'none';
+    }
+
+    async function saveItem() {
+      const id = document.getElementById('item_id').value;
+      const itemData = {
+        hs_code: document.getElementById('hs_code').value,
+        submission_date: document.getElementById('submission_date').value,
+        description: document.getElementById('description').value,
+        crop_id: document.getElementById('crop_id').value,
+        exporter_id: document.getElementById('exporter_id').value,
+      };
+
+      let query;
+      if (id) {
+        query = supabase.from('verification_list').update(itemData).eq('id', id);
+      } else {
+        const { data, error } = await supabase
+          .from('verification_list')
+          .select('sr_no')
+          .order('sr_no', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116: no rows found
+          document.getElementById('modal-message').innerHTML = `<p class="error-message">Error fetching max sr_no: ${error.message}</p>`;
+          return;
+        }
+
+        itemData.sr_no = (data ? data.sr_no : 0) + 1;
+        query = supabase.from('verification_list').insert(itemData);
+      }
+
+      const { error } = await query;
+
+      if (error) {
+        document.getElementById('modal-message').innerHTML = `<p class="error-message">Error saving item: ${error.message}</p>`;
+      } else {
+        closeModal();
+        loadVerificationList();
+      }
+    }
+
+    async function deleteItem(id) {
+      if (!confirm('Are you sure you want to delete this item?')) {
+        return;
+      }
+
+      const { error } = await supabase.from('verification_list').delete().eq('id', id);
+
+      if (error) {
+        alert(`Error deleting item: ${error.message}`);
+      } else {
+        loadVerificationList();
+      }
+    }
+
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+    window.saveItem = saveItem;
+    window.deleteItem = deleteItem;
+    window.applyFilters = applyFilters;
+    window.clearAllFilters = clearAllFilters;
+    window.removeFilter = removeFilter;
+    window.toggleFilters = toggleFilters;
+
+    window.onload = async () => {
+      const loader = document.getElementById("loader");
+      if (loader) {
+          loader.style.display = "block";
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+          window.location.href = 'login.html';
+      } else {
+          // Initialize filters and load data
+          await initializeFilters();
+          await loadVerificationList();
+          addFilterEventListeners();
+      }
+
+      if (loader) {
+          loader.style.display = "none";
+      }
+    };
+
+    // Initialize sidebar functionality
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.querySelector('.sidebar');
+      const sidebarToggle = document.querySelector('.sidebar-toggle');
+      const navLinks = document.querySelectorAll('.nav-link');
+      const hasSubmenus = document.querySelectorAll('.has-submenu');
+
+      const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+      function handleMediaQueryChange(e) {
+        if (e.matches) {
+          sidebar.classList.remove('collapsed');
+          sidebar.classList.remove('open');
+        } else {
+          sidebar.classList.remove('open');
+        }
+      }
+
+      handleMediaQueryChange(mediaQuery);
+      mediaQuery.addListener(handleMediaQueryChange);
+
+      sidebarToggle.addEventListener('click', () => {
+        if (mediaQuery.matches) {
+          sidebar.classList.toggle('open');
+        } else {
+          sidebar.classList.toggle('collapsed');
+        }
+      });
+
+      hasSubmenus.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const submenu = item.nextElementSibling;
+          if (submenu && submenu.classList.contains('submenu')) {
+            submenu.classList.toggle('open');
+            item.classList.toggle('open');
+          }
+        });
+      });
+
+      const currentPath = window.location.pathname.split('/').pop();
+      navLinks.forEach(link => {
+        if (link.href.split('/').pop() === currentPath) {
+          link.classList.add('active');
+          let parentSubmenu = link.closest('.submenu');
+          if (parentSubmenu) {
+            parentSubmenu.classList.add('open');
+            let parentHasSubmenu = parentSubmenu.previousElementSibling;
+            if (parentHasSubmenu && parentHasSubmenu.classList.contains('has-submenu')) {
+              parentHasSubmenu.classList.add('open');
+            }
+          }
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+  </div>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="documents.html" class="nav-link">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+          </a>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link active"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu open">
+            <li><a href="send-freight-queries.html" class="nav-link"><span class="text">Send Freight Queries</span></a></li>
+            <li><a href="freight-query-response.html" class="nav-link"><span class="text">Freight Query Response</span></a></li>
+            <li><a href="manage-freight-queries.html" class="nav-link"><span class="text">Manage Freight Queries</span></a></li>
+            <li><a href="award-shipment.html" class="nav-link"><span class="text">Award Shipment</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Verification List</h1>
+      </div>
+    </header>
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Verification Items</h2>
+        <button onclick="openModal()">Create New Item</button>
+      </div>
+      
+      <!-- Filters Panel -->
+      <div class="filters-panel">
+        <div class="filters-header" onclick="toggleFilters()">
+          <h3><i class="fas fa-filter"></i> Filters</h3>
+          <button type="button" class="filters-toggle" id="filters-toggle">
+            <i class="fas fa-chevron-up"></i>
+          </button>
+        </div>
+        <div class="filters-content" id="filters-content">
+          <div class="filters-grid">
+            <div class="filter-group">
+              <label for="filter-hs-code">HS Code</label>
+              <input type="text" id="filter-hs-code" placeholder="Search HS Code...">
+            </div>
+            <div class="filter-group">
+              <label for="filter-description">Description</label>
+              <input type="text" id="filter-description" placeholder="Search description...">
+            </div>
+            <div class="filter-group">
+              <label for="filter-crop">Crop</label>
+              <select id="filter-crop">
+                <option value="">All Crops</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filter-exporter">Exporter</label>
+              <select id="filter-exporter">
+                <option value="">All Exporters</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filter-date-from">Submission Date From</label>
+              <input type="date" id="filter-date-from">
+            </div>
+            <div class="filter-group">
+              <label for="filter-date-to">Submission Date To</label>
+              <input type="date" id="filter-date-to">
+            </div>
+          </div>
+          <div class="filters-actions">
+            <button type="button" class="filter-btn primary" onclick="applyFilters()">
+              <i class="fas fa-search"></i> Apply Filters
+            </button>
+            <button type="button" class="filter-btn secondary" onclick="clearAllFilters()">
+              <i class="fas fa-times"></i> Clear All
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Info -->
+      <div class="results-info" id="results-info">
+        <div class="results-count">
+          <i class="fas fa-list"></i> Loading items...
+        </div>
+        <div class="active-filters" id="active-filters"></div>
+      </div>
+
+      <div class="panel-body">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Sr. No</th>
+                <th>HS Code</th>
+                <th>Submission Date</th>
+                <th>Description</th>
+                <th>Crop</th>
+                <th>Exporter</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="verification-list-body">
+              <!-- Rows will be injected by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="verification-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close-button" onclick="closeModal()">×</span>
+        <h2>Verification Item</h2>
+        <div id="modal-message"></div>
+        <form id="verification-form">
+          <input type="hidden" id="item_id">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="hs_code">HS Code</label>
+              <input type="text" id="hs_code" name="hs_code" required>
+            </div>
+            <div class="form-group">
+              <label for="submission_date">Submission Date</label>
+              <input type="date" id="submission_date" name="submission_date">
+            </div>
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea id="description" name="description"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="crop_id">Crop</label>
+              <select id="crop_id" name="crop_id"></select>
+            </div>
+            <div class="form-group">
+              <label for="exporter_id">Exporter</label>
+              <select id="exporter_id" name="exporter_id"></select>
+            </div>
+          </div>
+          <div class="button-container">
+            <button type="button" onclick="saveItem()">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
+</body>
+</html>

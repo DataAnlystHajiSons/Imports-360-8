@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Calculation Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .test-case {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #374151;
+        }
+        input {
+            padding: 8px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #7c3aed;
+        }
+        .calculated {
+            background: #dcfce7 !important;
+            border-color: #16a34a !important;
+            color: #166534 !important;
+            font-weight: 600;
+        }
+        .result {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #f59e0b;
+        }
+        .test-button {
+            background: #7c3aed;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #6d28d9;
+        }
+        .success { color: #16a34a; }
+        .error { color: #dc2626; }
+        .breakdown {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Insurance Calculation Test Suite</h1>
+        <p>This page tests the insurance calculation logic independently of the main application.</p>
+
+        <div class="test-section">
+            <h2>📊 Manual Test</h2>
+            <div class="test-case">
+                <div class="input-group">
+                    <label>Value *</label>
+                    <input type="number" id="test-value" placeholder="100000" value="100000">
+                </div>
+                <div class="input-group">
+                    <label>Rate (%) *</label>
+                    <input type="number" id="test-rate" placeholder="0.5" value="0.5">
+                </div>
+                <div class="input-group">
+                    <label>Marine (%)</label>
+                    <input type="number" id="test-marine-perc" placeholder="0.1" value="0.1">
+                </div>
+                <div class="input-group">
+                    <label>War (%)</label>
+                    <input type="number" id="test-war-perc" placeholder="0.05" value="0.05">
+                </div>
+                <div class="input-group">
+                    <label>ASC</label>
+                    <input type="number" id="test-asc" placeholder="100" value="100">
+                </div>
+                <div class="input-group">
+                    <label>FIF (%)</label>
+                    <input type="number" id="test-fif-perc" placeholder="2" value="2">
+                </div>
+                <div class="input-group">
+                    <label>STS (%)</label>
+                    <input type="number" id="test-sts-perc" placeholder="1" value="1">
+                </div>
+                <div class="input-group">
+                    <label>Stamp</label>
+                    <input type="number" id="test-stamp" placeholder="50" value="50">
+                </div>
+            </div>
+            
+            <button class="test-button" onclick="runManualTest()">🔄 Calculate</button>
+            <button class="test-button" onclick="clearResults()">🗑️ Clear</button>
+            
+            <div id="manual-result" class="result" style="display: none;">
+                <h3>Results:</h3>
+                <div class="test-case">
+                    <div class="input-group">
+                        <label>Amount</label>
+                        <input type="number" id="result-amount" class="calculated" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>10%</label>
+                        <input type="number" id="result-ten-perc" class="calculated" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>Total Value</label>
+                        <input type="number" id="result-total-value" class="calculated" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>Marine Amount</label>
+                        <input type="number" id="result-marine-amount" class="calculated" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>War Amount</label>
+                        <input type="number" id="result-war-amount" class="calculated" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>FIF Amount</label>
+                        <input type="number" id="result-fif-amount" class="calculated" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>STS Amount</label>
+                        <input type="number" id="result-sts-amount" class="calculated" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label><strong>Grand Total</strong></label>
+                        <input type="number" id="result-grand-total" class="calculated" readonly style="background: #fef3c7; border-color: #f59e0b; font-weight: bold;">
+                    </div>
+                </div>
+                <div id="calculation-breakdown" class="breakdown"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🎯 Automated Test Cases</h2>
+            <button class="test-button" onclick="runAllTests()">🚀 Run All Tests</button>
+            <div id="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📝 Expected Calculation Logic</h2>
+            <div class="breakdown">
+<strong>Insurance Calculation Steps:</strong>
+1. amount = value × rate (%)
+2. ten_perc = amount × 10%
+3. total_value = amount + ten_perc
+4. marine_amount = total_value × marine_perc (%)
+5. war_amount = total_value × war_perc (%)
+6. fif_amount = (marine_amount + war_amount + asc_1) × fif_perc (%)
+7. sts_amount = (marine_amount + war_amount + asc_1) × sts_perc (%)
+8. grand_total = (marine_amount + war_amount + asc_1) + fif_amount + sts_amount + stamp
+
+<strong>Example with default values:</strong>
+- Value: 100,000, Rate: 0.5%
+- amount = 100,000 × 0.5% = 500
+- ten_perc = 500 × 10% = 50
+- total_value = 500 + 50 = 550
+- marine_amount = 550 × 0.1% = 0.55
+- war_amount = 550 × 0.05% = 0.275
+- base_for_fif_sts = 0.55 + 0.275 + 100 = 100.825
+- fif_amount = 100.825 × 2% = 2.0165
+- sts_amount = 100.825 × 1% = 1.00825
+- grand_total = 100.825 + 2.0165 + 1.00825 + 50 = 153.85
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Local calculation function for testing
+        function calculateInsurance(input) {
+            const amount = input.value * (input.rate / 100);
+            const ten_perc = amount * 0.10;
+            const total_value = amount + ten_perc;
+            const marine_amount = total_value * (input.marine_perc / 100);
+            const war_amount = total_value * (input.war_perc / 100);
+            const base_for_fif_sts = marine_amount + war_amount + input.asc_1;
+            const fif_amount = base_for_fif_sts * (input.fif_perc / 100);
+            const sts_amount = base_for_fif_sts * (input.sts_perc / 100);
+            const grand_total = base_for_fif_sts + fif_amount + sts_amount + input.stamp;
+
+            return {
+                amount: Math.round(amount * 100) / 100,
+                ten_perc: Math.round(ten_perc * 100) / 100,
+                total_value: Math.round(total_value * 100) / 100,
+                marine_amount: Math.round(marine_amount * 100) / 100,
+                war_amount: Math.round(war_amount * 100) / 100,
+                fif_amount: Math.round(fif_amount * 100) / 100,
+                sts_amount: Math.round(sts_amount * 100) / 100,
+                grand_total: Math.round(grand_total * 100) / 100,
+                breakdown: {
+                    step1: `amount = ${input.value} × ${input.rate}% = ${amount}`,
+                    step2: `ten_perc = ${amount} × 10% = ${ten_perc}`,
+                    step3: `total_value = ${amount} + ${ten_perc} = ${total_value}`,
+                    step4: `marine_amount = ${total_value} × ${input.marine_perc}% = ${marine_amount}`,
+                    step5: `war_amount = ${total_value} × ${input.war_perc}% = ${war_amount}`,
+                    step6: `base_for_calculations = ${marine_amount} + ${war_amount} + ${input.asc_1} = ${base_for_fif_sts}`,
+                    step7: `fif_amount = ${base_for_fif_sts} × ${input.fif_perc}% = ${fif_amount}`,
+                    step8: `sts_amount = ${base_for_fif_sts} × ${input.sts_perc}% = ${sts_amount}`,
+                    step9: `grand_total = ${base_for_fif_sts} + ${fif_amount} + ${sts_amount} + ${input.stamp} = ${grand_total}`
+                }
+            };
+        }
+
+        function runManualTest() {
+            const input = {
+                value: parseFloat(document.getElementById('test-value').value) || 0,
+                rate: parseFloat(document.getElementById('test-rate').value) || 0,
+                marine_perc: parseFloat(document.getElementById('test-marine-perc').value) || 0,
+                war_perc: parseFloat(document.getElementById('test-war-perc').value) || 0,
+                asc_1: parseFloat(document.getElementById('test-asc').value) || 0,
+                fif_perc: parseFloat(document.getElementById('test-fif-perc').value) || 0,
+                sts_perc: parseFloat(document.getElementById('test-sts-perc').value) || 0,
+                stamp: parseFloat(document.getElementById('test-stamp').value) || 0
+            };
+
+            const result = calculateInsurance(input);
+
+            // Update result fields
+            document.getElementById('result-amount').value = result.amount;
+            document.getElementById('result-ten-perc').value = result.ten_perc;
+            document.getElementById('result-total-value').value = result.total_value;
+            document.getElementById('result-marine-amount').value = result.marine_amount;
+            document.getElementById('result-war-amount').value = result.war_amount;
+            document.getElementById('result-fif-amount').value = result.fif_amount;
+            document.getElementById('result-sts-amount').value = result.sts_amount;
+            document.getElementById('result-grand-total').value = result.grand_total;
+
+            // Show breakdown
+            const breakdownHtml = Object.values(result.breakdown).map(step => 
+                `<div>${step}</div>`
+            ).join('');
+            document.getElementById('calculation-breakdown').innerHTML = `<strong>Calculation Steps:</strong><br>${breakdownHtml}`;
+
+            document.getElementById('manual-result').style.display = 'block';
+        }
+
+        function clearResults() {
+            document.getElementById('manual-result').style.display = 'none';
+        }
+
+        const testCases = [
+            {
+                name: "Basic Test",
+                input: { value: 100000, rate: 0.5, marine_perc: 0.1, war_perc: 0.05, asc_1: 100, fif_perc: 2, sts_perc: 1, stamp: 50 },
+                expected: { grand_total: 153.85 }
+            },
+            {
+                name: "Zero Values",
+                input: { value: 0, rate: 0, marine_perc: 0, war_perc: 0, asc_1: 0, fif_perc: 0, sts_perc: 0, stamp: 0 },
+                expected: { grand_total: 0 }
+            },
+            {
+                name: "High Values",
+                input: { value: 1000000, rate: 2, marine_perc: 1, war_perc: 0.5, asc_1: 1000, fif_perc: 5, sts_perc: 3, stamp: 500 },
+                expected: { grand_total: 11885 }
+            }
+        ];
+
+        function runAllTests() {
+            const resultsDiv = document.getElementById('test-results');
+            let html = '<h3>Test Results:</h3>';
+
+            testCases.forEach((testCase, index) => {
+                const result = calculateInsurance(testCase.input);
+                const passed = Math.abs(result.grand_total - testCase.expected.grand_total) < 0.01;
+                
+                html += `
+                    <div style="padding: 10px; margin: 10px 0; border: 1px solid ${passed ? '#16a34a' : '#dc2626'}; border-radius: 6px; background: ${passed ? '#dcfce7' : '#fee2e2'}">
+                        <strong>${testCase.name}</strong> - <span class="${passed ? 'success' : 'error'}">${passed ? 'PASSED' : 'FAILED'}</span><br>
+                        Expected: ${testCase.expected.grand_total}, Got: ${result.grand_total}
+                    </div>
+                `;
+            });
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // Run basic test on page load
+        window.onload = function() {
+            runManualTest();
+        };
+    </script>
+</body>
+</html>

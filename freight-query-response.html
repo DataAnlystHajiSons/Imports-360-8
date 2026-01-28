@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Imports 360 - Freight Query Response</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    .page-layout {
+      display: flex;
+      gap: 20px;
+    }
+    .filters-pane {
+      width: 250px;
+      flex-shrink: 0;
+    }
+    .content-area {
+      flex-grow: 1;
+    }
+    .filter-group {
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="documents.html" class="nav-link">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+          </a>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu open">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu open">
+            <li><a href="send-freight-queries.html" class="nav-link"><span class="text">Send Freight Queries</span></a></li>
+            <li><a href="freight-query-response.html" class="nav-link active"><span class="text">Freight Query Response</span></a></li>
+            <li><a href="manage-freight-queries.html" class="nav-link"><span class="text">Manage Freight Queries</span></a></li>
+            <li><a href="award-shipment.html" class="nav-link"><span class="text">Award Shipment</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Freight Query Responses</h1>
+      </div>
+    </header>
+
+    <div class="page-layout">
+      <div class="filters-pane panel">
+        <div class="panel-body">
+          <h3>Filters</h3>
+          <div class="filter-group">
+            <label for="shipment-filter">Shipment</label>
+            <select id="shipment-filter"></select>
+          </div>
+          <div class="filter-group">
+            <label for="company-filter">Logistics Company</label>
+            <select id="company-filter"></select>
+          </div>
+          <div class="filter-group">
+            <label for="from-date-filter">From Date</label>
+            <input type="date" id="from-date-filter">
+          </div>
+          <div class="filter-group">
+            <label for="to-date-filter">To Date</label>
+            <input type="date" id="to-date-filter">
+          </div>
+          <div class="button-container">
+              <button id="apply-filters-btn">Apply Filters</button>
+              <button id="clear-filters-btn" class="button-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-area">
+        <div id="responses-container">
+          <p>Loading responses...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+  const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+  async function loadFilters() {
+    // Load shipments
+    const { data: shipments, error: shipmentError } = await supabase
+      .from('shipment')
+      .select('id, reference_code');
+    if (shipmentError) console.error(shipmentError);
+    else {
+      const shipmentFilter = document.getElementById('shipment-filter');
+      shipmentFilter.innerHTML = '<option value="">All Shipments</option>';
+      shipments.forEach(s => {
+        shipmentFilter.innerHTML += `<option value="${s.id}">${s.reference_code}</option>`;
+      });
+    }
+
+    // Load logistics companies
+    const { data: companies, error: companyError } = await supabase
+      .from('logistics_company')
+      .select('id, name');
+    if (companyError) console.error(companyError);
+    else {
+      const companyFilter = document.getElementById('company-filter');
+      companyFilter.innerHTML = '<option value="">All Companies</option>';
+      companies.forEach(c => {
+        companyFilter.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+      });
+    }
+  }
+
+  async function loadResponses() {
+    const shipmentId = document.getElementById('shipment-filter').value;
+    const companyId = document.getElementById('company-filter').value;
+    const fromDate = document.getElementById('from-date-filter').value;
+    const toDate = document.getElementById('to-date-filter').value;
+
+    let query = supabase
+      .from('freight_quote_response')
+      .select(`
+        *,
+        freight_query!inner(
+          shipment_id,
+          logistics_company_id,
+          shipment!inner(
+            reference_code
+          ),
+          logistics_company!inner(
+            name
+          )
+        )
+      `);
+
+    if (shipmentId) {
+      query = query.eq('freight_query.shipment_id', shipmentId);
+    }
+    if (companyId) {
+      query = query.eq('freight_query.logistics_company_id', companyId);
+    }
+    if (fromDate) {
+        query = query.gte('received_at', fromDate);
+    }
+    if (toDate) {
+        query = query.lte('received_at', toDate);
+    }
+
+    const { data: responses, error } = await query.order('received_at', { ascending: false });
+
+    if (error) {
+      console.error(error);
+      document.getElementById('responses-container').innerHTML = '<p class="error-message">Error loading responses.</p>';
+      return;
+    }
+
+    renderResponses(responses);
+  }
+
+  function renderResponses(responses) {
+    const container = document.getElementById('responses-container');
+    if (responses.length === 0) {
+      container.innerHTML = '<div class="panel"><div class="panel-body"><p>No responses found for the selected filters.</p></div></div>';
+      return;
+    }
+
+    const groupedByShipment = responses.reduce((acc, res) => {
+      const shipmentRef = res.freight_query.shipment.reference_code;
+      if (!acc[shipmentRef]) {
+        acc[shipmentRef] = [];
+      }
+      acc[shipmentRef].push(res);
+      return acc;
+    }, {});
+
+    let html = '';
+    for (const shipmentRef in groupedByShipment) {
+      html += `
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Shipment: ${shipmentRef}</h2>
+          </div>
+          <div class="panel-body">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Logistics Company</th>
+                    <th>Quote Amount</th>
+                    <th>Transit Days</th>
+                    <th>Validity Date</th>
+                    <th>Received At</th>
+                    <th>Attachment</th>
+                  </tr>
+                </thead>
+                <tbody>
+      `;
+      groupedByShipment[shipmentRef].forEach(res => {
+        html += `
+          <tr>
+            <td>${res.freight_query.logistics_company.name}</td>
+            <td>${res.quote_amount} ${res.currency}</td>
+            <td>${res.transit_days}</td>
+            <td>${new Date(res.validity_date).toLocaleDateString()}</td>
+            <td>${new Date(res.received_at).toLocaleString()}</td>
+            <td>${res.attachment_url ? `<a href="${res.attachment_url}" target="_blank" class="button button-secondary">View</a>` : 'N/A'}</td>
+          </tr>
+        `;
+      });
+      html += `
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    container.innerHTML = html;
+  }
+  
+  function clearFilters() {
+    document.getElementById('shipment-filter').value = '';
+    document.getElementById('company-filter').value = '';
+    document.getElementById('from-date-filter').value = '';
+    document.getElementById('to-date-filter').value = '';
+    loadResponses();
+  }
+
+  window.onload = () => {
+    const userCheck = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = 'login.html';
+        }
+    };
+    userCheck();
+    loadFilters();
+    loadResponses();
+
+    document.getElementById('apply-filters-btn').addEventListener('click', loadResponses);
+    document.getElementById('clear-filters-btn').addEventListener('click', clearFilters);
+
+    // Sidebar logic
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const hasSubmenus = document.querySelectorAll('.has-submenu');
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+    function handleMediaQueryChange(e) {
+      if (e.matches) {
+        sidebar.classList.remove('collapsed');
+        sidebar.classList.remove('open');
+      } else {
+        sidebar.classList.remove('open');
+      }
+    }
+
+    handleMediaQueryChange(mediaQuery);
+    mediaQuery.addListener(handleMediaQueryChange);
+
+    sidebarToggle.addEventListener('click', () => {
+      if (mediaQuery.matches) {
+        sidebar.classList.toggle('open');
+      } else {
+        sidebar.classList.toggle('collapsed');
+      }
+    });
+
+    hasSubmenus.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const submenu = item.nextElementSibling;
+        if (submenu && submenu.classList.contains('submenu')) {
+          submenu.classList.toggle('open');
+          item.classList.toggle('open');
+        }
+      });
+    });
+
+    const currentPath = window.location.pathname.split('/').pop();
+    navLinks.forEach(link => {
+      if (link.href.split('/').pop() === currentPath) {
+        link.classList.add('active');
+        let parentSubmenu = link.closest('.submenu');
+        if (parentSubmenu) {
+          parentSubmenu.classList.add('open');
+          let parentHasSubmenu = parentSubmenu.previousElementSibling;
+          if (parentHasSubmenu && parentHasSubmenu.classList.contains('has-submenu')) {
+            parentHasSubmenu.classList.add('open');
+          }
+        }
+      }
+    });
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Communication</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* CC Email Tags Styling */
+        .cc-container {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px;
+            min-height: 45px;
+            background: #fff;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            cursor: text;
+        }
+        .cc-container:focus-within {
+            border-color: #F59E0B;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
+        }
+        .cc-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #F59E0B 0%, #FBB124 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .cc-tag .remove-cc {
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            transition: background 0.2s;
+        }
+        .cc-tag .remove-cc:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .cc-input-field {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 200px;
+            font-size: 14px;
+            padding: 4px;
+        }
+        .cc-helper-text {
+            font-size: 12px;
+            color: #64748B;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cc-error {
+            color: #EF4444;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .cc-error.show {
+            display: block;
+        }
+        
+        /* Select2 Customization */
+        .select2-container {
+            width: 100% !important;
+        }
+        .select2-container--default .select2-selection--single {
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            height: 45px;
+            padding: 8px;
+            transition: all 0.3s ease;
+        }
+        .select2-container--default.select2-container--open .select2-selection--single,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #F59E0B;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+        .select2-container--default .select2-selection--single:hover {
+            border-color: #94a3b8;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px;
+            color: #334155;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 43px;
+        }
+        .select2-dropdown {
+            border: 2px solid #F59E0B;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #F59E0B;
+        }
+        .select2-container--default .select2-search--dropdown .select2-search__field {
+            border: 2px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 8px;
+            transition: all 0.3s ease;
+        }
+        .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+            border-color: #F59E0B;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+        
+        /* Enhanced form field borders */
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group textarea,
+        .form-group select {
+            border: 2px solid #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .form-group input[type="text"]:focus,
+        .form-group input[type="email"]:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #F59E0B;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+        .form-group input[type="text"]:hover,
+        .form-group input[type="email"]:hover,
+        .form-group textarea:hover,
+        .form-group select:hover {
+            border-color: #94a3b8;
+        }
+        
+        /* CC Input field specific */
+        .cc-input-field {
+            border: 2px solid #cbd5e1 !important;
+            transition: all 0.3s ease !important;
+        }
+        .cc-input-field:focus {
+            border-color: #F59E0B !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1) !important;
+        }
+        .cc-input-field:hover {
+            border-color: #94a3b8 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+                <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i> Back</button>
+        <h1>Bank Communication for Shipment #<span id="shipment-reference"></span></h1>
+
+        <div class="card">
+            <h2>Send New Communication</h2>
+            <form id="bank-comm-form">
+                <div class="form-group">
+                    <label for="bank-select">Bank</label>
+                    <select id="bank-select" name="bank" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="bank-contact-select">Bank Contact</label>
+                    <select id="bank-contact-select" name="contact" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" id="subject" name="subject" required>
+                </div>
+                <div class="form-group">
+                    <label for="stakeholder-select">Quick Add Stakeholder</label>
+                    <select id="stakeholder-select">
+                        <option value="">-- Select Stakeholder --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="cc-emails">CC (Stakeholders)</label>
+                    <div class="cc-container" id="cc-container">
+                        <input type="text" 
+                               class="cc-input-field" 
+                               id="cc-input" 
+                               placeholder="Enter email manually or select from dropdown above"
+                               autocomplete="off">
+                    </div>
+                    <div class="cc-helper-text">
+                        <i class="fas fa-info-circle"></i>
+                        Add stakeholder emails one at a time. Press Enter or use comma to add.
+                    </div>
+                    <div class="cc-error" id="cc-error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="email-body">Body</label>
+                    <textarea id="email-body" name="body" rows="6" required></textarea>
+                </div>
+                <div class="form-group">
+                    <h3>Attach Documents</h3>
+                    <div id="document-checklist">
+                        <!-- Document checkboxes will be dynamically inserted here -->
+                    </div>
+                </div>
+                <button type="submit" class="btn">Send Email</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Communication History</h2>
+            <table id="comm-history-table">
+                <thead>
+                    <tr>
+                        <th>Sent At</th>
+                        <th>Bank</th>
+                        <th>Contact</th>
+                        <th>CC</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- History rows will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+        const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+        const shipmentId = new URLSearchParams(window.location.search).get('id');
+        let currentUser = null;
+        let ccEmails = []; // Store CC emails
+
+        // UI Elements
+        const shipmentReferenceEl = document.getElementById('shipment-reference');
+        const bankSelect = document.getElementById('bank-select');
+        const contactSelect = document.getElementById('bank-contact-select');
+        const docChecklist = document.getElementById('document-checklist');
+        const historyTableBody = document.querySelector('#comm-history-table tbody');
+        const form = document.getElementById('bank-comm-form');
+        const ccContainer = document.getElementById('cc-container');
+        const ccInput = document.getElementById('cc-input');
+        const ccError = document.getElementById('cc-error');
+        const stakeholderSelect = document.getElementById('stakeholder-select');
+
+        async function loadInitialData() {
+            // Fetch shipment reference
+            const { data: shipment, error: shipmentError } = await supabase
+                .from('shipment')
+                .select('reference_code')
+                .eq('id', shipmentId)
+                .single();
+
+            if (shipmentError) {
+                console.error('Error fetching shipment reference:', shipmentError);
+                shipmentReferenceEl.textContent = 'Error';
+                return;
+            }
+            shipmentReferenceEl.textContent = shipment.reference_code;
+
+            await Promise.all([
+                loadBanks(),
+                loadShipmentDocuments(),
+                loadCommunicationHistory()
+            ]);
+            
+            if (bankSelect.value) {
+                await loadBankContacts(bankSelect.value);
+                await loadStakeholders(bankSelect.value);
+            }
+        }
+
+        async function loadBanks() {
+            const { data, error } = await supabase.from('bank').select('id, name, branch_name');
+            if (error) {
+                console.error('Error fetching banks:', error);
+                return;
+            }
+            bankSelect.innerHTML = '<option value="">-- Select Bank --</option>';
+            data.forEach(bank => {
+                const option = document.createElement('option');
+                option.value = bank.id;
+                option.textContent = `${bank.name} (${bank.branch_name || 'Main Branch'})`;
+                bankSelect.appendChild(option);
+            });
+            // Refresh Select2 after updating options
+            $('#bank-select').trigger('change.select2');
+        }
+
+        async function loadBankContacts(bankId) {
+            if (!bankId) {
+                contactSelect.innerHTML = '<option value="">-- Select Bank First --</option>';
+                $('#bank-contact-select').trigger('change.select2');
+                return;
+            }
+            const { data, error } = await supabase.from('bank_contact').select('id, contact_name, contact_email').eq('bank_id', bankId);
+            if (error) {
+                console.error('Error fetching bank contacts:', error);
+                return;
+            }
+            contactSelect.innerHTML = '<option value="">-- Select Contact --</option>';
+            if (data.length === 0) {
+                const option = document.createElement('option');
+                option.textContent = 'No contacts found for this bank';
+                contactSelect.appendChild(option);
+                $('#bank-contact-select').trigger('change.select2');
+                return;
+            }
+            data.forEach(contact => {
+                const option = document.createElement('option');
+                option.value = contact.id;
+                option.textContent = `${contact.contact_name} (${contact.contact_email})`;
+                contactSelect.appendChild(option);
+            });
+            // Refresh Select2 after updating options
+            $('#bank-contact-select').trigger('change.select2');
+        }
+
+        async function loadStakeholders(bankId) {
+            stakeholderSelect.innerHTML = '<option value="">-- Select Stakeholder --</option>';
+            
+            if (!bankId) return;
+            
+            // Get ALL bank contacts for the selected bank (not just the one in the "Bank Contact" dropdown)
+            const { data: bankContacts, error } = await supabase
+                .from('bank_contact')
+                .select('id, contact_name, contact_email, department')
+                .eq('bank_id', bankId);
+            
+            if (error) {
+                console.error('Error fetching bank contacts for stakeholders:', error);
+                return;
+            }
+            
+            if (bankContacts && bankContacts.length > 0) {
+                bankContacts.forEach(contact => {
+                    const option = document.createElement('option');
+                    option.value = contact.contact_email;
+                    option.textContent = `${contact.contact_name} - Bank Contact${contact.department ? ' (' + contact.department + ')' : ''} (${contact.contact_email})`;
+                    stakeholderSelect.appendChild(option);
+                });
+            }
+            
+            // Also load shipment-related stakeholders
+            await loadShipmentStakeholders();
+        }
+        
+        async function loadShipmentStakeholders() {
+            // Get supplier from shipment_products
+            const { data: supplierData } = await supabase
+                .from('shipment_products')
+                .select('product_variety(supplier(name, contact_email))')
+                .eq('shipment_id', shipmentId)
+                .limit(1)
+                .single();
+            
+            // Get clearing agent
+            const { data: clearingAgent } = await supabase
+                .from('under_clearing_agent')
+                .select('clearing_agent(name, contact_email)')
+                .eq('shipment_id', shipmentId)
+                .maybeSingle();
+            
+            // Get warehouse
+            const { data: warehouseData } = await supabase
+                .from('warehouse_arrival')
+                .select('warehouse(warehouse_name, email)')
+                .eq('shipment_id', shipmentId)
+                .maybeSingle();
+            
+            // Get freight forwarder from freight_query
+            const { data: freightQuery } = await supabase
+                .from('freight_query')
+                .select('logistics_company(name, contact_email)')
+                .eq('shipment_id', shipmentId)
+                .maybeSingle();
+            
+            // Add supplier
+            if (supplierData?.product_variety?.supplier?.contact_email) {
+                const option = document.createElement('option');
+                option.value = supplierData.product_variety.supplier.contact_email;
+                option.textContent = `${supplierData.product_variety.supplier.name} - Supplier (${supplierData.product_variety.supplier.contact_email})`;
+                stakeholderSelect.appendChild(option);
+            }
+            
+            // Add clearing agent
+            if (clearingAgent?.clearing_agent?.contact_email) {
+                const option = document.createElement('option');
+                option.value = clearingAgent.clearing_agent.contact_email;
+                option.textContent = `${clearingAgent.clearing_agent.name} - Clearing Agent (${clearingAgent.clearing_agent.contact_email})`;
+                stakeholderSelect.appendChild(option);
+            }
+            
+            // Add warehouse
+            if (warehouseData?.warehouse?.email) {
+                const option = document.createElement('option');
+                option.value = warehouseData.warehouse.email;
+                option.textContent = `${warehouseData.warehouse.warehouse_name} - Warehouse (${warehouseData.warehouse.email})`;
+                stakeholderSelect.appendChild(option);
+            }
+            
+            // Add freight forwarder
+            if (freightQuery?.logistics_company?.contact_email) {
+                const option = document.createElement('option');
+                option.value = freightQuery.logistics_company.contact_email;
+                option.textContent = `${freightQuery.logistics_company.name} - Freight Forwarder (${freightQuery.logistics_company.contact_email})`;
+                stakeholderSelect.appendChild(option);
+            }
+            
+            // Refresh Select2 after updating options
+            $('#stakeholder-select').trigger('change.select2');
+        }
+
+        async function loadShipmentDocuments() {
+            // Load all available documents from various sources
+            const allDocuments = [];
+            
+            // 1. Centralized document system (new)
+            const { data: centralDocs, error: centralError } = await supabase
+                .from('document')
+                .select('id, doc_type, file_url, file_name, uploaded_at')
+                .eq('shipment_id', shipmentId)
+                .eq('status', 'active');
+            
+            if (centralDocs) {
+                centralDocs.forEach(doc => {
+                    // Categorize based on doc_type
+                    let category = 'Others';
+                    const docType = doc.doc_type ? doc.doc_type.toLowerCase() : '';
+                    
+                    if (docType.includes('invoice') || docType.includes('lc') || docType.includes('letter_of_credit') || docType.includes('payment')) {
+                        category = 'Financial Documents';
+                    } else if (docType.includes('bl') || docType.includes('bill_of_lading') || docType.includes('original') || docType.includes('non_negotiable')) {
+                        category = 'Shipping Documents';
+                    } else if (docType.includes('certificate') || docType.includes('inspection') || docType.includes('quality')) {
+                        category = 'Certificates';
+                    } else if (docType.includes('packing') || docType.includes('list')) {
+                        category = 'Packing Documents';
+                    } else if (docType.includes('proforma') || docType.includes('purchase_order') || docType.includes('ip_number')) {
+                        category = 'Stage Documents';
+                    }
+                    
+                    allDocuments.push({
+                        id: doc.id,
+                        name: doc.doc_type ? doc.doc_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : (doc.file_name || 'Document'),
+                        fileName: doc.file_name || null,
+                        category: category,
+                        type: 'document',
+                        uploaded_at: doc.uploaded_at
+                    });
+                });
+            }
+            
+            // 2. Stage-specific documents
+            const stageDocuments = await loadStageDocuments();
+            allDocuments.push(...stageDocuments);
+            
+            // Sort by upload date (newest first)
+            allDocuments.sort((a, b) => {
+                const dateA = a.uploaded_at ? new Date(a.uploaded_at) : new Date(0);
+                const dateB = b.uploaded_at ? new Date(b.uploaded_at) : new Date(0);
+                return dateB - dateA;
+            });
+            
+            // Render document checklist
+            docChecklist.innerHTML = '';
+            if (allDocuments.length === 0) {
+                docChecklist.innerHTML = '<p style="color: #94a3b8; font-style: italic; padding: 20px; text-align: center;">No documents found for this shipment.</p>';
+                return;
+            }
+            
+            // Group by category
+            const categories = {};
+            allDocuments.forEach(doc => {
+                if (!categories[doc.category]) {
+                    categories[doc.category] = [];
+                }
+                categories[doc.category].push(doc);
+            });
+            
+            // Render grouped documents
+            Object.keys(categories).forEach(category => {
+                const categoryHeader = document.createElement('div');
+                categoryHeader.style.cssText = 'margin-top: 15px; margin-bottom: 10px; font-weight: 700; color: #475569; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px;';
+                categoryHeader.innerHTML = `<i class="fas fa-folder"></i> ${category}`;
+                docChecklist.appendChild(categoryHeader);
+                
+                categories[category].forEach(doc => {
+                    const checkboxId = `doc-${doc.id}`;
+                    const wrapper = document.createElement('div');
+                    wrapper.style.cssText = 'padding: 8px 0; display: flex; align-items: flex-start; gap: 10px;';
+                    
+                    // Build label content
+                    let labelContent = `<div style="font-weight: 600; color: #334155; font-size: 0.95rem;">${doc.name}</div>`;
+                    if (doc.fileName) {
+                        labelContent += `<div style="font-size: 0.8rem; color: #64748b; margin-top: 2px; word-wrap: break-word; word-break: break-all;">${doc.fileName}</div>`;
+                    }
+                    
+                    wrapper.innerHTML = `
+                        <input type="checkbox" id="${checkboxId}" name="documents" value="${doc.id}" style="width: 18px; height: 18px; cursor: pointer; margin-top: 2px; flex-shrink: 0;">
+                        <label for="${checkboxId}" style="cursor: pointer; flex: 1;">${labelContent}</label>
+                    `;
+                    docChecklist.appendChild(wrapper);
+                });
+            });
+        }
+        
+        async function loadStageDocuments() {
+            const stageDocuments = [];
+            
+            // Proforma Invoice
+            const { data: proforma } = await supabase.from('proforma_invoice').select('id, proforma_number, file_url').eq('shipment_id', shipmentId).single();
+            if (proforma?.file_url) {
+                stageDocuments.push({ id: `proforma_${proforma.id}`, name: `Proforma Invoice - ${proforma.proforma_number}`, category: 'Stage Documents', type: 'proforma' });
+            }
+            
+            // Purchase Order
+            const { data: po } = await supabase.from('purchase_order').select('id, po_number, po_file_url').eq('shipment_id', shipmentId).single();
+            if (po?.po_file_url) {
+                stageDocuments.push({ id: `po_${po.id}`, name: `Purchase Order - ${po.po_number}`, category: 'Stage Documents', type: 'purchase_order' });
+            }
+            
+            // Commercial Invoice
+            const { data: invoice } = await supabase.from('commercial_invoice').select('id, invoice_number, file_url').eq('shipment_id', shipmentId).single();
+            if (invoice?.file_url) {
+                stageDocuments.push({ id: `invoice_${invoice.id}`, name: `Commercial Invoice - ${invoice.invoice_number}`, category: 'Financial Documents', type: 'invoice' });
+            }
+            
+            // IP Number
+            const { data: ip } = await supabase.from('ip_number').select('id, file_url').eq('shipment_id', shipmentId).single();
+            if (ip?.file_url) {
+                stageDocuments.push({ id: `ip_${ip.id}`, name: 'IP Number Document', category: 'Stage Documents', type: 'ip_number' });
+            }
+            
+            // Letter of Credit
+            const { data: lc } = await supabase.from('letter_of_credit').select('id, lc_number, file_url').eq('shipment_id', shipmentId).single();
+            if (lc?.file_url) {
+                stageDocuments.push({ id: `lc_${lc.id}`, name: `Letter of Credit - ${lc.lc_number}`, category: 'Financial Documents', type: 'letter_of_credit' });
+            }
+            
+            // Non-Negotiable Docs
+            const { data: nonNeg } = await supabase.from('non_negotiable_docs').select('id, file_url').eq('shipment_id', shipmentId).single();
+            if (nonNeg?.file_url) {
+                stageDocuments.push({ id: `nonneg_${nonNeg.id}`, name: 'Non-Negotiable Documents', category: 'Stage Documents', type: 'non_negotiable' });
+            }
+            
+            // Original Docs
+            const { data: original } = await supabase.from('original_docs').select('id, docs_url').eq('shipment_id', shipmentId).single();
+            if (original?.docs_url) {
+                stageDocuments.push({ id: `original_${original.id}`, name: 'Original Documents', category: 'Stage Documents', type: 'original_docs' });
+            }
+            
+            return stageDocuments;
+        }
+
+        // CC Email Management Functions
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email.toLowerCase());
+        }
+
+        function showCCError(message) {
+            ccError.textContent = message;
+            ccError.classList.add('show');
+            setTimeout(() => {
+                ccError.classList.remove('show');
+            }, 3000);
+        }
+
+        function addCCEmail(email) {
+            email = email.trim().toLowerCase();
+            
+            if (!email) return;
+            
+            if (!validateEmail(email)) {
+                showCCError('Invalid email format');
+                return;
+            }
+            
+            if (ccEmails.includes(email)) {
+                showCCError('Email already added');
+                return;
+            }
+            
+            ccEmails.push(email);
+            renderCCTags();
+            ccInput.value = '';
+        }
+
+        function removeCCEmail(email) {
+            ccEmails = ccEmails.filter(e => e !== email);
+            renderCCTags();
+        }
+
+        function renderCCTags() {
+            // Remove existing tags
+            const existingTags = ccContainer.querySelectorAll('.cc-tag');
+            existingTags.forEach(tag => tag.remove());
+            
+            // Add tags before the input field
+            ccEmails.forEach(email => {
+                const tag = document.createElement('div');
+                tag.className = 'cc-tag';
+                tag.innerHTML = `
+                    <span>${email}</span>
+                    <span class="remove-cc" onclick="window.removeCCEmail('${email}')">×</span>
+                `;
+                ccContainer.insertBefore(tag, ccInput);
+            });
+        }
+
+        // Make removeCCEmail available globally for onclick
+        window.removeCCEmail = removeCCEmail;
+
+        async function loadCommunicationHistory() {
+            const { data, error } = await supabase
+                .from('bank_communication')
+                .select(`sent_at,email_subject,status,cc_emails,bank(name),bank_contact(contact_name)`)
+                .eq('shipment_id', shipmentId)
+                .order('sent_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching communication history:', error);
+                return;
+            }
+            
+            historyTableBody.innerHTML = '';
+            if (data.length === 0) {
+                const row = historyTableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 6;
+                cell.textContent = 'No communication history found.';
+                cell.style.textAlign = 'center';
+                return;
+            }
+            data.forEach(item => {
+                const ccDisplay = item.cc_emails && item.cc_emails.length > 0 
+                    ? item.cc_emails.join(', ') 
+                    : '-';
+                
+                const row = historyTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${new Date(item.sent_at).toLocaleString()}</td>
+                    <td>${item.bank.name}</td>
+                    <td>${item.bank_contact ? item.bank_contact.contact_name : 'N/A'}</td>
+                    <td style="font-size: 12px; color: #64748B;">${ccDisplay}</td>
+                    <td>${item.email_subject}</td>
+                    <td>${item.status || 'Sent'}</td>
+                `;
+            });
+        }
+
+        async function handleSendCommunication(e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const selectedDocs = formData.getAll('documents');
+            const communicationData = {
+                shipment_id: shipmentId,
+                bank_id: formData.get('bank'),
+                bank_contact_id: formData.get('contact'),
+                sent_by: currentUser.id,
+                email_subject: formData.get('subject'),
+                email_body: formData.get('body'),
+                cc_emails: ccEmails.length > 0 ? ccEmails : null,
+                status: 'sent'
+            };
+
+            const { data: commResult, error: commError } = await supabase
+                .from('bank_communication')
+                .insert(communicationData)
+                .select('id')
+                .single();
+
+            if (commError) {
+                alert('Failed to log communication: ' + commError.message);
+                return;
+            }
+
+            if (selectedDocs.length > 0) {
+                const docLinks = selectedDocs.map(docId => ({ communication_id: commResult.id, document_id: docId }));
+                const { error: docError } = await supabase.from('bank_communication_documents').insert(docLinks);
+                if (docError) {
+                    alert('Communication logged, but failed to link documents: ' + docError.message);
+                }
+            }
+
+            const { error: functionError } = await supabase.functions.invoke('send-bank-email', {
+                body: { communication_id: commResult.id },
+            });
+
+            if(functionError){
+                alert('DB log successful, but failed to send email: ' + functionError.message);
+            } else {
+                alert('Communication sent and logged successfully!');
+            }
+            
+            form.reset();
+            ccEmails = [];
+            renderCCTags();
+            await loadCommunicationHistory();
+        }
+
+        // --- Event Listeners ---
+        // Use jQuery event for Select2 compatibility
+        $('#bank-select').on('change', async function(e) {
+            const bankId = $(this).val();
+            await loadBankContacts(bankId);
+            await loadStakeholders(bankId);
+        });
+
+        $('#stakeholder-select').on('change', function(e) {
+            const email = $(this).val();
+            if (email) {
+                addCCEmail(email);
+                $(this).val('').trigger('change'); // Reset dropdown
+            }
+        });
+
+        // CC input event listeners
+        ccInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                addCCEmail(ccInput.value.replace(',', ''));
+            } else if (e.key === 'Backspace' && !ccInput.value && ccEmails.length > 0) {
+                // Remove last CC email on backspace if input is empty
+                removeCCEmail(ccEmails[ccEmails.length - 1]);
+            }
+        });
+
+        ccInput.addEventListener('blur', () => {
+            // Add email on blur if there's a value
+            if (ccInput.value.trim()) {
+                addCCEmail(ccInput.value);
+            }
+        });
+
+        // Allow clicking on container to focus input
+        ccContainer.addEventListener('click', (e) => {
+            if (e.target === ccContainer) {
+                ccInput.focus();
+            }
+        });
+
+        form.addEventListener('submit', handleSendCommunication);
+
+        window.onload = async () => {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+                console.error('User not authenticated. Redirecting to login.');
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = user;
+
+            if (!shipmentId) {
+                document.body.innerHTML = '<h1>Error: No Shipment ID provided in URL.</h1>';
+                return;
+            }
+
+            await loadInitialData();
+            
+            // Initialize Select2 for dropdowns
+            $('#bank-select').select2({
+                placeholder: 'Select a bank',
+                allowClear: false
+            });
+            
+            $('#bank-contact-select').select2({
+                placeholder: 'Select a contact',
+                allowClear: false
+            });
+            
+            $('#stakeholder-select').select2({
+                placeholder: 'Select a stakeholder',
+                allowClear: true
+            });
+        };
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+</body>
+</html>

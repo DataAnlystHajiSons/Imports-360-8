@@ -1,0 +1,970 @@
+<!-- ============================================================================
+     MANAGE PRODUCTS MODAL
+     Full product management interface with change history
+     ============================================================================ -->
+
+<!-- Modal Container -->
+<div id="manage-products-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-container large-modal">
+    <div class="modal-header">
+      <h2>
+        <i class="fas fa-boxes"></i>
+        Manage Products
+        <span id="manage-products-shipment-ref" class="shipment-ref-badge"></span>
+      </h2>
+      <button class="modal-close-btn" onclick="closeManageProductsModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Tab Navigation -->
+      <div class="tab-navigation">
+        <button class="tab-btn active" data-tab="current-products">
+          <i class="fas fa-list"></i>
+          Current Products
+        </button>
+        <button class="tab-btn" data-tab="add-product">
+          <i class="fas fa-plus-circle"></i>
+          Add Product
+        </button>
+        <button class="tab-btn" data-tab="change-history">
+          <i class="fas fa-history"></i>
+          Change History
+        </button>
+      </div>
+
+      <!-- Tab Content: Current Products -->
+      <div id="tab-current-products" class="tab-content active">
+        <div class="section-header">
+          <h3>Current Products in Shipment</h3>
+          <button class="btn btn-secondary btn-sm" onclick="refreshProductsList()">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+        </div>
+
+        <div id="current-products-loading" class="loading-state" style="display: none;">
+          <i class="fas fa-spinner fa-spin"></i> Loading products...
+        </div>
+
+        <div id="current-products-empty" class="empty-state" style="display: none;">
+          <i class="fas fa-box-open"></i>
+          <p>No products in this shipment yet</p>
+          <button class="btn btn-primary" onclick="switchToTab('add-product')">
+            <i class="fas fa-plus"></i> Add Your First Product
+          </button>
+        </div>
+
+        <div id="current-products-table-container" style="display: none;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Commodity</th>
+                <th>Product</th>
+                <th>Variety</th>
+                <th>Quantity</th>
+                <th>Unit</th>
+                <th>Rate</th>
+                <th>Amount</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="current-products-tbody">
+              <!-- Products will be populated here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab Content: Add Product -->
+      <div id="tab-add-product" class="tab-content">
+        <div class="section-header">
+          <h3>Add New Product to Shipment</h3>
+        </div>
+
+        <form id="add-product-form" class="form-grid">
+          <div class="form-group">
+            <label for="add-commodity">
+              Commodity <span class="required">*</span>
+            </label>
+            <select id="add-commodity" required class="form-control">
+              <option value="">Select Commodity</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="add-variety">
+              Product Variety <span class="required">*</span>
+            </label>
+            <select id="add-variety" required class="form-control" disabled>
+              <option value="">Select Commodity First</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="add-quantity">
+              Quantity <span class="required">*</span>
+            </label>
+            <input 
+              type="number" 
+              id="add-quantity" 
+              required 
+              min="0.01" 
+              step="0.01"
+              class="form-control"
+              placeholder="Enter quantity"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="add-unit">
+              Unit <span class="required">*</span>
+            </label>
+            <select id="add-unit" required class="form-control" disabled>
+              <option value="">Select Product First</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="add-rate">
+              Rate (per unit)
+            </label>
+            <input 
+              type="number" 
+              id="add-rate" 
+              min="0" 
+              step="0.01"
+              class="form-control"
+              placeholder="Optional"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="add-amount">
+              Total Amount
+            </label>
+            <input 
+              type="number" 
+              id="add-amount" 
+              min="0" 
+              step="0.01"
+              class="form-control"
+              placeholder="Auto-calculated"
+              readonly
+            >
+          </div>
+
+          <div class="form-group full-width">
+            <label for="add-reason">
+              Reason for Adding
+            </label>
+            <textarea 
+              id="add-reason" 
+              class="form-control"
+              rows="2"
+              placeholder="Optional: Explain why you're adding this product"
+            ></textarea>
+          </div>
+
+          <div class="form-actions full-width">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-plus"></i> Add Product
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="resetAddProductForm()">
+              <i class="fas fa-undo"></i> Reset
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tab Content: Change History -->
+      <div id="tab-change-history" class="tab-content">
+        <div class="section-header">
+          <h3>Product Change History</h3>
+          <button class="btn btn-secondary btn-sm" onclick="refreshChangeHistory()">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+        </div>
+
+        <div id="change-history-loading" class="loading-state" style="display: none;">
+          <i class="fas fa-spinner fa-spin"></i> Loading history...
+        </div>
+
+        <div id="change-history-empty" class="empty-state" style="display: none;">
+          <i class="fas fa-history"></i>
+          <p>No changes recorded yet</p>
+        </div>
+
+        <div id="change-history-timeline" class="timeline-container">
+          <!-- Timeline items will be populated here -->
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeManageProductsModal()">
+        <i class="fas fa-times"></i> Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div id="edit-product-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-edit"></i>
+        Edit Product
+      </h3>
+      <button class="modal-close-btn" onclick="closeEditProductModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form id="edit-product-form">
+        <input type="hidden" id="edit-product-variety-id">
+        
+        <div class="form-group">
+          <label>Product</label>
+          <input type="text" id="edit-product-name" class="form-control" readonly>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-quantity">
+            Quantity <span class="required">*</span>
+          </label>
+          <input 
+            type="number" 
+            id="edit-quantity" 
+            required 
+            min="0.01" 
+            step="0.01"
+            class="form-control"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="edit-unit">
+            Unit <span class="required">*</span>
+          </label>
+          <select id="edit-unit" required class="form-control">
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-rate">Rate (per unit)</label>
+          <input 
+            type="number" 
+            id="edit-rate" 
+            min="0" 
+            step="0.01"
+            class="form-control"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="edit-amount">Total Amount</label>
+          <input 
+            type="number" 
+            id="edit-amount" 
+            min="0" 
+            step="0.01"
+            class="form-control"
+            readonly
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="edit-reason">
+            Reason for Change
+          </label>
+          <textarea 
+            id="edit-reason" 
+            class="form-control"
+            rows="2"
+            placeholder="Optional: Explain why you're modifying this product"
+          ></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="closeEditProductModal()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Remove Product Confirmation Modal -->
+<div id="remove-product-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-container small-modal">
+    <div class="modal-header alert">
+      <h3>
+        <i class="fas fa-exclamation-triangle"></i>
+        Remove Product
+      </h3>
+      <button class="modal-close-btn" onclick="closeRemoveProductModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <input type="hidden" id="remove-product-variety-id">
+      
+      <p class="alert-message">
+        Are you sure you want to remove <strong id="remove-product-name"></strong> from this shipment?
+      </p>
+      
+      <div class="form-group">
+        <label for="remove-reason">
+          Reason for Removal
+        </label>
+        <textarea 
+          id="remove-reason" 
+          class="form-control"
+          rows="2"
+          placeholder="Optional: Explain why you're removing this product"
+        ></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-danger" onclick="confirmRemoveProduct()">
+          <i class="fas fa-trash"></i> Yes, Remove Product
+        </button>
+        <button class="btn btn-secondary" onclick="closeRemoveProductModal()">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Template for Product Row -->
+<template id="product-row-template">
+  <tr class="product-row">
+    <td class="commodity-name"></td>
+    <td class="product-name"></td>
+    <td class="variety-name"></td>
+    <td class="quantity"></td>
+    <td class="unit"></td>
+    <td class="rate"></td>
+    <td class="amount"></td>
+    <td class="actions">
+      <button class="btn-icon btn-edit" title="Edit Product">
+        <i class="fas fa-edit"></i>
+      </button>
+      <button class="btn-icon btn-delete" title="Remove Product">
+        <i class="fas fa-trash"></i>
+      </button>
+    </td>
+  </tr>
+</template>
+
+<!-- Template for Timeline Item -->
+<template id="timeline-item-template">
+  <div class="timeline-item">
+    <div class="timeline-marker"></div>
+    <div class="timeline-content">
+      <div class="timeline-header">
+        <span class="timeline-action"></span>
+        <span class="timeline-time"></span>
+      </div>
+      <div class="timeline-details">
+        <div class="timeline-product"></div>
+        <div class="timeline-description"></div>
+        <div class="timeline-user"></div>
+        <div class="timeline-reason"></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style>
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 900px;
+  width: 90%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-container.large-modal {
+  max-width: 1200px;
+}
+
+.modal-container.small-modal {
+  max-width: 500px;
+}
+
+.modal-header {
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header.alert {
+  background: #fef2f2;
+  border-bottom-color: #fca5a5;
+}
+
+.modal-header h2, .modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shipment-ref-badge {
+  font-size: 0.875rem;
+  background: #7c3aed;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Tab Navigation */
+.tab-navigation {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #6b7280;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: -2px;
+}
+
+.tab-btn:hover {
+  color: #7c3aed;
+}
+
+.tab-btn.active {
+  color: #7c3aed;
+  border-bottom-color: #7c3aed;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Section Header */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+/* Loading & Empty States */
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+  font-size: 1.125rem;
+}
+
+.loading-state i {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  font-size: 1.125rem;
+  margin-bottom: 20px;
+}
+
+/* Form Styles */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.form-control {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.form-control:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+.form-actions.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Table Styles */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.data-table thead {
+  background: #f9fafb;
+}
+
+.data-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #1f2937;
+  font-size: 0.875rem;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr:hover {
+  background: #f9fafb;
+}
+
+/* Button Styles */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  background: #7c3aed;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #6d28d9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.813rem;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #6b7280;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.btn-edit:hover {
+  color: #7c3aed;
+}
+
+.btn-delete:hover {
+  color: #ef4444;
+}
+
+/* Timeline Styles */
+.timeline-container {
+  position: relative;
+  padding: 20px 0;
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 40px;
+  margin-bottom: 24px;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  background: #7c3aed;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 0 0 2px #7c3aed;
+}
+
+.timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 12px;
+  width: 2px;
+  height: calc(100% + 12px);
+  background: #e5e7eb;
+}
+
+.timeline-content {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 3px solid #7c3aed;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.timeline-action {
+  font-weight: 600;
+  color: #7c3aed;
+  font-size: 0.875rem;
+}
+
+.timeline-time {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.timeline-details {
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.timeline-product {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.timeline-description {
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.timeline-user {
+  font-size: 0.813rem;
+  color: #9ca3af;
+  margin-top: 8px;
+}
+
+.timeline-reason {
+  margin-top: 8px;
+  padding: 8px;
+  background: white;
+  border-radius: 4px;
+  font-style: italic;
+  color: #6b7280;
+  font-size: 0.813rem;
+}
+
+.alert-message {
+  padding: 16px;
+  background: #fef2f2;
+  border-left: 3px solid #ef4444;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+/* Select2 Customization for Searchable Dropdowns */
+.select2-container {
+  width: 100% !important;
+}
+
+.select2-container--default .select2-selection--single {
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  height: 45px;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.select2-container--default .select2-selection--single:hover {
+  border-color: #d1d5db;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  line-height: 28px;
+  color: #1f2937;
+  padding: 0;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+  color: #9ca3af;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 43px;
+  right: 8px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+  border-color: #6b7280 transparent transparent transparent;
+  border-width: 6px 5px 0 5px;
+}
+
+.select2-dropdown {
+  border: 2px solid #7c3aed;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  margin-top: 4px;
+}
+
+.select2-container--default .select2-search--dropdown {
+  padding: 8px;
+  background-color: #f9fafb;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field {
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field:focus {
+  border-color: #7c3aed;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.select2-container--default .select2-results__option {
+  padding: 10px 12px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  background-color: #7c3aed;
+  color: white;
+}
+
+.select2-container--default .select2-results__option[aria-selected="true"] {
+  background-color: #ede9fe;
+  color: #7c3aed;
+  font-weight: 500;
+}
+
+.select2-container--default .select2-results__option--disabled {
+  color: #d1d5db;
+  background-color: #f9fafb;
+  font-style: italic;
+}
+
+.select2-container--default .select2-results__option:hover:not([aria-disabled="true"]) {
+  background-color: #f3f4f6;
+}
+
+/* Select2 inside modal */
+.modal-overlay .select2-container {
+  z-index: 10001;
+}
+
+.select2-container--open .select2-dropdown {
+  z-index: 10002;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-container {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-navigation {
+    flex-direction: column;
+  }
+
+  .tab-btn {
+    border-bottom: none;
+    border-left: 2px solid transparent;
+    padding: 12px 16px;
+  }
+
+  .tab-btn.active {
+    border-left-color: #7c3aed;
+    border-bottom-color: transparent;
+  }
+}
+</style>

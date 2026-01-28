@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Clearing Agent Details</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* View Toggle Styles */
+    .view-toggle-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(251, 191, 36, 0.05) 100%);
+      border-radius: 12px;
+    }
+    .view-toggle-label {
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 60px;
+      height: 30px;
+      background: #ddd;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .toggle-switch.active {
+      background: linear-gradient(to right, #F59E0B, #FBB124);
+    }
+    .toggle-slider {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(30px);
+    }
+    .view-section {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .view-section.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Clearing Agent Business View Styles */
+    .clearing-summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-left: 5px solid #F59E0B;
+    }
+    .clearing-summary-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+      border-left-color: #FBB124;
+    }
+    .clearing-summary-card.expanded {
+      border-left-color: #FBB124;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
+    }
+    .clearing-summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .clearing-summary-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .clearing-summary-title h3 {
+      margin: 0;
+      color: #1E293B;
+      font-size: 22px;
+    }
+    .clearing-summary-title .clearing-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #F59E0B 0%, #FBB124 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+    .expand-indicator {
+      font-size: 24px;
+      color: #F59E0B;
+      transition: transform 0.3s ease;
+    }
+    .clearing-summary-card.expanded .expand-indicator {
+      transform: rotate(180deg);
+    }
+    .clearing-summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .summary-stat {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(251, 191, 36, 0.05) 100%);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #FEF3C7;
+    }
+    .summary-stat-label {
+      font-size: 13px;
+      color: #64748B;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .summary-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #F59E0B;
+    }
+    .summary-stat-value.amount {
+      color: #D97706;
+    }
+    .clearing-history {
+      display: none;
+      margin-top: 20px;
+      border-top: 2px solid #F1F5F9;
+      padding-top: 20px;
+      animation: slideDown 0.3s ease;
+    }
+    .clearing-summary-card.expanded .clearing-history {
+      display: block;
+    }
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        max-height: 0;
+      }
+      to {
+        opacity: 1;
+        max-height: 2000px;
+      }
+    }
+    .clearing-history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .clearing-history-header h4 {
+      margin: 0;
+      color: #F59E0B;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .clearing-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 15px;
+    }
+    .clearing-table thead {
+      background: linear-gradient(135deg, #F59E0B 0%, #FBB124 100%) !important;
+    }
+    .clearing-table thead th {
+      color: white !important;
+      background: transparent;
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .clearing-table thead th:first-child {
+      border-radius: 8px 0 0 0;
+    }
+    .clearing-table thead th:last-child {
+      border-radius: 0 8px 0 0;
+    }
+    .clearing-table tbody tr {
+      background: white;
+      transition: all 0.2s ease;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    .clearing-table tbody tr:hover {
+      background: rgba(245, 158, 11, 0.03);
+      transform: scale(1.01);
+    }
+    .clearing-table tbody tr:last-child {
+      border-bottom: none;
+    }
+    .clearing-table tbody td {
+      padding: 15px;
+      color: #334155;
+      font-size: 14px;
+    }
+    .shipment-ref {
+      font-weight: 600;
+      color: #F59E0B;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.3s ease;
+    }
+    .shipment-ref:hover {
+      color: #FBB124;
+      text-decoration: underline;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-badge.paid {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+      border: 1px solid #059669;
+    }
+    .status-badge.pending {
+      background: rgba(245, 158, 11, 0.1);
+      color: #D97706;
+      border: 1px solid #D97706;
+    }
+    .status-badge.active {
+      background: rgba(59, 130, 246, 0.1);
+      color: #3B82F6;
+      border: 1px solid #3B82F6;
+    }
+    .status-badge.completed {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+      border: 1px solid #059669;
+    }
+    .date-display {
+      font-size: 13px;
+      color: #64748B;
+    }
+    .no-clearing {
+      text-align: center;
+      padding: 40px;
+      color: #94A3B8;
+      font-style: italic;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #94A3B8;
+    }
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+    .clearing-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid;
+    }
+    .clearing-badge i {
+      font-size: 10px;
+    }
+    .shipment-amount {
+      font-weight: 600;
+      color: #D97706;
+    }
+  </style>
+  <script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+  const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+  async function loadClearingAgents() {
+    const { data, error } = await supabase
+      .from("clearing_agent")
+      .select(`*
+`);
+
+    if (error) {
+      document.getElementById("clearing-agents-list").innerHTML = `<p class="error-message">Error loading clearing agents: ${error.message}</p>`;
+      return;
+    }
+
+    let html = "<table><tr><th>Name</th><th>Company Name</th><th>Email</th><th>Phone</th></tr>";
+    data.forEach(item => {
+      html += `<tr>
+        <td>${item.name}</td>
+        <td>${item.company_name || ''}</td>
+        <td>${item.contact_email || ''}</td>
+        <td>${item.contact_phone || ''}</td>
+      </tr>`;
+    });
+    html += "</table>";
+
+    document.getElementById("clearing-agents-list").innerHTML = html;
+  }
+
+  function openNewClearingAgentModal() {
+    let formHtml = `
+      <div id="new-clearing-agent-message"></div>
+      <form id="new-clearing-agent-form">
+        <div><label for="name">Name:</label><input type="text" id="name" name="name"></div>
+        <div><label for="company_name">Company Name:</label><input type="text" id="company_name" name="company_name"></div>
+        <div><label for="contact_email">Email:</label><input type="email" id="contact_email" name="contact_email"></div>
+        <div><label for="contact_phone">Phone:</label><input type="text" id="contact_phone" name="contact_phone"></div>
+        <button type="button" onclick="saveNewClearingAgent()">Save</button>
+      </form>
+    `;
+
+    document.getElementById('new-clearing-agent-form-container').innerHTML = formHtml;
+    document.getElementById('new-clearing-agent-modal').style.display = 'block';
+  }
+
+  function closeModal() {
+    document.getElementById('new-clearing-agent-modal').style.display = 'none';
+  }
+
+  async function saveNewClearingAgent() {
+    const form = document.getElementById('new-clearing-agent-form');
+    const formData = new FormData(form);
+
+    const { error } = await supabase
+        .from('clearing_agent')
+        .insert({
+            name: formData.get('name'),
+            company_name: formData.get('company_name'),
+            contact_email: formData.get('contact_email'),
+            contact_phone: formData.get('contact_phone')
+        });
+
+    if (error) {
+        document.getElementById('new-clearing-agent-message').innerHTML = `<p class="error-message">Error creating clearing agent: ${error.message}</p>`;
+    } else {
+        closeModal();
+        loadClearingAgents();
+    }
+  }
+
+  window.openNewClearingAgentModal = openNewClearingAgentModal;
+  window.saveNewClearingAgent = saveNewClearingAgent;
+  window.closeModal = closeModal;
+
+  // Business View Logic
+  let businessData = {};
+  let currentView = 'details';
+  let clearingAgentsData = [];
+
+  window.toggleView = () => {
+    const toggle = document.getElementById('view-toggle');
+    const detailsView = document.getElementById('agent-details-view');
+    const businessView = document.getElementById('business-view');
+    
+    toggle.classList.toggle('active');
+    
+    if (toggle.classList.contains('active')) {
+      currentView = 'business';
+      detailsView.classList.remove('active');
+      businessView.classList.add('active');
+      if (Object.keys(businessData).length === 0) {
+        loadBusinessData();
+      }
+    } else {
+      currentView = 'details';
+      businessView.classList.remove('active');
+      detailsView.classList.add('active');
+    }
+  };
+
+  async function loadBusinessData() {
+    const container = document.getElementById('business-container');
+    container.innerHTML = '<p style="text-align:center; padding: 40px;">Loading clearing agent business data...</p>';
+    
+    try {
+      // Fetch all clearing agents
+      const { data: allAgents, error: agentsError } = await supabase
+        .from('clearing_agent')
+        .select('id, name, company_name, contact_email, contact_phone');
+      
+      if (agentsError) throw agentsError;
+      
+      clearingAgentsData = allAgents;
+
+      // Fetch docs_to_clearing_agent (Send to Clearing Agent stage)
+      const { data: docsToCA, error: docsError } = await supabase
+        .from('docs_to_clearing_agent')
+        .select('id, shipment_id, clearing_agent_id, sended_at, expected_arrival_date');
+      
+      if (docsError) throw docsError;
+
+      // Fetch under_clearing_agent (Under Clearing Agent stage)
+      const { data: underCA, error: underCAError } = await supabase
+        .from('under_clearing_agent')
+        .select(`
+          id,
+          shipment_id,
+          clearing_agent_id,
+          is_received,
+          receiving_date,
+          destuffed_date,
+          duty_payment_date
+        `);
+      
+      if (underCAError) throw underCAError;
+
+      // Fetch clearing agent bills
+      const { data: bills, error: billsError } = await supabase
+        .from('clearing_agent_bill')
+        .select(`
+          id,
+          total_bill,
+          net_payable,
+          created_at,
+          updated_at,
+          shipment_id
+        `);
+
+      if (billsError) throw billsError;
+
+      // Collect all unique shipment IDs across all stages
+      const allShipmentIds = new Set([
+        ...docsToCA.map(d => d.shipment_id).filter(Boolean),
+        ...underCA.map(u => u.shipment_id).filter(Boolean),
+        ...bills.map(b => b.shipment_id).filter(Boolean)
+      ]);
+
+      // Fetch all shipments data
+      let shipmentsMap = {};
+      if (allShipmentIds.size > 0) {
+        const { data: shipments, error: shipmentsError } = await supabase
+          .from('shipment')
+          .select('id, reference_code, status, current_stage, created_at')
+          .in('id', [...allShipmentIds]);
+        
+        if (!shipmentsError && shipments) {
+          shipmentsMap = Object.fromEntries(shipments.map(s => [s.id, s]));
+        }
+      }
+
+      // Create maps for bills by shipment_id
+      const billsMap = {};
+      bills.forEach(bill => {
+        if (bill.shipment_id) {
+          billsMap[bill.shipment_id] = bill;
+        }
+      });
+
+      // Process data by clearing agent
+      const agentBusinessMap = {};
+      
+      allAgents.forEach(agent => {
+        agentBusinessMap[agent.id] = {
+          agent: agent,
+          shipments: [],
+          totalShipments: 0,
+          shipmentsByStage: {
+            docs_sent: 0,
+            under_clearing: 0,
+            billed: 0
+          },
+          totalBillAmount: 0,
+          pendingAmount: 0
+        };
+      });
+
+      // Track shipments already added to avoid duplicates
+      const processedShipments = new Map(); // Map<agentId_shipmentId, true>
+
+      // Process docs_to_clearing_agent
+      docsToCA.forEach(doc => {
+        const agentId = doc.clearing_agent_id;
+        const shipmentId = doc.shipment_id;
+        
+        if (agentId && shipmentId && agentBusinessMap[agentId]) {
+          const key = `${agentId}_${shipmentId}`;
+          if (!processedShipments.has(key)) {
+            const shipment = shipmentsMap[shipmentId];
+            if (shipment) {
+              agentBusinessMap[agentId].shipments.push({
+                ...shipment,
+                stage: 'docs_sent',
+                stage_label: 'Docs Sent to CA',
+                sended_at: doc.sended_at,
+                bill: billsMap[shipmentId] || null
+              });
+              agentBusinessMap[agentId].shipmentsByStage.docs_sent++;
+              processedShipments.set(key, true);
+            }
+          }
+        }
+      });
+
+      // Process under_clearing_agent
+      underCA.forEach(uca => {
+        const agentId = uca.clearing_agent_id;
+        const shipmentId = uca.shipment_id;
+        
+        if (agentId && shipmentId && agentBusinessMap[agentId]) {
+          const key = `${agentId}_${shipmentId}`;
+          const shipment = shipmentsMap[shipmentId];
+          
+          if (shipment) {
+            if (!processedShipments.has(key)) {
+              // New shipment, add it
+              agentBusinessMap[agentId].shipments.push({
+                ...shipment,
+                stage: 'under_clearing',
+                stage_label: 'Under Clearing Agent',
+                receiving_date: uca.receiving_date,
+                duty_payment_date: uca.duty_payment_date,
+                bill: billsMap[shipmentId] || null
+              });
+              agentBusinessMap[agentId].shipmentsByStage.under_clearing++;
+              processedShipments.set(key, true);
+            } else {
+              // Update existing shipment with under_clearing info
+              const existingShipment = agentBusinessMap[agentId].shipments.find(s => s.id === shipmentId);
+              if (existingShipment) {
+                existingShipment.stage = 'under_clearing';
+                existingShipment.stage_label = 'Under Clearing Agent';
+                existingShipment.receiving_date = uca.receiving_date;
+                existingShipment.duty_payment_date = uca.duty_payment_date;
+                agentBusinessMap[agentId].shipmentsByStage.docs_sent--;
+                agentBusinessMap[agentId].shipmentsByStage.under_clearing++;
+              }
+            }
+          }
+        }
+      });
+
+      // Process bills and calculate totals
+      bills.forEach(bill => {
+        const shipmentId = bill.shipment_id;
+        if (!shipmentId) return;
+
+        // Find which agent handles this shipment
+        let agentId = null;
+        
+        // Check under_clearing_agent first
+        const ucaRecord = underCA.find(u => u.shipment_id === shipmentId);
+        if (ucaRecord) {
+          agentId = ucaRecord.clearing_agent_id;
+        } else {
+          // Check docs_to_clearing_agent
+          const docRecord = docsToCA.find(d => d.shipment_id === shipmentId);
+          if (docRecord) {
+            agentId = docRecord.clearing_agent_id;
+          }
+        }
+
+        if (agentId && agentBusinessMap[agentId]) {
+          const billAmount = parseFloat(bill.net_payable || bill.total_bill || 0);
+          agentBusinessMap[agentId].totalBillAmount += billAmount;
+          agentBusinessMap[agentId].pendingAmount += billAmount;
+          
+          // Update shipment with bill info
+          const existingShipment = agentBusinessMap[agentId].shipments.find(s => s.id === shipmentId);
+          if (existingShipment) {
+            existingShipment.bill = bill;
+            // Update stage to billed
+            const oldStage = existingShipment.stage;
+            if (oldStage && agentBusinessMap[agentId].shipmentsByStage[oldStage] > 0) {
+              agentBusinessMap[agentId].shipmentsByStage[oldStage]--;
+            }
+            existingShipment.stage = 'billed';
+            existingShipment.stage_label = 'Billed';
+            agentBusinessMap[agentId].shipmentsByStage.billed++;
+          } else {
+            // Add shipment if not already tracked
+            const key = `${agentId}_${shipmentId}`;
+            if (!processedShipments.has(key)) {
+              const shipment = shipmentsMap[shipmentId];
+              if (shipment) {
+                agentBusinessMap[agentId].shipments.push({
+                  ...shipment,
+                  stage: 'billed',
+                  stage_label: 'Billed',
+                  bill: bill
+                });
+                agentBusinessMap[agentId].shipmentsByStage.billed++;
+                processedShipments.set(key, true);
+              }
+            }
+          }
+        }
+      });
+
+      // Calculate total shipments for each agent
+      Object.values(agentBusinessMap).forEach(agent => {
+        agent.totalShipments = agent.shipments.length;
+      });
+
+      businessData = agentBusinessMap;
+      renderBusinessView();
+      
+    } catch (error) {
+      console.error('Error loading business data:', error);
+      container.innerHTML = `<p class="error-message">Error loading business data: ${error.message}</p>`;
+    }
+  }
+
+  function renderBusinessView() {
+    const container = document.getElementById('business-container');
+    
+    const agentsWithBusiness = Object.values(businessData).filter(a => 
+      a.shipments.length > 0
+    );
+
+    if (agentsWithBusiness.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-user-shield"></i>
+          <h3>No Clearing Activity Yet</h3>
+          <p>Shipments and clearing bills will appear here once clearing agents are assigned.</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    
+    agentsWithBusiness.forEach(agentBusiness => {
+      const agent = agentBusiness.agent;
+      const billedCount = agentBusiness.shipmentsByStage.billed;
+      
+      html += `
+        <div class="clearing-summary-card" id="clearing-card-${agent.id}" onclick="toggleClearingExpand('${agent.id}')">
+          <div class="clearing-summary-header">
+            <div class="clearing-summary-title">
+              <div class="clearing-icon">
+                <i class="fas fa-user-shield"></i>
+              </div>
+              <div>
+                <h3>${agent.name}</h3>
+                <p style="margin: 5px 0 0 0; color: #64748B; font-size: 13px;">
+                  ${agent.company_name || 'No company'} • ${agent.contact_email || 'No email'}
+                </p>
+              </div>
+            </div>
+            <div class="expand-indicator">
+              <i class="fas fa-chevron-down"></i>
+            </div>
+          </div>
+          
+          <!-- Summary Stats -->
+          <div class="clearing-summary-stats">
+            <div class="summary-stat">
+              <div class="summary-stat-label">
+                <i class="fas fa-box"></i>
+                Total Shipments
+              </div>
+              <div class="summary-stat-value">${agentBusiness.totalShipments}</div>
+            </div>
+            <div class="summary-stat">
+              <div class="summary-stat-label">
+                <i class="fas fa-paper-plane"></i>
+                Docs Sent
+              </div>
+              <div class="summary-stat-value">${agentBusiness.shipmentsByStage.docs_sent}</div>
+            </div>
+            <div class="summary-stat">
+              <div class="summary-stat-label">
+                <i class="fas fa-hourglass-half"></i>
+                Under Clearing
+              </div>
+              <div class="summary-stat-value">${agentBusiness.shipmentsByStage.under_clearing}</div>
+            </div>
+            <div class="summary-stat">
+              <div class="summary-stat-label">
+                <i class="fas fa-file-invoice-dollar"></i>
+                Billed (${billedCount})
+              </div>
+              <div class="summary-stat-value amount">PKR ${formatNumber(agentBusiness.totalBillAmount)}</div>
+            </div>
+          </div>
+
+          <!-- Clearing History (Expandable) -->
+          <div class="clearing-history">
+            <div class="clearing-history-header">
+              <h4><i class="fas fa-history"></i> Shipment Details</h4>
+              <span style="color: #64748B; font-size: 14px;">${agentBusiness.shipments.length} shipment${agentBusiness.shipments.length !== 1 ? 's' : ''}</span>
+            </div>
+            
+            ${agentBusiness.shipments.length > 0 ? `
+              <table class="clearing-table">
+                <thead>
+                  <tr>
+                    <th>Shipment</th>
+                    <th>Clearing Stage</th>
+                    <th>Current Status</th>
+                    <th>Key Dates</th>
+                    <th>Bill Amount (PKR)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${agentBusiness.shipments.map(shipment => {
+                    const billAmount = shipment.bill ? (shipment.bill.net_payable || shipment.bill.total_bill || 0) : 0;
+                    let keyDateInfo = '';
+                    
+                    if (shipment.stage === 'docs_sent' && shipment.sended_at) {
+                      keyDateInfo = `Sent: ${formatDate(shipment.sended_at)}`;
+                    } else if (shipment.stage === 'under_clearing') {
+                      const dates = [];
+                      if (shipment.receiving_date) dates.push(`Received: ${formatDate(shipment.receiving_date)}`);
+                      if (shipment.duty_payment_date) dates.push(`Duty Paid: ${formatDate(shipment.duty_payment_date)}`);
+                      keyDateInfo = dates.length > 0 ? dates.join('<br>') : 'In progress';
+                    } else if (shipment.stage === 'billed' && shipment.bill) {
+                      keyDateInfo = `Billed: ${formatDate(shipment.bill.created_at)}`;
+                    }
+                    
+                    return `
+                      <tr>
+                        <td>
+                          <a href="shipment-details.html?id=${shipment.id}" class="shipment-ref">
+                            <i class="fas fa-external-link-alt"></i>
+                            ${shipment.reference_code}
+                          </a>
+                        </td>
+                        <td>
+                          ${(() => {
+                            const colors = getStageColor(shipment.stage);
+                            return `<span class="clearing-badge" style="background: ${colors.bg}; border-color: ${colors.border}; color: ${colors.text};">
+                              ${getStageIcon(shipment.stage)} ${shipment.stage_label}
+                            </span>`;
+                          })()}
+                        </td>
+                        <td>
+                          <span class="status-badge ${getShipmentStatusClass(shipment.status)}">
+                            ${shipment.status || 'active'}
+                          </span>
+                        </td>
+                        <td>
+                          <div style="font-size: 12px; color: #64748B; line-height: 1.5;">
+                            ${keyDateInfo || 'N/A'}
+                          </div>
+                        </td>
+                        <td>
+                          ${shipment.bill ? `
+                            <span class="shipment-amount">PKR ${formatNumber(billAmount)}</span>
+                          ` : '<span style="color: #94A3B8; font-style: italic;">Not billed</span>'}
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                  ${agentBusiness.totalBillAmount > 0 ? `
+                    <tr style="background: rgba(245, 158, 11, 0.05); font-weight: 600;">
+                      <td colspan="4" style="text-align: right; padding-right: 20px;">TOTAL BILLED:</td>
+                      <td><span class="shipment-amount">PKR ${formatNumber(agentBusiness.totalBillAmount)}</span></td>
+                    </tr>
+                  ` : ''}
+                </tbody>
+              </table>
+            ` : '<div class="no-clearing">No shipments assigned to this clearing agent yet</div>'}
+          </div>
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+  }
+
+  function getShipmentStatusClass(status) {
+    if (!status) return 'pending';
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('active') || statusLower.includes('progress')) return 'active';
+    if (statusLower.includes('complete')) return 'completed';
+    return 'pending';
+  }
+
+  function getStageColor(stage) {
+    const colors = {
+      'docs_sent': { bg: 'rgba(59, 130, 246, 0.1)', border: '#3B82F6', text: '#3B82F6' },
+      'under_clearing': { bg: 'rgba(245, 158, 11, 0.1)', border: '#F59E0B', text: '#F59E0B' },
+      'billed': { bg: 'rgba(16, 185, 129, 0.1)', border: '#10B981', text: '#10B981' }
+    };
+    return colors[stage] || { bg: 'rgba(148, 163, 184, 0.1)', border: '#94A3B8', text: '#94A3B8' };
+  }
+
+  function getStageIcon(stage) {
+    const icons = {
+      'docs_sent': '<i class="fas fa-paper-plane"></i>',
+      'under_clearing': '<i class="fas fa-hourglass-half"></i>',
+      'billed': '<i class="fas fa-file-invoice-dollar"></i>'
+    };
+    return icons[stage] || '<i class="fas fa-circle"></i>';
+  }
+
+  function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function formatNumber(num) {
+    if (!num && num !== 0) return '0';
+    return parseFloat(num).toLocaleString('en-US', { maximumFractionDigits: 2 });
+  }
+
+  window.toggleClearingExpand = (agentId) => {
+    const card = document.getElementById(`clearing-card-${agentId}`);
+    if (card) {
+      card.classList.toggle('expanded');
+    }
+  };
+
+  window.onload = async () => {
+      const loader = document.getElementById("loader");
+      if (loader) {
+          loader.style.display = "block";
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+          window.location.href = 'login.html';
+      } else {
+          await loadClearingAgents();
+      }
+
+      if (loader) {
+          loader.style.display = "none";
+      }
+  };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+  </div>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link active">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="documents.html" class="nav-link">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+          </a>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu open">
+            <li><a href="send-freight-queries.html" class="nav-link"><span class="text">Send Freight Queries</span></a></li>
+            <li><a href="freight-query-response.html" class="nav-link"><span class="text">Freight Query Response</span></a></li>
+            <li><a href="manage-freight-queries.html" class="nav-link"><span class="text">Manage Freight Queries</span></a></li>
+            <li><a href="award-shipment.html" class="nav-link"><span class="text">Award Shipment</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Clearing Agents</h1>
+      </div>
+    </header>
+
+    <!-- View Toggle -->
+    <div class="view-toggle-container">
+      <span class="view-toggle-label">
+        <i class="fas fa-user-shield"></i>
+        Agent Details
+      </span>
+      <div class="toggle-switch" id="view-toggle" onclick="toggleView()">
+        <div class="toggle-slider"></div>
+      </div>
+      <span class="view-toggle-label">
+        <i class="fas fa-chart-line"></i>
+        Business View
+      </span>
+    </div>
+
+    <!-- Agent Details View (Default) -->
+    <div id="agent-details-view" class="view-section active">
+      <div id="clearing-agents-list">Loading...</div>
+
+      <button onclick="openNewClearingAgentModal()">Create New Clearing Agent</button>
+
+      <p class="back-link"><a href="admin-dashboard.html">← Back to Dashboard</a></p>
+    </div>
+
+    <!-- Business View -->
+    <div id="business-view" class="view-section">
+      <div style="margin-bottom: 20px;">
+        <h2 style="margin: 0 0 8px 0; color: #1E293B; font-size: 28px; font-weight: 700;">
+          <i class="fas fa-chart-line" style="color: #F59E0B; margin-right: 12px;"></i>
+          Clearing Agent Business Overview
+        </h2>
+        <p style="margin: 0; color: #64748B; font-size: 15px;">
+          Track all shipments by clearing agent across stages: Documents Sent, Under Clearing, and Billed
+        </p>
+      </div>
+      <div id="business-container">Loading business data...</div>
+    </div>
+
+    <div id="new-clearing-agent-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close-button" onclick="closeModal()">&times;</span>
+        <h2>Create New Clearing Agent</h2>
+        <div id="new-clearing-agent-form-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.querySelector('.sidebar');
+      const sidebarToggle = document.querySelector('.sidebar-toggle');
+      const navLinks = document.querySelectorAll('.nav-link');
+      const hasSubmenus = document.querySelectorAll('.has-submenu');
+
+      // Responsive off-canvas menu (for mobile)
+      const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+      function handleMediaQueryChange(e) {
+        if (e.matches) { // If on mobile
+          sidebar.classList.remove('collapsed'); // Ensure it's not collapsed on mobile
+          sidebar.classList.remove('open'); // Ensure it's closed initially on mobile
+        } else { // If on desktop
+          sidebar.classList.remove('open'); // Ensure it's not open on desktop
+        }
+      }
+
+      // Initial check for mobile responsiveness
+      handleMediaQueryChange(mediaQuery);
+
+      // Listen for changes in media query
+      mediaQuery.addListener(handleMediaQueryChange);
+
+      // Unified sidebar toggle logic
+      sidebarToggle.addEventListener('click', () => {
+        if (mediaQuery.matches) {
+          // If on mobile, toggle 'open' class
+          sidebar.classList.toggle('open');
+        } else {
+          // If on desktop, toggle 'collapsed' class
+          sidebar.classList.toggle('collapsed');
+        }
+      });
+
+      // Accordion sub-menus (no change)
+      hasSubmenus.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const submenu = item.nextElementSibling;
+          if (submenu && submenu.classList.contains('submenu')) {
+            submenu.classList.toggle('open');
+            item.classList.toggle('open');
+          }
+        });
+      });
+
+      // Active link highlighting (no change)
+      const currentPath = window.location.pathname.split('/').pop();
+      navLinks.forEach(link => {
+        if (link.href.split('/').pop() === currentPath) {
+          link.classList.add('active');
+          let parentSubmenu = link.closest('.submenu');
+          if (parentSubmenu) {
+            parentSubmenu.classList.add('open');
+            let parentHasSubmenu = parentSubmenu.previousElementSibling;
+            if (parentHasSubmenu && parentHasSubmenu.classList.contains('has-submenu')) {
+              parentHasSubmenu.classList.add('open');
+            }
+          }
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    });
+    
+  </script>
+</body>
+</html>

@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Shipment Tracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/shipment-tracker.css">
+  <!-- Select2 for searchable dropdowns -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Shipment Tracker</h1>
+      </div>
+    </header>
+
+    <div class="tracker-container">
+      <div class="circular-container">
+        <div class="circular-progress" id="circularProgress">
+          <div class="progress-ring"></div>
+          <div class="center-hub">
+            <div class="shipment-id">#SP-2025-001</div>
+            <div class="shipment-product">Premium Cauliflower</div>
+            <div class="shipment-status">In Transit</div>
+            <div class="shipment-incoterm-display" id="incotermDisplay">
+              <i class="fas fa-shipping-fast"></i>
+              <span id="modeOfTransport">Sea</span> • <span id="incotermValue">FOB</span>
+            </div>
+            <div class="progress-stats">
+              <div class="stat">
+                <div class="stat-value" id="completedCount">8</div>
+                <div class="stat-label">Completed</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value" id="progressPercent">36%</div>
+                <div class="stat-label">Progress</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value" id="remainingCount">14</div>
+                <div class="stat-label">Remaining</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tracker-sidebar">
+        <!-- Supplier Details Section -->
+        <div class="supplier-details-section">
+          <div class="section-header">
+            <h3>
+              <i class="fas fa-building supplier-icon"></i>
+              Supplier Information
+            </h3>
+            <button class="quick-action-btn" onclick="viewSupplierProfile()" title="View Full Profile">
+              <i class="fas fa-external-link-alt"></i>
+            </button>
+          </div>
+          <div class="supplier-details-card" id="supplierDetailsCard">
+            <div class="supplier-header">
+              <div class="supplier-avatar">
+                <i class="fas fa-user-tie"></i>
+                <div class="avatar-badge">
+                  <i class="fas fa-check"></i>
+                </div>
+              </div>
+              <div class="supplier-info">
+                <h4 class="supplier-name" id="supplierName">Loading...</h4>
+                <p class="supplier-type" id="supplierType">
+                  <i class="fas fa-star"></i>
+                  Verified Supplier
+                </p>
+              </div>
+              <div class="supplier-status">
+                <span class="status-badge active" id="supplierStatus">
+                  <i class="fas fa-circle pulse"></i>
+                  Active
+                </span>
+              </div>
+            </div>
+            
+            <div class="supplier-contact-info">
+              <div class="contact-item">
+                <div class="contact-icon-wrapper email">
+                  <i class="fas fa-envelope"></i>
+                </div>
+                <div class="contact-details">
+                  <span class="contact-label">Email Address</span>
+                  <a href="#" class="contact-value" id="supplierEmail" onclick="copyToClipboard(this.textContent, 'Email'); return false;">Loading...</a>
+                </div>
+                <button class="copy-btn" onclick="copyToClipboard(document.getElementById('supplierEmail').textContent, 'Email')" title="Copy email">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+              <div class="contact-item">
+                <div class="contact-icon-wrapper phone">
+                  <i class="fas fa-phone"></i>
+                </div>
+                <div class="contact-details">
+                  <span class="contact-label">Phone Number</span>
+                  <a href="#" class="contact-value" id="supplierPhone" onclick="copyToClipboard(this.textContent, 'Phone'); return false;">Loading...</a>
+                </div>
+                <button class="copy-btn" onclick="copyToClipboard(document.getElementById('supplierPhone').textContent, 'Phone')" title="Copy phone">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+              <div class="contact-item">
+                <div class="contact-icon-wrapper location">
+                  <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="contact-details">
+                  <span class="contact-label">Location</span>
+                  <span class="contact-value" id="supplierLocation">Loading...</span>
+                </div>
+                <button class="map-btn" onclick="openMap()" title="View on map">
+                  <i class="fas fa-map"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="supplier-metrics">
+              <div class="metric-item">
+                <div class="metric-value" id="supplierTotalShipments">0</div>
+                <div class="metric-label">Total Shipments</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value" id="supplierActiveShipments">0</div>
+                <div class="metric-label">Active</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value" id="supplierCompletedShipments">0</div>
+                <div class="metric-label">Completed</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value" id="supplierOnTimeRate">0%</div>
+                <div class="metric-label">On-Time Rate</div>
+              </div>
+            </div>
+            
+            <div class="supplier-actions">
+              <button class="supplier-action-btn primary" onclick="contactSupplier()">
+                <i class="fas fa-envelope"></i>
+                <span>Send Message</span>
+              </button>
+              <button class="supplier-action-btn secondary" onclick="viewSupplierShipments()">
+                <i class="fas fa-boxes"></i>
+                <span>View History</span>
+              </button>
+            </div>
+            
+            <div class="lc-sharing-status" id="lcSharingStatus" style="display: none;">
+              <div class="lc-status-item">
+                <i class="fas fa-file-contract lc-icon"></i>
+                <div class="lc-info">
+                  <span class="lc-label">LC Sharing Status</span>
+                  <span class="lc-value" id="lcSharingValue">Not Shared</span>
+                </div>
+                <div class="lc-action">
+                  <button class="lc-toggle-btn" onclick="toggleLCSharing()" id="lcToggleBtn">
+                    <i class="fas fa-share"></i>
+                    Share LC
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Current Stage Details</h3>
+        <div class="stage-details" id="currentStageDetails">
+          <h4>LC Opening</h4>
+          <div class="detail-item">
+            <span class="detail-label">Started:</span>
+            <span class="detail-value">Sep 3, 2025</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Expected:</span>
+            <span class="detail-value">Sep 5, 2025</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Responsible:</span>
+            <span class="detail-value">Finance Team</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Status:</span>
+            <span class="detail-value">In Progress</span>
+          </div>
+        </div>
+
+        <div class="progress-bar-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="overallProgress" style="width: 36%"></div>
+          </div>
+        </div>
+
+        <!-- Documents Management Button -->
+        <div class="documents-section">
+          <button class="documents-stage-btn">
+            <i class="fas fa-folder-open"></i>
+            <span>Manage Documents</span>
+          </button>
+        </div>
+
+        <!-- Products Management Button -->
+        <div class="products-section" style="margin-top: 16px;">
+          <button class="products-manage-btn" onclick="openManageProductsModal()" style="
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(124, 58, 237, 0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(124, 58, 237, 0.3)';">
+            <i class="fas fa-boxes"></i>
+            <span>Manage Products</span>
+            <i class="fas fa-chevron-right" style="margin-left: auto; font-size: 12px;"></i>
+          </button>
+        </div>
+
+        <h3>Timeline</h3>
+        <div class="timeline" id="timeline">
+          <!-- Timeline items will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="stage-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeModal()">&times;</span>
+      <h2 id="modal-title"></h2>
+      <div id="modal-body">
+        <!-- View State -->
+        <div id="stage-view-container">
+          <table id="stage-details-table">
+            <!-- Dynamic content will be injected here -->
+          </table>
+          <div class="button-container">
+            <button id="edit-stage-button" onclick="renderStageEdit()">Edit</button>
+          </div>
+        </div>
+        <!-- Edit State -->
+        <div id="stage-edit-container" style="display: none;">
+          <form id="modal-form">
+            <!-- Dynamic form fields will be injected here -->
+          </form>
+          <div class="button-container">
+            <button id="save-stage-button" onclick="saveStageDetails()" style="display: none;">Save</button>
+            <button id="cancel-edit-button" onclick="renderStageView()" style="display: none;">Cancel</button>
+          </div>
+        </div>
+        <div id="stage-modal-message"></div>
+        <div class="modal-loader" style="display: none;">
+            <div class="loader">
+              <div class="loader-dot"></div>
+              <div class="loader-dot"></div>
+              <div class="loader-dot"></div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="toast-message"></div>
+
+  <div id="bank-charges-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeBankChargesModal()">&times;</span>
+      <h2>Bank Charges</h2>
+      <div id="bank-charges-modal-body">
+        <!-- View State -->
+        <div id="bank-charges-view-container">
+          <div id="bank-charges-details-table"></div>
+          <div class="button-container">
+            <button id="edit-bank-charges-button" onclick="renderBankChargesEdit()">Edit</button>
+          </div>
+        </div>
+        <!-- Edit State -->
+        <div id="bank-charges-edit-container" style="display: none;">
+          <form id="bank-charges-form">
+            <input type="hidden" id="bank_charges_id" name="bank_charges_id">
+            <div class="form-section">
+              <h3>Main Details</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="bc_usd_amount">USD Amount</label>
+                  <input type="number" id="bc_usd_amount" name="usd_amount">
+                </div>
+                <div class="form-group">
+                  <label for="bc_rate">Rate</label>
+                  <input type="number" id="bc_rate" name="rate">
+                </div>
+                <div class="form-group">
+                    <label for="bc_rs">RS</label>
+                    <input type="number" id="bc_rs" name="rs">
+                </div>
+                <div class="form-group">
+                    <label for="bc_lc_issuance_date">LC Issuance Date</label>
+                    <input type="date" id="bc_lc_issuance_date" name="lc_issuance_date">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Issuance Charges</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                    <label for="bc_issuance_services_charges_amount">Services Charges Amount</label>
+                    <input type="number" id="bc_issuance_services_charges_amount" name="issuance_services_charges_amount">
+                </div>
+                <div class="form-group">
+                    <label for="bc_issuance_services_charges_per">Services Charges (%)</label>
+                    <input type="number" id="bc_issuance_services_charges_per" name="issuance_services_charges_per">
+                </div>
+                <div class="form-group">
+                    <label for="bc_issuance_swift_amount">Swift Amount</label>
+                    <input type="number" id="bc_issuance_swift_amount" name="issuance_swift_amount">
+                </div>
+                <div class="form-group">
+                    <label for="bc_issuance_swift_percentage">Swift (%)</label>
+                    <input type="number" id="bc_issuance_swift_percentage" name="issuance_swift_percentage">
+                </div>
+                <div class="form-group">
+                    <label for="bc_issuance_fed_amount">FED Amount</label>
+                    <input type="number" id="bc_issuance_fed_amount" name="issuance_fed_amount">
+                </div>
+                <div class="form-group">
+                    <label for="bc_issuance_fed_per">FED (%)</label>
+                    <input type="number" id="bc_issuance_fed_per" name="issuance_fed_per">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Amendment Charges</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                    <label for="bc_amendment_charges_amount">Amendment Charges Amount</label>
+                    <input type="number" id="bc_amendment_charges_amount" name="amendment_charges_amount">
+                </div>
+                <div class="form-group">
+                    <label for="bc_amendment_charges_per">Amendment Charges (%)</label>
+                    <input type="number" id="bc_amendment_charges_per" name="amendment_charges_per">
+                </div>
+                <div class="form-group">
+                    <label for="bc_amendment_fed_amount">FED Amount</label>
+                    <input type="number" id="bc_amendment_fed_amount" name="amendment_fed_amount">
+                </div>
+                <div class="form-group">
+                    <label for="bc_amendment_fed_per">FED (%)</label>
+                    <input type="number" id="bc_amendment_fed_per" name="amendment_fed_per">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Final Payment Charges</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                    <label for="bc_final_payment_services_charges_amount">Services Charges Amount</label>
+                    <input type="number" id="bc_final_payment_services_charges_amount" name="final_payment_services_charges_amount">
+                </div>
+                <div class="form-group">
+                    <label for="bc_final_payment_services_charges_per">Services Charges (%)</label>
+                    <input type="number" id="bc_final_payment_services_charges_per" name="final_payment_services_charges_per">
+                </div>
+                <div class="form-group">
+                    <label for="bc_final_payment_fed_amount">FED Amount</label>
+                    <input type="number" id="bc_final_payment_fed_amount" name="final_payment_fed_amount">
+                </div>
+                <div class="form-group">
+                    <label for="bc_final_payment_fed_per">FED (%)</label>
+                    <input type="number" id="bc_final_payment_fed_per" name="final_payment_fed_per">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Documents</h3>
+              <div id="bank-charge-documents-list"></div>
+              <div id="add-document-form-container"></div>
+              <button type="button" class="button-secondary" onclick="addDocumentForm()">Add Document</button>
+            </div>
+
+            <div class="button-container">
+              <button type="button" onclick="saveBankCharges()">Save Bank Charges</button>
+              <button type="button" class="button-secondary" onclick="cancelBankChargesEdit()">Cancel</button>
+            </div>
+          </form>
+        </div>
+        <div id="bank-charges-modal-message"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="insurance-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeInsuranceModal()">&times;</span>
+      <h2>Insurance</h2>
+      <div id="insurance-modal-body">
+        <!-- View State -->
+        <div id="insurance-view-container">
+          <div id="insurance-details-table"></div>
+          <div class="button-container">
+            <button id="edit-insurance-button" onclick="renderInsuranceEdit()">Edit</button>
+          </div>
+        </div>
+        <!-- Edit State -->
+        <div id="insurance-edit-container" style="display: none;">
+          <form id="insurance-form">
+            <input type="hidden" id="insurance_id" name="insurance_id">
+            <div class="form-section">
+                <h3>Insurance Details</h3>
+                <div class="form-grid">
+                    <div class="form-group"><label for="ins_value">Value</label><input type="number" id="ins_value" name="value"></div>
+                    <div class="form-group"><label for="ins_rate">Rate</label><input type="number" id="ins_rate" name="rate"></div>
+                    <div class="form-group"><label for="ins_amount">Amount</label><input type="number" id="ins_amount" name="amount"></div>
+                    <div class="form-group"><label for="ins_ten_perc">10%</label><input type="number" id="ins_ten_perc" name="ten_perc"></div>
+                    <div class="form-group"><label for="ins_total_value">Total Value</label><input type="number" id="ins_total_value" name="total_value"></div>
+                    <div class="form-group"><label for="ins_marine_perc">Marine (%)</label><input type="number" id="ins_marine_perc" name="marine_perc"></div>
+                    <div class="form-group"><label for="ins_marine_amount">Marine Amount</label><input type="number" id="ins_marine_amount" name="marine_amount"></div>
+                    <div class="form-group"><label for="ins_war_perc">War (%)</label><input type="number" id="ins_war_perc" name="war_perc"></div>
+                    <div class="form-group"><label for="ins_war_amount">War Amount</label><input type="number" id="ins_war_amount" name="war_amount"></div>
+                    <div class="form-group"><label for="ins_asc_1">ASC</label><input type="number" id="ins_asc_1" name="asc_1"></div>
+                    <div class="form-group"><label for="ins_fif_perc">FIF (%)</label><input type="number" id="ins_fif_perc" name="fif_perc"></div>
+                    <div class="form-group"><label for="ins_fif_amount">FIF Amount</label><input type="number" id="ins_fif_amount" name="fif_amount"></div>
+                    <div class="form-group"><label for="ins_sts_perc">STS (%)</label><input type="number" id="ins_sts_perc" name="sts_perc"></div>
+                    <div class="form-group"><label for="ins_sts_amount">STS Amount</label><input type="number" id="ins_sts_amount" name="sts_amount"></div>
+                    <div class="form-group"><label for="ins_stamp">Stamp</label><input type="number" id="ins_stamp" name="stamp"></div>
+                    <div class="form-group"><label for="ins_grand_total">Grand Total</label><input type="number" id="ins_grand_total" name="grand_total"></div>
+                </div>
+            </div>
+            <div class="form-section">
+              <h3>Documents</h3>
+              <div id="insurance-documents-list"></div>
+              <div id="add-insurance-document-form-container"></div>
+              <button type="button" class="button-secondary" onclick="addInsuranceDocumentForm()">Add Document</button>
+            </div>
+            <div class="button-container">
+              <button type="button" onclick="saveInsurance()">Save Insurance</button>
+              <button type="button" class="button-secondary" onclick="cancelInsuranceEdit()">Cancel</button>
+            </div>
+          </form>
+        </div>
+        <div id="insurance-modal-message"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Freight Forwarder Bill Modal -->
+  <div id="freight-forwarder-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeFreightForwarderModal()">&times;</span>
+      <h2>Freight Forwarder Bill</h2>
+      <div id="freight-forwarder-modal-body">
+        <!-- View State -->
+        <div id="freight-forwarder-view-container">
+          <div id="freight-forwarder-details-table"></div>
+          <div class="button-container">
+            <button id="edit-freight-forwarder-button" onclick="renderFreightForwarderEdit()">Edit</button>
+          </div>
+        </div>
+        <!-- Edit State -->
+        <div id="freight-forwarder-edit-container" style="display: none;">
+          <form id="freight-forwarder-form">
+            <input type="hidden" id="freight_forwarder_bill_id" name="freight_forwarder_bill_id">
+            <div class="form-section">
+              <h3>Main Details</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="ff_mode">Mode</label>
+                  <input type="text" id="ff_mode" name="ff_mode">
+                </div>
+                <div class="form-group">
+                  <label for="ff_agree_weight_kg">Agreed Weight (KG)</label>
+                  <input type="number" id="ff_agree_weight_kg" name="ff_agree_weight_kg">
+                </div>
+                <div class="form-group">
+                  <label for="ff_agree_cbm">Agreed CBM</label>
+                  <input type="number" id="ff_agree_cbm" name="ff_agree_cbm">
+                </div>
+                <div class="form-group">
+                  <label for="ff_weight_as_per_pl">Weight as per PL</label>
+                  <input type="number" id="ff_weight_as_per_pl" name="ff_weight_as_per_pl">
+                </div>
+                <div class="form-group">
+                  <label for="ff_weight_as_per_bl">Weight as per BL</label>
+                  <input type="number" id="ff_weight_as_per_bl" name="ff_weight_as_per_bl">
+                </div>
+                <div class="form-group">
+                  <label for="ff_agreed_rate_usd">Agreed Rate (USD)</label>
+                  <input type="number" id="ff_agreed_rate_usd" name="ff_agreed_rate_usd">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Freight & EXW Charges</h3>
+              <div id="freight-exw-charges-list"></div>
+              <div id="add-freight-exw-form-container"></div>
+              <button type="button" class="button-secondary" onclick="addChargeForm('freight_and_exw_charges')">Add Charge</button>
+            </div>
+
+            <div class="form-section">
+              <h3>Local Charges</h3>
+              <div id="local-charges-list"></div>
+              <div id="add-local-charges-form-container"></div>
+              <button type="button" class="button-secondary" onclick="addChargeForm('local_charges')">Add Charge</button>
+            </div>
+
+            <div class="form-section">
+              <h3>Deductions</h3>
+              <div id="deduction-charges-list"></div>
+              <div id="add-deduction-form-container"></div>
+              <button type="button" class="button-secondary" onclick="addChargeForm('deduction')">Add Charge</button>
+            </div>
+
+            <div class="button-container">
+              <button type="button" onclick="saveFreightForwarderBill()">Save Freight Forwarder Bill</button>
+              <button type="button" class="button-secondary" onclick="cancelFreightForwarderEdit()">Cancel</button>
+            </div>
+          </form>
+        </div>
+        <div id="freight-forwarder-modal-message"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FBR Duty Modal -->
+  <div id="fbr-duty-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeFbrDutyModal()">&times;</span>
+      <h2>FBR Duty Calculation</h2>
+      <div id="fbr-duty-modal-body">
+        <!-- View State -->
+        <div id="fbr-duty-view-container">
+          <div id="fbr-duty-details-table"></div>
+          <div class="button-container">
+            <button id="edit-fbr-duty-button" onclick="renderFbrDutyEdit()">Edit</button>
+          </div>
+        </div>
+        <!-- Edit State -->
+        <div id="fbr-duty-edit-container" style="display: none;">
+          <form id="fbr-duty-form">
+            <input type="hidden" id="fbr_duty_id" name="fbr_duty_id">
+            
+            <div class="form-section">
+              <h3>Invoice & Insurance Details</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="fbr_invoice_amount">Invoice Amount</label>
+                  <input type="number" step="0.01" id="fbr_invoice_amount" name="fbr_invoice_amount">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_insurance_fix">Insurance Fix</label>
+                  <input type="number" step="0.01" id="fbr_insurance_fix" name="fbr_insurance_fix">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_insurance_rate">Insurance Rate</label>
+                  <input type="number" step="0.01" id="fbr_insurance_rate" name="fbr_insurance_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_total_after_insurance">Total After Insurance</label>
+                  <input type="number" step="0.01" id="fbr_total_after_insurance" name="fbr_total_after_insurance">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_landing_charges_rate">Landing Charges Rate</label>
+                  <input type="number" step="0.01" id="fbr_landing_charges_rate" name="fbr_landing_charges_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_landing_charges_amount">Landing Charges Amount</label>
+                  <input type="number" step="0.01" id="fbr_landing_charges_amount" name="fbr_landing_charges_amount">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_total_invoice">Total Invoice</label>
+                  <input type="number" step="0.01" id="fbr_total_invoice" name="fbr_total_invoice">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_usd_rate">USD Rate</label>
+                  <input type="number" step="0.01" id="fbr_usd_rate" name="fbr_usd_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_access_value">Access Value</label>
+                  <input type="number" step="0.01" id="fbr_access_value" name="fbr_access_value">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Custom Duties</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="fbr_custom_duty_rate">Custom Duty Rate</label>
+                  <input type="number" step="0.01" id="fbr_custom_duty_rate" name="fbr_custom_duty_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_custom_duty_amount">Custom Duty Amount</label>
+                  <input type="number" step="0.01" id="fbr_custom_duty_amount" name="fbr_custom_duty_amount">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_additional_custom_duty_rate">Additional Custom Duty Rate</label>
+                  <input type="number" step="0.01" id="fbr_additional_custom_duty_rate" name="fbr_additional_custom_duty_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_additional_custom_duty_amount">Additional Custom Duty Amount</label>
+                  <input type="number" step="0.01" id="fbr_additional_custom_duty_amount" name="fbr_additional_custom_duty_amount">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_regulatory_duty_rate">Regulatory Duty Rate</label>
+                  <input type="number" step="0.01" id="fbr_regulatory_duty_rate" name="fbr_regulatory_duty_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_regulatory_duty_amount">Regulatory Duty Amount</label>
+                  <input type="number" step="0.01" id="fbr_regulatory_duty_amount" name="fbr_regulatory_duty_amount">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Sales Tax</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="fbr_value_for_sales_tax">Value for Sales Tax</label>
+                  <input type="number" step="0.01" id="fbr_value_for_sales_tax" name="fbr_value_for_sales_tax">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_sales_tax_rate">Sales Tax Rate</label>
+                  <input type="number" step="0.01" id="fbr_sales_tax_rate" name="fbr_sales_tax_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_sales_tax_amount">Sales Tax Amount</label>
+                  <input type="number" step="0.01" id="fbr_sales_tax_amount" name="fbr_sales_tax_amount">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_additional_sales_tax_rate">Additional Sales Tax Rate</label>
+                  <input type="number" step="0.01" id="fbr_additional_sales_tax_rate" name="fbr_additional_sales_tax_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_additional_sales_tax_amount">Additional Sales Tax Amount</label>
+                  <input type="number" step="0.01" id="fbr_additional_sales_tax_amount" name="fbr_additional_sales_tax_amount">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Income Tax</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="fbr_value_for_income_tax">Value for Income Tax</label>
+                  <input type="number" step="0.01" id="fbr_value_for_income_tax" name="fbr_value_for_income_tax">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_income_tax_rate">Income Tax Rate</label>
+                  <input type="number" step="0.01" id="fbr_income_tax_rate" name="fbr_income_tax_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_income_tax_amount">Income Tax Amount</label>
+                  <input type="number" step="0.01" id="fbr_income_tax_amount" name="fbr_income_tax_amount">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_custom">Custom</label>
+                  <input type="number" step="0.01" id="fbr_custom" name="fbr_custom">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Additional Charges</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="fbr_excise_on_a_value_rate">Excise on A-Value Rate</label>
+                  <input type="number" step="0.01" id="fbr_excise_on_a_value_rate" name="fbr_excise_on_a_value_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_excise_on_a_value_amount">Excise on A-Value Amount</label>
+                  <input type="number" step="0.01" id="fbr_excise_on_a_value_amount" name="fbr_excise_on_a_value_amount">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_l_single_declaration_rate">L-Single Declaration Rate</label>
+                  <input type="number" step="0.01" id="fbr_l_single_declaration_rate" name="fbr_l_single_declaration_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_l_single_declaration_amount">L-Single Declaration Amount</label>
+                  <input type="number" step="0.01" id="fbr_l_single_declaration_amount" name="fbr_l_single_declaration_amount">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_m_release_order_rate">M-Release Order Rate</label>
+                  <input type="number" step="0.01" id="fbr_m_release_order_rate" name="fbr_m_release_order_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_m_release_order_amount">M-Release Order Amount</label>
+                  <input type="number" step="0.01" id="fbr_m_release_order_amount" name="fbr_m_release_order_amount">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_n_stamp_duty_rate">N-Stamp Duty Rate</label>
+                  <input type="number" step="0.01" id="fbr_n_stamp_duty_rate" name="fbr_n_stamp_duty_rate">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_n_stamp_duty_amount">N-Stamp Duty Amount</label>
+                  <input type="number" step="0.01" id="fbr_n_stamp_duty_amount" name="fbr_n_stamp_duty_amount">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Summary</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="fbr_total_duties">Total Duties</label>
+                  <input type="number" step="0.01" id="fbr_total_duties" name="fbr_total_duties">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_as_per_psid">As Per PSID</label>
+                  <input type="number" step="0.01" id="fbr_as_per_psid" name="fbr_as_per_psid">
+                </div>
+                <div class="form-group">
+                  <label for="fbr_difference">Difference</label>
+                  <input type="number" step="0.01" id="fbr_difference" name="fbr_difference">
+                </div>
+              </div>
+            </div>
+
+            <div class="button-container">
+              <button type="button" onclick="saveFbrDuty()">Save FBR Duty</button>
+              <button type="button" class="button-secondary" onclick="cancelFbrDutyEdit()">Cancel</button>
+            </div>
+          </form>
+        </div>
+        <div id="fbr-duty-modal-message"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bility Modal -->
+  <div id="bility-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeBilityModal()">&times;</span>
+      <h2>Bility Management</h2>
+      <div id="bility-modal-body">
+        <!-- View State -->
+        <div id="bility-view-container">
+          <div id="bility-details-table"></div>
+          <div class="button-container">
+            <button id="edit-bility-button" onclick="renderBilityEdit()">Edit</button>
+          </div>
+        </div>
+        <!-- Edit State -->
+        <div id="bility-edit-container" style="display: none;">
+          <form id="bility-form">
+            <input type="hidden" id="bility_id" name="bility_id">
+            
+            <div class="form-section">
+              <h3>Basic Information</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="bility_cargo_name">Cargo Name</label>
+                  <input type="text" id="bility_cargo_name" name="bility_cargo_name">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Bility Numbers</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="bility_number_as_per_hs">Bility Number (as per HS)</label>
+                  <input type="number" step="0.01" id="bility_number_as_per_hs" name="bility_number_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="bility_number_as_per_cargo">Bility Number (as per Cargo)</label>
+                  <input type="number" step="0.01" id="bility_number_as_per_cargo" name="bility_number_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Delivery Route</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="delivery_route_as_per_hs">Delivery Route (as per HS)</label>
+                  <input type="text" id="delivery_route_as_per_hs" name="delivery_route_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="delivery_route_as_per_cargo">Delivery Route (as per Cargo)</label>
+                  <input type="text" id="delivery_route_as_per_cargo" name="delivery_route_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Number of Cartoons</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="no_of_cartoons_as_per_hs">No. of Cartoons (as per HS)</label>
+                  <input type="number" step="0.01" id="no_of_cartoons_as_per_hs" name="no_of_cartoons_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="no_of_cartoons_as_per_cargo">No. of Cartoons (as per Cargo)</label>
+                  <input type="number" step="0.01" id="no_of_cartoons_as_per_cargo" name="no_of_cartoons_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Weight</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="weight_as_per_hs">Weight (as per HS)</label>
+                  <input type="number" step="0.01" id="weight_as_per_hs" name="weight_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="weight_as_per_cargo">Weight (as per Cargo)</label>
+                  <input type="number" step="0.01" id="weight_as_per_cargo" name="weight_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Rate per KG</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="rate_per_kg_as_per_hs">Rate per KG (as per HS)</label>
+                  <input type="number" step="0.01" id="rate_per_kg_as_per_hs" name="rate_per_kg_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="rate_per_kg_as_per_cargo">Rate per KG (as per Cargo)</label>
+                  <input type="number" step="0.01" id="rate_per_kg_as_per_cargo" name="rate_per_kg_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Total Freight</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="total_freight_as_per_hs">Total Freight (as per HS)</label>
+                  <input type="number" step="0.01" id="total_freight_as_per_hs" name="total_freight_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="total_freight_as_per_cargo">Total Freight (as per Cargo)</label>
+                  <input type="number" step="0.01" id="total_freight_as_per_cargo" name="total_freight_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Local Labor</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="local_labor_as_per_hs">Local Labor (as per HS)</label>
+                  <input type="number" step="0.01" id="local_labor_as_per_hs" name="local_labor_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="local_labor_as_per_cargo">Local Labor (as per Cargo)</label>
+                  <input type="number" step="0.01" id="local_labor_as_per_cargo" name="local_labor_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Basic Total</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="basic_total_as_per_hs">Basic Total (as per HS)</label>
+                  <input type="number" step="0.01" id="basic_total_as_per_hs" name="basic_total_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="basic_total_as_per_cargo">Basic Total (as per Cargo)</label>
+                  <input type="number" step="0.01" id="basic_total_as_per_cargo" name="basic_total_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Destination Labor</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="destination_labor_as_per_hs">Destination Labor (as per HS)</label>
+                  <input type="number" step="0.01" id="destination_labor_as_per_hs" name="destination_labor_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="destination_labor_as_per_cargo">Destination Labor (as per Cargo)</label>
+                  <input type="number" step="0.01" id="destination_labor_as_per_cargo" name="destination_labor_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Destination to Farm</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="destination_to_farm_as_per_hs">Destination to Farm (as per HS)</label>
+                  <input type="number" step="0.01" id="destination_to_farm_as_per_hs" name="destination_to_farm_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="destination_to_farm_as_per_cargo">Destination to Farm (as per Cargo)</label>
+                  <input type="number" step="0.01" id="destination_to_farm_as_per_cargo" name="destination_to_farm_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Total</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="total_as_per_hs">Total (as per HS)</label>
+                  <input type="number" step="0.01" id="total_as_per_hs" name="total_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="total_as_per_cargo">Total (as per Cargo)</label>
+                  <input type="number" step="0.01" id="total_as_per_cargo" name="total_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Tax Percentage</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="tax_perc_as_per_hs">Tax % (as per HS)</label>
+                  <input type="number" step="0.01" id="tax_perc_as_per_hs" name="tax_perc_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="tax_perc_as_per_cargo">Tax % (as per Cargo)</label>
+                  <input type="number" step="0.01" id="tax_perc_as_per_cargo" name="tax_perc_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Net Payable Amount</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="net_payable_amount_as_per_hs">Net Payable Amount (as per HS)</label>
+                  <input type="number" step="0.01" id="net_payable_amount_as_per_hs" name="net_payable_amount_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="net_payable_amount_as_per_cargo">Net Payable Amount (as per Cargo)</label>
+                  <input type="number" step="0.01" id="net_payable_amount_as_per_cargo" name="net_payable_amount_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Rate per CTN</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="rate_per_ctn_as_per_hs">Rate per CTN (as per HS)</label>
+                  <input type="number" step="0.01" id="rate_per_ctn_as_per_hs" name="rate_per_ctn_as_per_hs">
+                </div>
+                <div class="form-group">
+                  <label for="rate_per_ctn_as_per_cargo">Rate per CTN (as per Cargo)</label>
+                  <input type="number" step="0.01" id="rate_per_ctn_as_per_cargo" name="rate_per_ctn_as_per_cargo">
+                </div>
+              </div>
+            </div>
+
+            <div class="button-container">
+              <button type="button" onclick="saveBility()">Save Bility</button>
+              <button type="button" class="button-secondary" onclick="cancelBilityEdit()">Cancel</button>
+            </div>
+          </form>
+        </div>
+        <div id="bility-modal-message"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clearing Agent Bill Modal -->
+  <div id="clearing-agent-bill-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeClearingAgentBillModal()">&times;</span>
+      <h2>Clearing Agent Bill Management</h2>
+      <div id="clearing-agent-bill-modal-body">
+        <!-- View State -->
+        <div id="clearing-agent-bill-view-container">
+          <div id="clearing-agent-bill-details-table"></div>
+          <div class="button-container">
+            <button id="edit-clearing-agent-bill-button" onclick="renderClearingAgentBillEdit()">Edit</button>
+          </div>
+        </div>
+        <!-- Edit State -->
+        <div id="clearing-agent-bill-edit-container" style="display: none;">
+          <form id="clearing-agent-bill-form">
+            <input type="hidden" id="clearing_agent_bill_id" name="clearing_agent_bill_id">
+            
+            <div class="form-section">
+              <h3>Bill Information</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="cab_bill_no">Bill Number</label>
+                  <input type="number" step="1" id="cab_bill_no" name="cab_bill_no">
+                </div>
+                <div class="form-group">
+                  <label for="cab_invoice_no">Invoice Number</label>
+                  <input type="text" id="cab_invoice_no" name="cab_invoice_no">
+                </div>
+                <div class="form-group">
+                  <label for="cab_total_clearing_agent_value">Total Clearing Agent Value</label>
+                  <input type="number" step="0.01" id="cab_total_clearing_agent_value" name="cab_total_clearing_agent_value">
+                </div>
+                <div class="form-group">
+                  <label for="cab_total_clearing_agent_accessed_perc">Total Clearing Agent Accessed %</label>
+                  <input type="number" step="0.01" id="cab_total_clearing_agent_accessed_perc" name="cab_total_clearing_agent_accessed_perc">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Expense & Bill Details</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="cab_total_expense_shipment_value">Total Expense Shipment Value</label>
+                  <input type="number" step="0.01" id="cab_total_expense_shipment_value" name="cab_total_expense_shipment_value">
+                </div>
+                <div class="form-group">
+                  <label for="cab_total_expense_shipment_accessed_perc">Total Expense Shipment Accessed %</label>
+                  <input type="number" step="0.01" id="cab_total_expense_shipment_accessed_perc" name="cab_total_expense_shipment_accessed_perc">
+                </div>
+                <div class="form-group">
+                  <label for="cab_total_bill">Total Bill</label>
+                  <input type="number" step="0.01" id="cab_total_bill" name="cab_total_bill">
+                </div>
+                <div class="form-group">
+                  <label for="cab_duties">Duties</label>
+                  <input type="number" step="0.01" id="cab_duties" name="cab_duties">
+                </div>
+                <div class="form-group">
+                  <label for="cab_excise">Excise</label>
+                  <input type="number" step="0.01" id="cab_excise" name="cab_excise">
+                </div>
+                <div class="form-group">
+                  <label for="cab_advance_payments">Advance Payments</label>
+                  <input type="number" step="0.01" id="cab_advance_payments" name="cab_advance_payments">
+                </div>
+                <div class="form-group">
+                  <label for="cab_deduction">Deduction</label>
+                  <input type="number" step="0.01" id="cab_deduction" name="cab_deduction">
+                </div>
+                <div class="form-group">
+                  <label for="cab_net_payable">Net Payable</label>
+                  <input type="number" step="0.01" id="cab_net_payable" name="cab_net_payable">
+                </div>
+              </div>
+            </div>
+
+            <!-- Agency Charges Section (One-to-One) -->
+            <div class="form-section">
+              <h3>Agency Charges</h3>
+              <div id="agency-charges-form">
+                <!-- Agency charges form will be rendered here -->
+              </div>
+            </div>
+
+            <!-- Receipted Port Expenses Section (One-to-One) -->
+            <div class="form-section">
+              <h3>Receipted Port Expenses</h3>
+              <div id="receipted-port-expense-form">
+                <!-- Receipted port expense form will be rendered here -->
+              </div>
+            </div>
+
+            <!-- Payments Section (One-to-One) -->
+            <div class="form-section">
+              <h3>Payments</h3>
+              <div id="payments-form">
+                <!-- Payments form will be rendered here -->
+              </div>
+            </div>
+
+            <!-- Duties Section (One-to-One) -->
+            <div class="form-section">
+              <h3>Duties</h3>
+              <div id="duties-form">
+                <!-- Duties form will be rendered here -->
+              </div>
+            </div>
+
+            <div class="button-container">
+              <button type="button" onclick="saveClearingAgentBill()">Save Clearing Agent Bill</button>
+              <button type="button" class="button-secondary" onclick="cancelClearingAgentBillEdit()">Cancel</button>
+            </div>
+          </form>
+        </div>
+        <div id="clearing-agent-bill-modal-message"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Documents Management Modal -->
+  <div id="documents-stage-modal" class="modal">
+    <div class="modal-content modal-large">
+      <span class="close-button" onclick="closeDocumentsModal()">&times;</span>
+      <h2><i class="fas fa-folder-open"></i> Document Management</h2>
+      
+      <!-- Required Documents Checklist -->
+      <div class="required-docs-section" id="required-docs-section" style="display: none;">
+        <div class="checklist-header">
+          <h3><i class="fas fa-clipboard-check"></i> Required Documents</h3>
+          <div class="completion-badge" id="completion-badge">
+            <span id="completion-percentage">0%</span>
+            <span class="completion-text">Complete</span>
+          </div>
+        </div>
+        <div id="required-docs-list" class="required-docs-list">
+          <!-- Dynamic checklist will be inserted here -->
+        </div>
+      </div>
+      
+      <div class="documents-upload-section">
+        <h3><i class="fas fa-cloud-upload-alt"></i> Upload Document</h3>
+        <form id="document-upload-form">
+          <div class="form-row">
+            <div class="form-field">
+              <label>Document Type: <span class="required">*</span></label>
+              <select name="doc_type" id="doc_type" required>
+                <option value="">Select document type</option>
+                <optgroup label="Purchase Documents">
+                  <option value="proforma_invoice">Proforma Invoice</option>
+                  <option value="purchase_order">Purchase Order</option>
+                  <option value="commercial_invoice">Commercial Invoice</option>
+                </optgroup>
+                <optgroup label="Shipping Documents">
+                  <option value="bill_of_lading">Bill of Lading</option>
+                  <option value="packing_list">Packing List</option>
+                  <option value="certificate_of_origin">Certificate of Origin</option>
+                </optgroup>
+                <optgroup label="Financial Documents">
+                  <option value="letter_of_credit">Letter of Credit</option>
+                  <option value="insurance_certificate">Insurance Certificate</option>
+                  <option value="bank_charges">Bank Charges</option>
+                </optgroup>
+                <optgroup label="Customs Documents">
+                  <option value="ip_number">IP Number</option>
+                  <option value="customs_declaration">Customs Declaration</option>
+                  <option value="release_order">Release Order</option>
+                </optgroup>
+                <optgroup label="Other">
+                  <option value="other">Other Document</option>
+                </optgroup>
+              </select>
+            </div>
+            
+            <div class="form-field">
+              <label>File: <span class="required">*</span></label>
+              <input 
+                type="file" 
+                name="document_file" 
+                id="document_file" 
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                required
+              />
+              <small class="field-hint">Max 10MB (PDF, DOC, DOCX, JPG, PNG)</small>
+            </div>
+          </div>
+          
+          <div class="button-container">
+            <button type="submit" class="button button-primary">
+              <i class="fas fa-upload"></i>
+              Upload Document
+            </button>
+          </div>
+        </form>
+      </div>
+      
+      <div class="documents-list-section">
+        <div class="documents-header">
+          <h3><i class="fas fa-list"></i> Uploaded Documents</h3>
+        </div>
+        
+        <div id="documents-grid" class="documents-grid">
+          <div class="empty-state" id="documents-empty-state">
+            <i class="fas fa-folder-open"></i>
+            <p>No documents uploaded yet</p>
+            <small>Upload your first document using the form above</small>
+          </div>
+        </div>
+        
+        <div id="documents-loading" class="loading-state" style="display: none;">
+          <div class="loader">
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+          </div>
+          <p>Loading documents...</p>
+        </div>
+      </div>
+      
+      <div id="documents-modal-message"></div>
+    </div>
+  </div>
+
+  <!-- Document Card Template -->
+  <template id="document-card-template">
+    <div class="document-card" data-doc-id="" data-file-url="">
+      <div class="document-icon">
+        <i class="fas fa-file-pdf"></i>
+      </div>
+      <div class="document-info">
+        <h4 class="document-title">Document Name</h4>
+        <p class="document-type">Document Type</p>
+        <p class="document-meta">
+          <span class="document-date">
+            <i class="fas fa-calendar"></i>
+            Jan 1, 2025
+          </span>
+          <span class="document-uploader">
+            <i class="fas fa-user"></i>
+            User Name
+          </span>
+        </p>
+      </div>
+      <div class="document-actions">
+        <button class="doc-action-btn" onclick="viewDocument(this)" title="View">
+          <i class="fas fa-eye"></i>
+        </button>
+        <button class="doc-action-btn" onclick="downloadDocument(this)" title="Download">
+          <i class="fas fa-download"></i>
+        </button>
+        <button class="doc-action-btn delete" onclick="deleteDocument(this)" title="Delete">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <!-- Product Management Modal Container -->
+  <div id="product-management-modal-container"></div>
+  <script>
+    // Load the product management modal HTML
+    fetch('manage-products-modal.html')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to load product management modal');
+        }
+        return response.text();
+      })
+      .then(html => {
+        document.getElementById('product-management-modal-container').innerHTML = html;
+        console.log('✅ Product management modal loaded successfully');
+      })
+      .catch(error => {
+        console.error('❌ Error loading product management modal:', error);
+        console.log('Make sure manage-products-modal.html is in the root directory');
+      });
+  </script>
+
+  <script type="module" src="js/shipment-tracker.js"></script>
+  <script src="js/supplier-helpers.js"></script>
+</body>
+</html>

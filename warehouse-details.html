@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Warehouse Details</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+  const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+  let currentEditingId = null;
+
+  async function loadWarehouses() {
+    const { data, error } = await supabase
+      .from("warehouse")
+      .select(`*`);
+
+    if (error) {
+      document.getElementById("warehouses-list").innerHTML = `<p class="error-message">Error loading warehouses: ${error.message}</p>`;
+      return;
+    }
+
+    let html = "<table><tr><th>Name</th><th>Email</th><th>Address</th><th>City</th><th>Latitude</th><th>Longitude</th><th>Actions</th></tr>";
+    data.forEach(item => {
+      // Escape potential single quotes in data for the onclick handler
+      const safeItem = JSON.stringify(item).replace(/'/g, "&#39;");
+      html += `<tr>
+        <td>${item.warehouse_name}</td>
+        <td>${item.email || ''}</td>
+        <td>${item.address || ''}</td>
+        <td>${item.city || ''}</td>
+        <td>${item.latitude || ''}</td>
+        <td>${item.longitude || ''}</td>
+        <td>
+          <button class="button-secondary" onclick='openEditWarehouseModal(${safeItem})'>
+            <i class="fas fa-edit"></i> Edit
+          </button>
+        </td>
+      </tr>`;
+    });
+    html += "</table>";
+
+    document.getElementById("warehouses-list").innerHTML = html;
+  }
+
+  function openNewWarehouseModal() {
+    currentEditingId = null;
+    document.getElementById('modal-title').textContent = 'Create New Warehouse';
+    
+    let formHtml = `
+      <div id="warehouse-message"></div>
+      <form id="warehouse-form">
+        <div><label for="warehouse_name">Name:</label><input type="text" id="warehouse_name" name="warehouse_name" required></div>
+        <div><label for="email">Email:</label><input type="email" id="email" name="email" placeholder="warehouse@example.com"></div>
+        <div><label for="address">Address:</label><input type="text" id="address" name="address"></div>
+        <div><label for="city">City:</label><input type="text" id="city" name="city"></div>
+        <div><label for="latitude">Latitude:</label><input type="number" id="latitude" name="latitude" step="any"></div>
+        <div><label for="longitude">Longitude:</label><input type="number" id="longitude" name="longitude" step="any"></div>
+        <button type="button" onclick="saveWarehouse()">Save</button>
+      </form>
+    `;
+
+    document.getElementById('warehouse-form-container').innerHTML = formHtml;
+    document.getElementById('warehouse-modal').style.display = 'block';
+  }
+
+  function openEditWarehouseModal(item) {
+    currentEditingId = item.id;
+    document.getElementById('modal-title').textContent = 'Edit Warehouse';
+
+    let formHtml = `
+      <div id="warehouse-message"></div>
+      <form id="warehouse-form">
+        <div><label for="warehouse_name">Name:</label><input type="text" id="warehouse_name" name="warehouse_name" value="${item.warehouse_name || ''}" required></div>
+        <div><label for="email">Email:</label><input type="email" id="email" name="email" value="${item.email || ''}" placeholder="warehouse@example.com"></div>
+        <div><label for="address">Address:</label><input type="text" id="address" name="address" value="${item.address || ''}"></div>
+        <div><label for="city">City:</label><input type="text" id="city" name="city" value="${item.city || ''}"></div>
+        <div><label for="latitude">Latitude:</label><input type="number" id="latitude" name="latitude" step="any" value="${item.latitude || ''}"></div>
+        <div><label for="longitude">Longitude:</label><input type="number" id="longitude" name="longitude" step="any" value="${item.longitude || ''}"></div>
+        <button type="button" onclick="saveWarehouse()">Update</button>
+      </form>
+    `;
+
+    document.getElementById('warehouse-form-container').innerHTML = formHtml;
+    document.getElementById('warehouse-modal').style.display = 'block';
+  }
+
+  function closeModal() {
+    document.getElementById('warehouse-modal').style.display = 'none';
+    currentEditingId = null;
+  }
+
+  async function saveWarehouse() {
+    const form = document.getElementById('warehouse-form');
+    const formData = new FormData(form);
+    
+    const warehouseData = {
+        warehouse_name: formData.get('warehouse_name'),
+        email: formData.get('email'),
+        address: formData.get('address'),
+        city: formData.get('city'),
+        latitude: formData.get('latitude') || null,
+        longitude: formData.get('longitude') || null
+    };
+
+    let error;
+    
+    if (currentEditingId) {
+        // Update existing
+        const { error: updateError } = await supabase
+            .from('warehouse')
+            .update(warehouseData)
+            .eq('id', currentEditingId);
+        error = updateError;
+    } else {
+        // Create new
+        const { error: insertError } = await supabase
+            .from('warehouse')
+            .insert(warehouseData);
+        error = insertError;
+    }
+
+    if (error) {
+        document.getElementById('warehouse-message').innerHTML = `<p class="error-message">Error saving warehouse: ${error.message}</p>`;
+    } else {
+        closeModal();
+        loadWarehouses();
+    }
+  }
+
+  window.openNewWarehouseModal = openNewWarehouseModal;
+  window.openEditWarehouseModal = openEditWarehouseModal;
+  window.saveWarehouse = saveWarehouse;
+  window.closeModal = closeModal;
+  
+  window.onload = async () => {
+      const loader = document.getElementById("loader");
+      if (loader) {
+          loader.style.display = "block";
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+          window.location.href = 'login.html';
+      } else {
+          await loadWarehouses();
+      }
+
+      if (loader) {
+          loader.style.display = "none";
+      }
+  };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+  </div>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="documents.html" class="nav-link">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+          </a>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link active">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu open">
+            <li><a href="send-freight-queries.html" class="nav-link"><span class="text">Send Freight Queries</span></a></li>
+            <li><a href="freight-query-response.html" class="nav-link"><span class="text">Freight Query Response</span></a></li>
+            <li><a href="manage-freight-queries.html" class="nav-link"><span class="text">Manage Freight Queries</span></a></li>
+            <li><a href="award-shipment.html" class="nav-link"><span class="text">Award Shipment</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Warehouses</h1>
+      </div>
+    </header>
+    <div id="warehouses-list">Loading...</div>
+
+    <button onclick="openNewWarehouseModal()">Create New Warehouse</button>
+
+    <p class="back-link"><a href="admin-dashboard.html">← Back to Dashboard</a></p>
+
+    <div id="warehouse-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close-button" onclick="closeModal()">&times;</span>
+        <h2 id="modal-title">Create New Warehouse</h2>
+        <div id="warehouse-form-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.querySelector('.sidebar');
+      const sidebarToggle = document.querySelector('.sidebar-toggle');
+      const navLinks = document.querySelectorAll('.nav-link');
+      const hasSubmenus = document.querySelectorAll('.has-submenu');
+
+      // Responsive off-canvas menu (for mobile)
+      const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+      function handleMediaQueryChange(e) {
+        if (e.matches) { // If on mobile
+          sidebar.classList.remove('collapsed'); // Ensure it's not collapsed on mobile
+          sidebar.classList.remove('open'); // Ensure it's closed initially on mobile
+        } else { // If on desktop
+          sidebar.classList.remove('open'); // Ensure it's not open on desktop
+        }
+      }
+
+      // Initial check for mobile responsiveness
+      handleMediaQueryChange(mediaQuery);
+
+      // Listen for changes in media query
+      mediaQuery.addListener(handleMediaQueryChange);
+
+      // Unified sidebar toggle logic
+      sidebarToggle.addEventListener('click', () => {
+        if (mediaQuery.matches) {
+          // If on mobile, toggle 'open' class
+          sidebar.classList.toggle('open');
+        } else {
+          // If on desktop, toggle 'collapsed' class
+          sidebar.classList.toggle('collapsed');
+        }
+      });
+
+      // Accordion sub-menus (no change)
+      hasSubmenus.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const submenu = item.nextElementSibling;
+          if (submenu && submenu.classList.contains('submenu')) {
+            submenu.classList.toggle('open');
+            item.classList.toggle('open');
+          }
+        });
+      });
+
+      // Active link highlighting (no change)
+      const currentPath = window.location.pathname.split('/').pop();
+      navLinks.forEach(link => {
+        if (link.href.split('/').pop() === currentPath) {
+          link.classList.add('active');
+          let parentSubmenu = link.closest('.submenu');
+          if (parentSubmenu) {
+            parentSubmenu.classList.add('open');
+            let parentHasSubmenu = parentSubmenu.previousElementSibling;
+            if (parentHasSubmenu && parentHasSubmenu.classList.contains('has-submenu')) {
+              parentHasSubmenu.classList.add('open');
+            }
+          }
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    });
+    
+  </script>
+</body>
+</html>

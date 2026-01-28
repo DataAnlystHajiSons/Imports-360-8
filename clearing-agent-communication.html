@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clearing Agent Communication</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* CC Email Tags Styling */
+        .cc-container {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px;
+            min-height: 45px;
+            background: #fff;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            cursor: text;
+        }
+        .cc-container:focus-within {
+            border-color: #F59E0B;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
+        }
+        .cc-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #F59E0B 0%, #FBB124 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .cc-tag .remove-cc {
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            transition: background 0.2s;
+        }
+        .cc-tag .remove-cc:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .cc-input-field {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 200px;
+            font-size: 14px;
+            padding: 4px;
+        }
+        .cc-helper-text {
+            font-size: 12px;
+            color: #64748B;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cc-error {
+            color: #EF4444;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .cc-error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i> Back</button>
+        <h1>Clearing Agent Communication for Shipment #<span id="shipment-reference"></span></h1>
+
+        <div class="card">
+            <h2>Send New Communication</h2>
+            <form id="clearing-agent-comm-form">
+                <div class="form-group">
+                    <label for="clearing-agent-select">Clearing Agent</label>
+                    <select id="clearing-agent-select" name="clearing_agent" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="clearing-agent-email">Clearing Agent Email</label>
+                    <input type="email" id="clearing-agent-email" name="clearing_agent_email" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" id="subject" name="subject" required>
+                </div>
+                <div class="form-group">
+                    <label for="cc-emails">CC (Stakeholders)</label>
+                    <div class="cc-container" id="cc-container">
+                        <input type="text" 
+                               class="cc-input-field" 
+                               id="cc-input" 
+                               placeholder="Enter email and press Enter or comma"
+                               autocomplete="off">
+                    </div>
+                    <div class="cc-helper-text">
+                        <i class="fas fa-info-circle"></i>
+                        Add stakeholder emails one at a time. Press Enter or use comma to add.
+                    </div>
+                    <div class="cc-error" id="cc-error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="email-body">Body</label>
+                    <textarea id="email-body" name="body" rows="6" required></textarea>
+                </div>
+                <div class="form-group">
+                    <h3>Attach Documents</h3>
+                    <div id="document-checklist">
+                        <!-- Document checkboxes will be dynamically inserted here -->
+                    </div>
+                </div>
+                <button type="submit" class="btn">Send Email</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Communication History</h2>
+            <table id="comm-history-table">
+                <thead>
+                    <tr>
+                        <th>Sent At</th>
+                        <th>Clearing Agent</th>
+                        <th>CC</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- History rows will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+        const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+        const shipmentId = new URLSearchParams(window.location.search).get('id');
+        let currentUser = null;
+        let ccEmails = []; // Store CC emails
+
+        // UI Elements
+        const shipmentReferenceEl = document.getElementById('shipment-reference');
+        const clearingAgentSelect = document.getElementById('clearing-agent-select');
+        const clearingAgentEmail = document.getElementById('clearing-agent-email');
+        const docChecklist = document.getElementById('document-checklist');
+        const historyTableBody = document.querySelector('#comm-history-table tbody');
+        const form = document.getElementById('clearing-agent-comm-form');
+        const ccContainer = document.getElementById('cc-container');
+        const ccInput = document.getElementById('cc-input');
+        const ccError = document.getElementById('cc-error');
+
+        async function loadInitialData() {
+            // Fetch shipment reference
+            const { data: shipment, error: shipmentError } = await supabase
+                .from('shipment')
+                .select('reference_code')
+                .eq('id', shipmentId)
+                .single();
+
+            if (shipmentError) {
+                console.error('Error fetching shipment reference:', shipmentError);
+                shipmentReferenceEl.textContent = 'Error';
+                return;
+            }
+            shipmentReferenceEl.textContent = shipment.reference_code;
+
+            await Promise.all([
+                loadClearingAgents(),
+                loadShipmentDocuments(),
+                loadCommunicationHistory()
+            ]);
+        }
+
+        async function loadClearingAgents() {
+            const { data, error } = await supabase.from('clearing_agent').select('id, name, company_name, contact_email');
+            if (error) {
+                console.error('Error fetching clearing agents:', error);
+                return;
+            }
+            clearingAgentSelect.innerHTML = '<option value="">Select clearing agent...</option>';
+            data.forEach(agent => {
+                const option = document.createElement('option');
+                option.value = agent.id;
+                option.dataset.email = agent.contact_email || '';
+                option.textContent = `${agent.name} ${agent.company_name ? '(' + agent.company_name + ')' : ''}`;
+                clearingAgentSelect.appendChild(option);
+            });
+        }
+
+        async function loadShipmentDocuments() {
+            // Load all available documents from various sources
+            const allDocuments = [];
+            
+            // 1. Centralized document system (new)
+            const { data: centralDocs, error: centralError } = await supabase
+                .from('document')
+                .select('id, doc_type, file_url, file_name, uploaded_at')
+                .eq('shipment_id', shipmentId)
+                .eq('status', 'active');
+            
+            if (centralDocs) {
+                centralDocs.forEach(doc => {
+                    allDocuments.push({
+                        id: doc.id,
+                        name: doc.doc_type ? doc.doc_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : (doc.file_name || 'Document'),
+                        category: 'General',
+                        type: 'document',
+                        uploaded_at: doc.uploaded_at
+                    });
+                });
+            }
+            
+            // 2. Stage-specific documents
+            const stageDocuments = await loadStageDocuments();
+            allDocuments.push(...stageDocuments);
+            
+            // Sort by upload date (newest first)
+            allDocuments.sort((a, b) => {
+                const dateA = a.uploaded_at ? new Date(a.uploaded_at) : new Date(0);
+                const dateB = b.uploaded_at ? new Date(b.uploaded_at) : new Date(0);
+                return dateB - dateA;
+            });
+            
+            // Render document checklist
+            docChecklist.innerHTML = '';
+            if (allDocuments.length === 0) {
+                docChecklist.innerHTML = '<p style="color: #94a3b8; font-style: italic; padding: 20px; text-align: center;">No documents found for this shipment.</p>';
+                return;
+            }
+            
+            // Group by category
+            const categories = {};
+            allDocuments.forEach(doc => {
+                if (!categories[doc.category]) {
+                    categories[doc.category] = [];
+                }
+                categories[doc.category].push(doc);
+            });
+            
+            // Render grouped documents
+            Object.keys(categories).forEach(category => {
+                const categoryHeader = document.createElement('div');
+                categoryHeader.style.cssText = 'margin-top: 15px; margin-bottom: 10px; font-weight: 700; color: #475569; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px;';
+                categoryHeader.innerHTML = `<i class="fas fa-folder"></i> ${category}`;
+                docChecklist.appendChild(categoryHeader);
+                
+                categories[category].forEach(doc => {
+                    const checkboxId = `doc-${doc.id}`;
+                    const wrapper = document.createElement('div');
+                    wrapper.style.cssText = 'padding: 8px 0; display: flex; align-items: center; gap: 10px;';
+                    wrapper.innerHTML = `
+                        <input type="checkbox" id="${checkboxId}" name="documents" value="${doc.id}" style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="${checkboxId}" style="cursor: pointer; flex: 1; color: #334155; font-size: 0.95rem;">${doc.name}</label>
+                    `;
+                    docChecklist.appendChild(wrapper);
+                });
+            });
+        }
+        
+        async function loadStageDocuments() {
+            const stageDocuments = [];
+            
+            // Proforma Invoice
+            const { data: proforma } = await supabase.from('proforma_invoice').select('id, proforma_number, file_url').eq('shipment_id', shipmentId).single();
+            if (proforma?.file_url) {
+                stageDocuments.push({ id: `proforma_${proforma.id}`, name: `Proforma Invoice - ${proforma.proforma_number}`, category: 'Stage Documents', type: 'proforma' });
+            }
+            
+            // Purchase Order
+            const { data: po } = await supabase.from('purchase_order').select('id, po_number, po_file_url').eq('shipment_id', shipmentId).single();
+            if (po?.po_file_url) {
+                stageDocuments.push({ id: `po_${po.id}`, name: `Purchase Order - ${po.po_number}`, category: 'Stage Documents', type: 'purchase_order' });
+            }
+            
+            // Commercial Invoice
+            const { data: invoice } = await supabase.from('commercial_invoice').select('id, invoice_number, file_url').eq('shipment_id', shipmentId).single();
+            if (invoice?.file_url) {
+                stageDocuments.push({ id: `invoice_${invoice.id}`, name: `Commercial Invoice - ${invoice.invoice_number}`, category: 'Financial Documents', type: 'invoice' });
+            }
+            
+            // IP Number
+            const { data: ip } = await supabase.from('ip_number').select('id, file_url').eq('shipment_id', shipmentId).single();
+            if (ip?.file_url) {
+                stageDocuments.push({ id: `ip_${ip.id}`, name: 'IP Number Document', category: 'Stage Documents', type: 'ip_number' });
+            }
+            
+            // Letter of Credit
+            const { data: lc } = await supabase.from('letter_of_credit').select('id, lc_number, file_url').eq('shipment_id', shipmentId).single();
+            if (lc?.file_url) {
+                stageDocuments.push({ id: `lc_${lc.id}`, name: `Letter of Credit - ${lc.lc_number}`, category: 'Financial Documents', type: 'letter_of_credit' });
+            }
+            
+            // Non-Negotiable Docs
+            const { data: nonNeg } = await supabase.from('non_negotiable_docs').select('id, file_url').eq('shipment_id', shipmentId).single();
+            if (nonNeg?.file_url) {
+                stageDocuments.push({ id: `nonneg_${nonNeg.id}`, name: 'Non-Negotiable Documents', category: 'Logistics Documents', type: 'non_negotiable' });
+            }
+            
+            // Original Docs
+            const { data: original } = await supabase.from('original_docs').select('id, docs_url').eq('shipment_id', shipmentId).single();
+            if (original?.docs_url) {
+                stageDocuments.push({ id: `original_${original.id}`, name: 'Original Documents', category: 'Logistics Documents', type: 'original_docs' });
+            }
+            
+            // Clearing Agent Slip
+            const { data: clearingSlip } = await supabase.from('docs_to_clearing_agent').select('id, slip_picture_url, name').eq('shipment_id', shipmentId).single();
+            if (clearingSlip?.slip_picture_url) {
+                stageDocuments.push({ id: `clearing_${clearingSlip.id}`, name: `Clearing Agent Slip - ${clearingSlip.name}`, category: 'Logistics Documents', type: 'clearing_slip' });
+            }
+            
+            return stageDocuments;
+        }
+
+        // CC Email Management Functions
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email.toLowerCase());
+        }
+
+        function showCCError(message) {
+            ccError.textContent = message;
+            ccError.classList.add('show');
+            setTimeout(() => {
+                ccError.classList.remove('show');
+            }, 3000);
+        }
+
+        function addCCEmail(email) {
+            email = email.trim().toLowerCase();
+            
+            if (!email) return;
+            
+            if (!validateEmail(email)) {
+                showCCError('Invalid email format');
+                return;
+            }
+            
+            if (ccEmails.includes(email)) {
+                showCCError('Email already added');
+                return;
+            }
+            
+            ccEmails.push(email);
+            renderCCTags();
+            ccInput.value = '';
+        }
+
+        function removeCCEmail(email) {
+            ccEmails = ccEmails.filter(e => e !== email);
+            renderCCTags();
+        }
+
+        function renderCCTags() {
+            // Remove existing tags
+            const existingTags = ccContainer.querySelectorAll('.cc-tag');
+            existingTags.forEach(tag => tag.remove());
+            
+            // Add tags before the input field
+            ccEmails.forEach(email => {
+                const tag = document.createElement('div');
+                tag.className = 'cc-tag';
+                tag.innerHTML = `
+                    <span>${email}</span>
+                    <span class="remove-cc" onclick="window.removeCCEmail('${email}')">×</span>
+                `;
+                ccContainer.insertBefore(tag, ccInput);
+            });
+        }
+
+        // Make removeCCEmail available globally
+        window.removeCCEmail = removeCCEmail;
+
+        async function loadCommunicationHistory() {
+            const { data, error } = await supabase
+                .from('clearing_agent_communication')
+                .select(`sent_at,email_subject,status,cc_emails,clearing_agent(name,company_name)`)
+                .eq('shipment_id', shipmentId)
+                .order('sent_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching communication history:', error);
+                return;
+            }
+            
+            historyTableBody.innerHTML = '';
+            if (data.length === 0) {
+                const row = historyTableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 5;
+                cell.textContent = 'No communication history found.';
+                cell.style.textAlign = 'center';
+                return;
+            }
+            data.forEach(item => {
+                const ccDisplay = item.cc_emails && item.cc_emails.length > 0 
+                    ? item.cc_emails.join(', ') 
+                    : '-';
+                
+                const row = historyTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${new Date(item.sent_at).toLocaleString()}</td>
+                    <td>${item.clearing_agent ? item.clearing_agent.name : 'N/A'}</td>
+                    <td style="font-size: 12px; color: #64748B;">${ccDisplay}</td>
+                    <td>${item.email_subject}</td>
+                    <td>${item.status || 'Sent'}</td>
+                `;
+            });
+        }
+
+        async function handleSendCommunication(e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const selectedDocs = formData.getAll('documents');
+            
+            const clearingAgentId = formData.get('clearing_agent');
+            if (!clearingAgentId) {
+                alert('Please select a clearing agent');
+                return;
+            }
+
+            const communicationData = {
+                shipment_id: shipmentId,
+                clearing_agent_id: clearingAgentId,
+                sent_by: currentUser.id,
+                email_subject: formData.get('subject'),
+                email_body: formData.get('body'),
+                cc_emails: ccEmails.length > 0 ? ccEmails : null,
+                status: 'sent'
+            };
+
+            const { data: commResult, error: commError } = await supabase
+                .from('clearing_agent_communication')
+                .insert(communicationData)
+                .select('id')
+                .single();
+
+            if (commError) {
+                alert('Failed to log communication: ' + commError.message);
+                return;
+            }
+
+            if (selectedDocs.length > 0) {
+                const docLinks = selectedDocs.map(docId => ({ 
+                    communication_id: commResult.id, 
+                    document_id: docId 
+                }));
+                const { error: docError } = await supabase
+                    .from('clearing_agent_communication_documents')
+                    .insert(docLinks);
+                if (docError) {
+                    alert('Communication logged, but failed to link documents: ' + docError.message);
+                }
+            }
+
+            const { error: functionError } = await supabase.functions.invoke('send-clearing-agent-email', {
+                body: { communication_id: commResult.id },
+            });
+
+            if(functionError){
+                alert('DB log successful, but failed to send email: ' + functionError.message);
+            } else {
+                alert('Communication sent and logged successfully!');
+            }
+            
+            form.reset();
+            ccEmails = [];
+            renderCCTags();
+            await loadCommunicationHistory();
+        }
+
+        // --- Event Listeners ---
+        clearingAgentSelect.addEventListener('change', (e) => {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            clearingAgentEmail.value = selectedOption.dataset.email || '';
+        });
+
+        // CC input event listeners
+        ccInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                addCCEmail(ccInput.value.replace(',', ''));
+            } else if (e.key === 'Backspace' && !ccInput.value && ccEmails.length > 0) {
+                removeCCEmail(ccEmails[ccEmails.length - 1]);
+            }
+        });
+
+        ccInput.addEventListener('blur', () => {
+            if (ccInput.value.trim()) {
+                addCCEmail(ccInput.value);
+            }
+        });
+
+        ccContainer.addEventListener('click', (e) => {
+            if (e.target === ccContainer) {
+                ccInput.focus();
+            }
+        });
+
+        form.addEventListener('submit', handleSendCommunication);
+
+        window.onload = async () => {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+                console.error('User not authenticated. Redirecting to login.');
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = user;
+
+            if (!shipmentId) {
+                document.body.innerHTML = '<h1>Error: No Shipment ID provided in URL.</h1>';
+                return;
+            }
+
+            await loadInitialData();
+        };
+    </script>
+</body>
+</html>

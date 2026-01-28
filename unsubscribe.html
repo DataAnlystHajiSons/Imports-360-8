@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Unsubscribe - Imports 360</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f8f9fa;
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #7C3AED;
+            margin-bottom: 20px;
+        }
+        .success {
+            background: #D1FAE5;
+            border: 2px solid #10B981;
+            color: #047857;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .info {
+            background: #EEF2FF;
+            border: 2px solid #7C3AED;
+            color: #5B21B6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        button {
+            background: #7C3AED;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 10px;
+        }
+        button:hover {
+            background: #6D28D9;
+        }
+        .contact {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #E5E7EB;
+            color: #6B7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Email Preferences</h1>
+        
+        <div id="unsubscribe-content">
+            <div class="info">
+                <h3>Unsubscribe Request</h3>
+                <p>We're sorry to see you go! You can unsubscribe from our supplier notification emails below.</p>
+                <p><strong>Email:</strong> <span id="email-address"></span></p>
+            </div>
+            
+            <p>Are you sure you want to unsubscribe from Imports 360 supplier notifications?</p>
+            
+            <button onclick="confirmUnsubscribe()">Yes, Unsubscribe Me</button>
+            <button onclick="window.close()" style="background: #6B7280;">Keep Me Subscribed</button>
+        </div>
+        
+        <div id="success-content" style="display: none;">
+            <div class="success">
+                <h3>✅ Successfully Unsubscribed</h3>
+                <p>You have been unsubscribed from Imports 360 supplier notifications.</p>
+                <p>You will no longer receive automated emails regarding shipment documents and updates.</p>
+            </div>
+            
+            <p>If you need to re-subscribe or have any questions, please contact your account manager.</p>
+        </div>
+        
+        <div class="contact">
+            <p><strong>Need Help?</strong></p>
+            <p>Contact us at: <a href="mailto:support@imports360.com" style="color: #7C3AED;">support@imports360.com</a></p>
+            <p>Imports 360 Import Management System</p>
+        </div>
+    </div>
+
+    <script>
+        // Get email from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const email = urlParams.get('email');
+        
+        if (email) {
+            document.getElementById('email-address').textContent = email;
+        } else {
+            document.getElementById('email-address').textContent = 'Not specified';
+        }
+        
+        function confirmUnsubscribe() {
+            // In a real implementation, you would send this to your backend
+            // For now, just show success message
+            document.getElementById('unsubscribe-content').style.display = 'none';
+            document.getElementById('success-content').style.display = 'block';
+            
+            // You could send this to your Supabase function:
+            /*
+            fetch('/functions/v1/unsubscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+            */
+        }
+    </script>
+</body>
+</html>

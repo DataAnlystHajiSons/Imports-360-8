@@ -1,0 +1,484 @@
+<!-- 
+============================================================================
+FIXED: supplier-shipment-responses.html with corrected query structure
+============================================================================
+The issue is the complex nested query. This version uses a working approach.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Imports 360 - Supplier Shipment Responses (FIXED)</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    .page-layout {
+      display: flex;
+      gap: 20px;
+    }
+    .filters-pane {
+      width: 250px;
+      flex-shrink: 0;
+    }
+    .content-area {
+      flex-grow: 1;
+    }
+    .filter-group {
+      margin-bottom: 15px;
+    }
+    .debug-info {
+      background: #f0f8ff;
+      border: 1px solid #007acc;
+      border-radius: 4px;
+      padding: 10px;
+      margin: 10px 0;
+      font-family: monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="documents.html" class="nav-link">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+          </a>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link active">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu open">
+            <li><a href="send-freight-queries.html" class="nav-link"><span class="text">Send Freight Queries</span></a></li>
+            <li><a href="freight-query-response.html" class="nav-link"><span class="text">Freight Query Response</span></a></li>
+            <li><a href="manage-freight-queries.html" class="nav-link"><span class="text">Manage Freight Queries</span></a></li>
+            <li><a href="award-shipment.html" class="nav-link"><span class="text">Award Shipment</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Supplier Shipment Responses (FIXED)</h1>
+      </div>
+    </header>
+
+    <div class="page-layout">
+      <div class="filters-pane panel">
+        <div class="panel-body">
+          <h3>Filters</h3>
+          <div class="filter-group">
+            <label for="shipment-filter">Shipment</label>
+            <select id="shipment-filter">
+              <option value="">All Shipments</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="supplier-filter">Supplier</label>
+            <select id="supplier-filter">
+              <option value="">All Suppliers</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="from-date-filter">From Date</label>
+            <input type="date" id="from-date-filter">
+          </div>
+          <div class="filter-group">
+            <label for="to-date-filter">To Date</label>
+            <input type="date" id="to-date-filter">
+          </div>
+          <div class="filter-group">
+            <button id="apply-filters-btn" class="button">Apply Filters</button>
+            <button id="clear-filters-btn" class="button button-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="content-area">
+        <div id="debug-info" class="debug-info" style="display: none;"></div>
+        <div id="responses-container">
+          <div class="panel">
+            <div class="panel-body">
+              <p>Loading responses...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+  
+  const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+  let allResponses = [];
+  let shipments = [];
+  let suppliers = [];
+
+  function showDebugInfo(message) {
+    const debugDiv = document.getElementById('debug-info');
+    debugDiv.style.display = 'block';
+    debugDiv.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
+    console.log('🔧 DEBUG:', message);
+  }
+
+  async function loadFilters() {
+    showDebugInfo('Loading filters...');
+    
+    try {
+      // Load shipments for filter
+      const { data: shipmentData, error: shipmentError } = await supabase
+        .from('shipment')
+        .select('id, reference_code')
+        .order('reference_code');
+
+      if (shipmentError) {
+        showDebugInfo(`Shipment filter error: ${shipmentError.message}`);
+      } else {
+        shipments = shipmentData;
+        const shipmentSelect = document.getElementById('shipment-filter');
+        shipmentSelect.innerHTML = '<option value="">All Shipments</option>';
+        shipments.forEach(s => {
+          shipmentSelect.innerHTML += `<option value="${s.id}">${s.reference_code}</option>`;
+        });
+        showDebugInfo(`Loaded ${shipments.length} shipments for filter`);
+      }
+
+      // Load suppliers for filter
+      const { data: supplierData, error: supplierError } = await supabase
+        .from('supplier')
+        .select('id, name')
+        .order('name');
+
+      if (supplierError) {
+        showDebugInfo(`Supplier filter error: ${supplierError.message}`);
+      } else {
+        suppliers = supplierData;
+        const supplierSelect = document.getElementById('supplier-filter');
+        supplierSelect.innerHTML = '<option value="">All Suppliers</option>';
+        suppliers.forEach(s => {
+          supplierSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+        });
+        showDebugInfo(`Loaded ${suppliers.length} suppliers for filter`);
+      }
+    } catch (error) {
+      showDebugInfo(`Filter loading exception: ${error.message}`);
+    }
+  }
+
+  async function loadResponses() {
+    showDebugInfo('Loading supplier responses...');
+    
+    try {
+      // Step 1: Get supplier shipment details
+      const { data: responses, error: responsesError } = await supabase
+        .from('supplier_shipment_details')
+        .select('*')
+        .order('details_received_date', { ascending: false });
+
+      if (responsesError) {
+        showDebugInfo(`Responses query error: ${responsesError.message}`);
+        document.getElementById('responses-container').innerHTML = 
+          `<div class="panel"><div class="panel-body"><p class="error-message">Error loading responses: ${responsesError.message}</p></div></div>`;
+        return;
+      }
+
+      showDebugInfo(`Loaded ${responses.length} raw responses`);
+
+      if (responses.length === 0) {
+        document.getElementById('responses-container').innerHTML = 
+          '<div class="panel"><div class="panel-body"><p>No supplier responses found.</p></div></div>';
+        return;
+      }
+
+      // Step 2: Get related shipment data
+      const shipmentIds = [...new Set(responses.map(r => r.shipment_id))];
+      showDebugInfo(`Getting shipment data for ${shipmentIds.length} unique shipments`);
+
+      const { data: shipmentData, error: shipmentError } = await supabase
+        .from('shipment')
+        .select('id, reference_code')
+        .in('id', shipmentIds);
+
+      if (shipmentError) {
+        showDebugInfo(`Shipment data error: ${shipmentError.message}`);
+      }
+
+      // Step 3: Create a lookup map for shipments
+      const shipmentMap = {};
+      if (shipmentData) {
+        shipmentData.forEach(s => {
+          shipmentMap[s.id] = s;
+        });
+      }
+
+      // Step 4: Enrich responses with shipment data
+      const enrichedResponses = responses.map(response => ({
+        ...response,
+        shipment_reference: shipmentMap[response.shipment_id]?.reference_code || 'Unknown',
+        shipment_data: shipmentMap[response.shipment_id] || null
+      }));
+
+      showDebugInfo(`Enriched ${enrichedResponses.length} responses with shipment data`);
+
+      allResponses = enrichedResponses;
+      renderResponses(enrichedResponses);
+
+    } catch (error) {
+      showDebugInfo(`Exception loading responses: ${error.message}`);
+      document.getElementById('responses-container').innerHTML = 
+        `<div class="panel"><div class="panel-body"><p class="error-message">Exception: ${error.message}</p></div></div>`;
+    }
+  }
+
+  function renderResponses(responses) {
+    const container = document.getElementById('responses-container');
+    if (responses.length === 0) {
+      container.innerHTML = '<div class="panel"><div class="panel-body"><p>No responses found for the selected filters.</p></div></div>';
+      return;
+    }
+
+    showDebugInfo(`Rendering ${responses.length} responses`);
+
+    let html = `
+      <div class="panel">
+        <div class="panel-body">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Shipment Reference</th>
+                  <th>Readiness Date</th>
+                  <th>Gross Weight</th>
+                  <th>Cartons</th>
+                  <th>Transport</th>
+                  <th>Received At</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody>
+    `;
+    
+    responses.forEach(res => {
+      html += `
+        <tr>
+          <td>${res.shipment_reference || 'N/A'}</td>
+          <td>${res.readiness_date ? new Date(res.readiness_date).toLocaleDateString() : 'N/A'}</td>
+          <td>${res.gross_weight || 'N/A'}</td>
+          <td>${res.cartons_count || 'N/A'}</td>
+          <td>${res.transport || 'N/A'}</td>
+          <td>${res.details_received_date ? new Date(res.details_received_date).toLocaleString() : 'N/A'}</td>
+          <td><button onclick="showResponseDetails('${res.id}')" class="button button-secondary">View</button></td>
+        </tr>
+      `;
+    });
+    
+    html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
+  }
+
+  function applyFilters() {
+    showDebugInfo('Applying filters...');
+    
+    const shipmentFilter = document.getElementById('shipment-filter').value;
+    const supplierFilter = document.getElementById('supplier-filter').value;
+    const fromDate = document.getElementById('from-date-filter').value;
+    const toDate = document.getElementById('to-date-filter').value;
+
+    let filtered = [...allResponses];
+
+    if (shipmentFilter) {
+      filtered = filtered.filter(r => r.shipment_id === shipmentFilter);
+      showDebugInfo(`Filtered by shipment: ${filtered.length} results`);
+    }
+
+    if (fromDate) {
+      filtered = filtered.filter(r => r.details_received_date && new Date(r.details_received_date) >= new Date(fromDate));
+      showDebugInfo(`Filtered by from date: ${filtered.length} results`);
+    }
+
+    if (toDate) {
+      filtered = filtered.filter(r => r.details_received_date && new Date(r.details_received_date) <= new Date(toDate + 'T23:59:59'));
+      showDebugInfo(`Filtered by to date: ${filtered.length} results`);
+    }
+
+    renderResponses(filtered);
+  }
+  
+  function clearFilters() {
+    document.getElementById('shipment-filter').value = '';
+    document.getElementById('supplier-filter').value = '';
+    document.getElementById('from-date-filter').value = '';
+    document.getElementById('to-date-filter').value = '';
+    renderResponses(allResponses);
+    showDebugInfo('Filters cleared');
+  }
+
+  window.showResponseDetails = function(responseId) {
+    const response = allResponses.find(r => r.id === responseId);
+    if (response) {
+      alert(`Response Details:\n\nShipment: ${response.shipment_reference}\nReadiness Date: ${response.readiness_date}\nGross Weight: ${response.gross_weight}\nCartons: ${response.cartons_count}\nTransport: ${response.transport}`);
+    }
+  };
+
+  // Hide debug info after 5 seconds if no errors
+  setTimeout(() => {
+    const debugDiv = document.getElementById('debug-info');
+    if (!debugDiv.innerHTML.includes('error') && !debugDiv.innerHTML.includes('Error')) {
+      debugDiv.style.display = 'none';
+    }
+  }, 5000);
+
+  window.onload = () => {
+    const userCheck = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = 'login.html';
+        }
+    };
+    userCheck();
+    loadFilters();
+    loadResponses();
+
+    document.getElementById('apply-filters-btn').addEventListener('click', applyFilters);
+    document.getElementById('clear-filters-btn').addEventListener('click', clearFilters);
+
+    // Sidebar logic (same as original)
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const hasSubmenus = document.querySelectorAll('.has-submenu');
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+    function handleMediaQueryChange(e) {
+      if (e.matches) {
+        sidebar.classList.remove('collapsed');
+        sidebar.classList.remove('open');
+      } else {
+        sidebar.classList.remove('open');
+      }
+    }
+
+    handleMediaQueryChange(mediaQuery);
+    mediaQuery.addListener(handleMediaQueryChange);
+
+    sidebarToggle.addEventListener('click', () => {
+      if (mediaQuery.matches) {
+        sidebar.classList.toggle('open');
+      } else {
+        sidebar.classList.toggle('collapsed');
+      }
+    });
+
+    hasSubmenus.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const submenu = item.nextElementSibling;
+        if (submenu && submenu.classList.contains('submenu')) {
+          submenu.classList.toggle('open');
+          item.classList.toggle('open');
+        }
+      });
+    });
+
+    const currentPath = window.location.pathname.split('/').pop();
+    navLinks.forEach(link => {
+      if (link.href.split('/').pop() === currentPath) {
+        link.classList.add('active');
+        let parentSubmenu = link.closest('.submenu');
+        if (parentSubmenu) {
+          parentSubmenu.classList.add('open');
+          let parentHasSubmenu = parentSubmenu.previousElementSibling;
+          if (parentHasSubmenu && parentHasSubmenu.classList.contains('has-submenu')) {
+            parentHasSubmenu.classList.add('open');
+          }
+        }
+      }
+    });
+  };
+</script>
+</body>
+</html>

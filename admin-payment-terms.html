@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Payment Terms</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/admin-payment-terms.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body class="payment-terms-page">
+  <div class="loader-overlay" id="loader">
+    <div class="loader"></div>
+  </div>
+
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="documents.html" class="nav-link">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+          </a>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-payments.html" class="nav-link">
+            <i class="fas fa-chart-line icon"></i>
+            <span class="text">Supplier Payments</span>
+          </a>
+        </li>
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <a href="admin-dashboard.html" class="back-button"><i class="fas fa-arrow-left"></i></a>
+        <h1>Manage Payment Terms</h1>
+      </div>
+    </header>
+    <div class="panel">
+      <div class="panel-header">
+        <h2>All Payment Terms</h2>
+        <div class="button-group">
+          <button id="create-term-btn" class="btn">Create New Term</button>
+          <button id="manage-events-btn" class="btn button-secondary">Manage Events</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="terms-list" class="terms-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="term-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Create Payment Term</h3>
+        <span class="modal-close" id="term-modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="term-id">
+        <div class="form-item">
+          <label for="term-name">Term Name</label>
+          <input type="text" id="term-name" placeholder="e.g., Net 30">
+        </div>
+        <div class="form-item">
+          <label for="term-description">Description</label>
+          <input type="text" id="term-description" placeholder="e.g., Payment due 30 days after invoice">
+        </div>
+        <div class="form-item">
+          <label>Payment Schedule</label>
+          <div id="payment-schedule-builder">
+            <div class="schedule-item-header">
+              <div>Percentage</div>
+              <div>Event</div>
+              <div>Days After</div>
+              <div></div>
+            </div>
+          </div>
+          <button id="add-schedule-item-btn" class="btn button-secondary">Add Item</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="save-term-btn" class="btn">Save Term</button>
+      </div>
+    </div>
+  </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.querySelector('.sidebar');
+      const sidebarToggle = document.querySelector('.sidebar-toggle');
+      const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+      const hasSubmenus = document.querySelectorAll('.has-submenu');
+
+      // --- Sidebar Toggle Logic ---
+      sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+      });
+
+      // --- Accordion Sub-menus ---
+      hasSubmenus.forEach(item => {
+        item.addEventListener('click', (e) => {
+          const submenu = item.nextElementSibling;
+          if (submenu && submenu.classList.contains('submenu')) {
+            e.preventDefault();
+            submenu.classList.toggle('open');
+            item.classList.toggle('open');
+          }
+        });
+      });
+
+      // --- Active Link Highlighting ---
+      const currentPath = window.location.pathname.split('/').pop();
+      navLinks.forEach(link => {
+        const linkPath = link.getAttribute('href');
+        if (linkPath === currentPath) {
+          link.classList.add('active');
+          let parentSubmenu = link.closest('.submenu');
+          if (parentSubmenu) {
+            parentSubmenu.classList.add('open');
+            let parentMenu = parentSubmenu.previousElementSibling;
+            if (parentMenu && parentMenu.classList.contains('has-submenu')) {
+              parentMenu.classList.add('open');
+            }
+          }
+        }
+      });
+    });
+  </script> <!-- Assuming sidebar logic is in a separate file -->
+  <script type="module" src="js/admin-payment-terms.js"></script>
+
+  <div id="event-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Manage Payment Events</h3>
+        <span class="modal-close" id="event-modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <h4>Existing Events</h4>
+        <div class="table-container">
+          <table id="events-table">
+            <thead>
+              <tr>
+                <th>Event Name</th>
+                <th>Source Table</th>
+                <th>Date Column</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Event rows will be inserted by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <h4 style="margin-top: 30px;">Create New Event</h4>
+        <div class="form-item">
+          <label for="event-name">Event Name</label>
+          <input type="text" id="event-name" placeholder="e.g., 'invoice_date'">
+        </div>
+        <div class="form-item">
+          <label for="source-table">Source Table</label>
+          <input type="text" id="source-table" placeholder="e.g., 'commercial_invoice'">
+        </div>
+        <div class="form-item">
+          <label for="date-column">Date Column</label>
+          <input type="text" id="date-column" placeholder="e.g., 'invoice_date'">
+        </div>
+        <div class="form-item">
+          <label for="event-description">Description</label>
+          <input type="text" id="event-description" placeholder="A brief explanation of the event">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="save-event-btn" class="btn">Save New Event</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

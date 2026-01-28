@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Product Details</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* View Toggle Styles */
+    .view-toggle-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+      border-radius: 12px;
+    }
+    .view-toggle-label {
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 60px;
+      height: 30px;
+      background: #ddd;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .toggle-switch.active {
+      background: linear-gradient(to right, #6366F1, #8B5CF6);
+    }
+    .toggle-slider {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(30px);
+    }
+    .view-section {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .view-section.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Product Business View Styles */
+    .product-summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-left: 5px solid #6366F1;
+    }
+    .product-summary-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+      border-left-color: #8B5CF6;
+    }
+    .product-summary-card.expanded {
+      border-left-color: #8B5CF6;
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
+    }
+    .product-summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .product-summary-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .product-summary-title h3 {
+      margin: 0;
+      color: #1E293B;
+      font-size: 22px;
+    }
+    .product-summary-title .product-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+    .expand-indicator {
+      font-size: 24px;
+      color: #6366F1;
+      transition: transform 0.3s ease;
+    }
+    .product-summary-card.expanded .expand-indicator {
+      transform: rotate(180deg);
+    }
+    .product-summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .summary-stat {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #E0E7FF;
+    }
+    .summary-stat-label {
+      font-size: 13px;
+      color: #64748B;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .summary-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #6366F1;
+    }
+    .summary-stat-value.positive {
+      color: #059669;
+    }
+    .summary-stat-value.negative {
+      color: #EF4444;
+    }
+    .yoy-history {
+      display: none;
+      margin-top: 20px;
+      border-top: 2px solid #F1F5F9;
+      padding-top: 20px;
+      animation: slideDown 0.3s ease;
+    }
+    .product-summary-card.expanded .yoy-history {
+      display: block;
+    }
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        max-height: 0;
+      }
+      to {
+        opacity: 1;
+        max-height: 2000px;
+      }
+    }
+    .yoy-history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .yoy-history-header h4 {
+      margin: 0;
+      color: #6366F1;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .yoy-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 15px;
+    }
+    .yoy-table thead {
+      background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%) !important;
+    }
+    .yoy-table thead th {
+      color: white !important;
+      background: transparent;
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .yoy-table thead th:first-child {
+      border-radius: 8px 0 0 0;
+    }
+    .yoy-table thead th:last-child {
+      border-radius: 0 8px 0 0;
+    }
+    .yoy-table tbody tr {
+      background: white;
+      transition: all 0.2s ease;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    .yoy-table tbody tr:hover {
+      background: rgba(99, 102, 241, 0.03);
+      transform: scale(1.01);
+    }
+    .yoy-table tbody tr:last-child {
+      border-bottom: none;
+    }
+    .yoy-table tbody td {
+      padding: 15px;
+      color: #334155;
+      font-size: 14px;
+    }
+    .variance-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .variance-badge.positive {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+      border: 1px solid #059669;
+    }
+    .variance-badge.negative {
+      background: rgba(239, 68, 68, 0.1);
+      color: #EF4444;
+      border: 1px solid #EF4444;
+    }
+    .variance-badge.neutral {
+      background: rgba(100, 116, 139, 0.1);
+      color: #64748B;
+      border: 1px solid #64748B;
+    }
+    .qty-value {
+      font-weight: 600;
+      color: #1E293B;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #94A3B8;
+    }
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+    .no-history {
+      text-align: center;
+      padding: 40px;
+      color: #94A3B8;
+      font-style: italic;
+    }
+  </style>
+  <script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+  const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+  // Searchable Dropdown Implementation
+  function createSearchableDropdown(selectElement, options, placeholder = 'Select an option') {
+    const container = document.createElement('div');
+    container.className = 'searchable-dropdown';
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'dropdown-input';
+    input.placeholder = placeholder;
+    input.readOnly = true;
+    
+    const dropdownList = document.createElement('div');
+    dropdownList.className = 'dropdown-list';
+    
+    container.appendChild(input);
+    container.appendChild(dropdownList);
+    
+    // Replace the original select element
+    selectElement.style.display = 'none';
+    selectElement.parentNode.insertBefore(container, selectElement);
+    
+    let filteredOptions = [...options];
+    let allOptions = [...options];
+    
+    function renderOptions() {
+      dropdownList.innerHTML = '';
+      
+      if (filteredOptions.length === 0) {
+        const noResults = document.createElement('div');
+        noResults.className = 'no-results';
+        noResults.textContent = 'No results found';
+        dropdownList.appendChild(noResults);
+        return;
+      }
+      
+      filteredOptions.forEach(option => {
+        const item = document.createElement('div');
+        item.className = 'dropdown-item';
+        item.textContent = option.text;
+        item.dataset.value = option.value;
+        
+        if (option.value === selectElement.value) {
+          item.classList.add('selected');
+        }
+        
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          selectElement.value = option.value;
+          input.value = option.text;
+          container.classList.remove('active');
+          input.readOnly = true;
+          
+          // Remove selected and highlighted classes from all items
+          dropdownList.querySelectorAll('.dropdown-item').forEach(el => {
+            el.classList.remove('selected', 'highlighted');
+          });
+          item.classList.add('selected');
+          
+          // Trigger change event on original select
+          const event = new Event('change', { bubbles: true });
+          selectElement.dispatchEvent(event);
+        });
+        
+        dropdownList.appendChild(item);
+      });
+    }
+    
+    function filterOptions(searchTerm) {
+      const term = searchTerm.toLowerCase().trim();
+      if (term === '') {
+        filteredOptions = [...allOptions];
+      } else {
+        filteredOptions = allOptions.filter(option => 
+          option.text.toLowerCase().includes(term)
+        );
+      }
+      renderOptions();
+    }
+    
+    // Set initial value if select has a value
+    const initialSelectedOption = allOptions.find(opt => opt.value === selectElement.value);
+    if (initialSelectedOption) {
+      input.value = initialSelectedOption.text;
+    } else if (allOptions.length > 0 && allOptions[0].value === '') {
+      input.value = allOptions[0].text;
+    }
+    
+    // Input events
+    input.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (input.readOnly) {
+        input.readOnly = false;
+        input.value = '';
+        container.classList.add('active');
+        input.focus();
+        filterOptions('');
+      }
+    });
+    
+    input.addEventListener('input', (e) => {
+      if (!input.readOnly) {
+        filterOptions(e.target.value);
+      }
+    });
+    
+    // Handle clicks outside to close dropdown
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target)) {
+        container.classList.remove('active');
+        input.readOnly = true;
+        
+        // Reset input value to selected option or placeholder
+        const selectedOption = allOptions.find(opt => opt.value === selectElement.value);
+        if (selectedOption) {
+          input.value = selectedOption.text;
+        } else {
+          input.value = allOptions[0]?.text || '';
+        }
+        
+        // Remove highlighted items
+        dropdownList.querySelectorAll('.dropdown-item').forEach(el => {
+          el.classList.remove('highlighted');
+        });
+      }
+    });
+    
+    // Add keyboard navigation
+    input.addEventListener('keydown', (e) => {
+      if (!container.classList.contains('active')) return;
+      
+      const items = dropdownList.querySelectorAll('.dropdown-item:not(.no-results)');
+      const currentSelected = dropdownList.querySelector('.dropdown-item.highlighted');
+      let currentIndex = currentSelected ? Array.from(items).indexOf(currentSelected) : -1;
+      
+      switch(e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          if (currentSelected) currentSelected.classList.remove('highlighted');
+          currentIndex = (currentIndex + 1) % items.length;
+          if (items[currentIndex]) items[currentIndex].classList.add('highlighted');
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          if (currentSelected) currentSelected.classList.remove('highlighted');
+          currentIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+          if (items[currentIndex]) items[currentIndex].classList.add('highlighted');
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (currentSelected) {
+            currentSelected.click();
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          container.classList.remove('active');
+          input.readOnly = true;
+          const selectedOption = allOptions.find(opt => opt.value === selectElement.value);
+          if (selectedOption) {
+            input.value = selectedOption.text;
+          } else {
+            input.value = allOptions[0]?.text || '';
+          }
+          break;
+      }
+    });
+    
+    // Initialize
+    renderOptions();
+    
+    return {
+      updateOptions: (newOptions) => {
+        allOptions = [...newOptions];
+        filteredOptions = [...newOptions];
+        renderOptions();
+        
+        // Update input value if needed
+        const selectedOption = allOptions.find(opt => opt.value === selectElement.value);
+        if (selectedOption) {
+          input.value = selectedOption.text;
+        } else if (allOptions.length > 0) {
+          input.value = allOptions[0].text;
+        }
+      },
+      container,
+      selectElement
+    };
+  }
+
+  let products = [];
+
+  async function initializeProductFilter() {
+      const productFilter = document.getElementById('product-name-filter');
+      
+      // Remove existing searchable dropdown if it exists
+      const existingDropdown = productFilter.previousElementSibling;
+      if (existingDropdown && existingDropdown.classList.contains('searchable-dropdown')) {
+        existingDropdown.remove();
+        productFilter.style.display = '';
+      }
+      
+      productFilter.innerHTML = '<option value="">All Products</option>';
+      
+      const productOptions = [
+        { value: '', text: 'All Products' },
+        ...products.map(p => ({
+          value: p.id,
+          text: `${p.product_name} - ${p.variety_name}`
+        }))
+      ];
+      
+      // Add options to original select
+      products.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = `${p.product_name} - ${p.variety_name}`;
+        productFilter.appendChild(option);
+      });
+      
+      // Create searchable dropdown
+      createSearchableDropdown(
+        productFilter,
+        productOptions,
+        'Search products...'
+      );
+    }
+
+  async function loadProducts(filters = {}) {
+    let query = supabase
+      .from("product_variety")
+      .select(`
+        *,
+        supplier (name),
+        commodity:commodity_id (name)
+      `);
+
+    if (filters.product_variety_id) {
+      query = query.eq('id', filters.product_variety_id);
+    }
+    if (filters.supplier_id) {
+      query = query.eq('supplier_id', filters.supplier_id);
+    }
+    if (filters.commodity_id) {
+      query = query.eq('commodity_id', filters.commodity_id);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      document.getElementById("products-list").innerHTML = `<p class="error-message">Error loading products: ${error.message}</p>`;
+      return;
+    }
+
+    let html = "<table><tr><th>Product Name</th><th>Variety Name</th><th>Commodity</th><th>Supplier</th><th>Unit</th><th>Rate Per Unit</th><th>Actions</th></tr>";
+    data.forEach(item => {
+      html += `<tr>
+        <td>${item.product_name}</td>
+        <td>${item.variety_name}</td>
+        <td>${item.commodity ? item.commodity.name : ''}</td>
+        <td>${item.supplier ? item.supplier.name : ''}</td>
+        <td>${item.unit}</td>
+        <td>${item.rate_per_unit}</td>
+        <td class="action-cell">
+          <button class="button-secondary" onclick='openEditProductModal(${JSON.stringify(item)})'>Edit</button>
+          <button class="button-secondary" onclick='deleteProduct("${item.id}")'>Delete</button>
+          <button class="button-secondary" onclick='openHistoryModal(${JSON.stringify(item.id)}, ${JSON.stringify(item.product_name + " " + item.variety_name)})'>History</button>
+        </td>
+      </tr>`;
+    });
+    html += "</table>";
+
+    document.getElementById("products-list").innerHTML = html;
+  }
+
+  async function openEditProductModal(product) {
+    await openNewProductModal(product);
+  }
+
+  async function deleteProduct(id) {
+    if (!confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
+    const { error } = await supabase.from('product_variety').delete().eq('id', id);
+
+    if (error) {
+      alert(`Error deleting product: ${error.message}`);
+    } else {
+      loadProducts();
+    }
+  }
+
+  async function populateUnits(commodityId, selectedUnit = null) {
+    const unitSelect = document.getElementById('unit');
+    unitSelect.innerHTML = '';
+    if (commodityId) {
+        const { data, error } = await supabase
+            .from('measurement_unit')
+            .select('unit_name')
+            .eq('commodity_id', commodityId);
+        if (error) {
+            console.error('Error loading measurement units:', error);
+        } else {
+            data.forEach(unit => {
+                const option = document.createElement('option');
+                option.value = unit.unit_name;
+                option.textContent = unit.unit_name;
+                unitSelect.appendChild(option);
+            });
+            if (selectedUnit) {
+                unitSelect.value = selectedUnit;
+            }
+        }
+    }
+  }
+
+  let activeUnitSelect = null;
+  let activeCommodityIdForUnit = null;
+
+  async function openAddUnitModal(unitSelectElement, commodityId) {
+    activeUnitSelect = unitSelectElement;
+    activeCommodityIdForUnit = commodityId;
+    document.getElementById('add-unit-modal').style.display = 'block';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('add-unit-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const newUnitName = document.getElementById('new_unit_name').value;
+      const messageDiv = document.getElementById('add-unit-message');
+
+      if (!activeCommodityIdForUnit) {
+        messageDiv.innerHTML = '<p class="error-message">Please select a commodity first.</p>';
+        return;
+      }
+
+      const { data, error } = await supabase.from('measurement_unit').insert({ unit_name: newUnitName, commodity_id: activeCommodityIdForUnit }).select().single();
+
+      if (error) {
+        messageDiv.innerHTML = `<p class="error-message">Error adding unit: ${error.message}</p>`;
+      } else {
+        messageDiv.innerHTML = `<p class="success-message">Unit added successfully!</p>`;
+        document.getElementById('add-unit-form').reset();
+        closeModal('add-unit-modal');
+        
+        if (activeUnitSelect) {
+          const option = document.createElement('option');
+          option.value = data.unit_name;
+          option.textContent = data.unit_name;
+          option.selected = true;
+          activeUnitSelect.appendChild(option);
+        }
+      }
+    });
+
+    document.getElementById('close-add-unit-modal-btn').addEventListener('click', () => closeModal('add-unit-modal'));
+  });
+
+  async function openNewProductModal(product = null) {
+    let formHtml = '<div id="new-product-message"></div>';
+    formHtml += '<form id="new-product-form">';
+    formHtml += '<input type="hidden" id="product_id" name="product_id">';
+    formHtml += '<div><label for="product_name">Product Name:</label><input type="text" id="product_name" name="product_name"></div>';
+    formHtml += '<div><label for="variety_name">Variety Name:</label><input type="text" id="variety_name" name="variety_name"></div>';
+    formHtml += '<div><label for="commodity_id">Commodity:</label><select id="commodity_id" name="commodity_id"></select></div>';
+    formHtml += '<div><label for="unit">Unit:</label><div class="input-group"><select id="unit" name="unit"></select><button type="button" class="add-new-btn">+</button></div></div>';
+    formHtml += '<div><label for="rate_per_unit">Rate Per Unit:</label><input type="number" id="rate_per_unit" name="rate_per_unit"></div>';
+    formHtml += '<div><label for="supplier_id">Supplier:</label><select id="supplier_id" name="supplier_id"></select></div>';
+    formHtml += '<button type="button" onclick="saveNewProduct()">Save</button>';
+    formHtml += '</form>';
+
+    const productFormContainer = document.getElementById('new-product-form-container');
+    productFormContainer.innerHTML = formHtml;
+
+    const commoditySelect = document.getElementById('commodity_id');
+    const unitSelect = document.getElementById('unit');
+    const supplierSelect = document.getElementById('supplier_id');
+    const addNewUnitBtn = productFormContainer.querySelector('.add-new-btn');
+
+    if (addNewUnitBtn) {
+      addNewUnitBtn.addEventListener('click', () => {
+        const commodityId = commoditySelect.value;
+        openAddUnitModal(unitSelect, commodityId);
+      });
+    }
+
+    // Load and create searchable commodity dropdown
+    const { data: commodities, error: commoditiesError } = await supabase.from('commodity').select('id, name');
+    if (commoditiesError) {
+        console.error("Error loading commodities:", commoditiesError);
+        return;
+    }
+    
+    commoditySelect.innerHTML = '<option value="">Select Commodity</option>';
+    const commodityOptions = [
+      { value: '', text: 'Select Commodity' },
+      ...commodities.map(item => ({
+        value: item.id,
+        text: item.name
+      }))
+    ];
+    
+    // Add options to original select
+    commodities.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.name;
+        commoditySelect.appendChild(option);
+    });
+    
+    // Create searchable dropdown for commodity
+    const commodityDropdown = createSearchableDropdown(commoditySelect, commodityOptions, 'Search commodities...');
+
+    commoditySelect.addEventListener('change', async (e) => {
+        await populateUnitsSearchable(e.target.value);
+    });
+
+    // Load and create searchable supplier dropdown
+    const { data: suppliers, error: suppliersError } = await supabase.from('supplier').select('id, name');
+    if (suppliersError) {
+        console.error("Error loading suppliers:", suppliersError);
+        return;
+    }
+
+    supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
+    const supplierOptions = [
+      { value: '', text: 'Select Supplier' },
+      ...suppliers.map(item => ({
+        value: item.id,
+        text: item.name
+      }))
+    ];
+    
+    // Add options to original select
+    suppliers.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.name;
+        supplierSelect.appendChild(option);
+    });
+    
+    // Create searchable dropdown for supplier
+    const supplierDropdown = createSearchableDropdown(supplierSelect, supplierOptions, 'Search suppliers...');
+
+    // Function to populate units with searchable dropdown
+    async function populateUnitsSearchable(commodityId, selectedUnit = null) {
+      const unitSelect = document.getElementById('unit');
+      
+      // Remove existing searchable dropdown if it exists
+      const existingUnitDropdown = unitSelect.previousElementSibling;
+      if (existingUnitDropdown && existingUnitDropdown.classList.contains('searchable-dropdown')) {
+        existingUnitDropdown.remove();
+        unitSelect.style.display = '';
+      }
+      
+      unitSelect.innerHTML = '';
+      
+      if (commodityId) {
+          const { data, error } = await supabase
+              .from('measurement_unit')
+              .select('unit_name')
+              .eq('commodity_id', commodityId);
+          if (error) {
+              console.error('Error loading measurement units:', error);
+          } else {
+              const unitOptions = [
+                { value: '', text: 'Select Unit' },
+                ...data.map(unit => ({
+                  value: unit.unit_name,
+                  text: unit.unit_name
+                }))
+              ];
+              
+              // Add options to original select
+              data.forEach(unit => {
+                  const option = document.createElement('option');
+                  option.value = unit.unit_name;
+                  option.textContent = unit.unit_name;
+                  unitSelect.appendChild(option);
+              });
+              
+              // Create searchable dropdown for units
+              createSearchableDropdown(unitSelect, unitOptions, 'Search units...');
+              
+              if (selectedUnit) {
+                  unitSelect.value = selectedUnit;
+                  // Update the searchable dropdown input display
+                  const selectedUnitOption = unitOptions.find(opt => opt.value === selectedUnit);
+                  if (selectedUnitOption) {
+                    const unitDropdownContainer = unitSelect.previousElementSibling;
+                    if (unitDropdownContainer && unitDropdownContainer.classList.contains('searchable-dropdown')) {
+                      const unitInput = unitDropdownContainer.querySelector('.dropdown-input');
+                      if (unitInput) unitInput.value = selectedUnitOption.text;
+                    }
+                  }
+              }
+          }
+      }
+    }
+
+    if (product) {
+        document.getElementById('product_id').value = product.id;
+        document.getElementById('product_name').value = product.product_name;
+        document.getElementById('variety_name').value = product.variety_name;
+        commoditySelect.value = product.commodity_id;
+        
+        // Update commodity dropdown display
+        const selectedCommodity = commodityOptions.find(opt => opt.value === product.commodity_id);
+        if (selectedCommodity && commodityDropdown.container) {
+          const commodityInput = commodityDropdown.container.querySelector('.dropdown-input');
+          if (commodityInput) commodityInput.value = selectedCommodity.text;
+        }
+        
+        await populateUnitsSearchable(product.commodity_id, product.unit);
+
+        document.getElementById('rate_per_unit').value = product.rate_per_unit;
+        supplierSelect.value = product.supplier_id;
+        
+        // Update supplier dropdown display
+        const selectedSupplier = supplierOptions.find(opt => opt.value === product.supplier_id);
+        if (selectedSupplier && supplierDropdown.container) {
+          const supplierInput = supplierDropdown.container.querySelector('.dropdown-input');
+          if (supplierInput) supplierInput.value = selectedSupplier.text;
+        }
+    }
+
+    document.getElementById('new-product-modal').style.display = 'block';
+  }
+
+  function closeModal(modalId = 'new-product-modal') {
+    document.getElementById(modalId).style.display = 'none';
+  }
+
+  async function saveNewProduct() {
+    const form = document.getElementById('new-product-form');
+    const formData = new FormData(form);
+    const productId = formData.get('product_id');
+
+    let rate_per_unit = formData.get('rate_per_unit');
+    if (rate_per_unit === '') {
+        rate_per_unit = null;
+    }
+
+    const productData = {
+        product_name: formData.get('product_name'),
+        variety_name: formData.get('variety_name'),
+        commodity_id: formData.get('commodity_id'),
+        supplier_id: formData.get('supplier_id'),
+        unit: formData.get('unit'),
+        rate_per_unit: rate_per_unit
+    };
+
+    let query;
+    if (productId) {
+        query = supabase.from('product_variety').update(productData).eq('id', productId);
+    } else {
+        query = supabase.from('product_variety').insert(productData);
+    }
+
+    const { error } = await query;
+
+    if (error) {
+        document.getElementById('new-product-message').innerHTML = `<p class="error-message">Error creating product: ${error.message}</p>`;
+    } else {
+        closeModal();
+        loadProducts();
+    }
+  }
+
+  window.openNewProductModal = openNewProductModal;
+  window.openEditProductModal = openEditProductModal;
+  window.deleteProduct = deleteProduct;
+  window.saveNewProduct = saveNewProduct;
+  window.closeModal = closeModal;
+  window.openHistoryModal = openHistoryModal;
+
+  // Business View Logic
+  let businessData = {};
+  let currentView = 'details';
+  let businessFilters = {
+    product_id: '',
+    supplier_id: '',
+    commodity_id: ''
+  };
+
+  window.toggleView = () => {
+    const toggle = document.getElementById('view-toggle');
+    const detailsView = document.getElementById('product-details-view');
+    const businessView = document.getElementById('business-view');
+    
+    toggle.classList.toggle('active');
+    
+    if (toggle.classList.contains('active')) {
+      currentView = 'business';
+      detailsView.classList.remove('active');
+      businessView.classList.add('active');
+      if (Object.keys(businessData).length === 0) {
+        loadBusinessData();
+      } else {
+        renderBusinessView();
+      }
+    } else {
+      currentView = 'details';
+      businessView.classList.remove('active');
+      detailsView.classList.add('active');
+    }
+  };
+
+  async function populateBusinessFilters() {
+    // Populate product filter
+    const productFilter = document.getElementById('business-product-filter');
+    productFilter.innerHTML = '<option value="">All Products</option>';
+    
+    const uniqueProducts = new Map();
+    Object.values(businessData).forEach(pb => {
+      if (pb.years.size > 0) {
+        const key = `${pb.product.product_name} - ${pb.product.variety_name}`;
+        uniqueProducts.set(pb.product.id, key);
+      }
+    });
+    
+    Array.from(uniqueProducts.entries())
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .forEach(([id, name]) => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = name;
+        productFilter.appendChild(option);
+      });
+
+    // Populate supplier filter
+    const supplierFilter = document.getElementById('business-supplier-filter');
+    supplierFilter.innerHTML = '<option value="">All Suppliers</option>';
+    
+    const uniqueSuppliers = new Map();
+    Object.values(businessData).forEach(pb => {
+      if (pb.years.size > 0 && pb.product.supplier) {
+        uniqueSuppliers.set(pb.product.supplier.name, pb.product.supplier.name);
+      }
+    });
+    
+    Array.from(uniqueSuppliers.keys())
+      .sort()
+      .forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        supplierFilter.appendChild(option);
+      });
+
+    // Populate commodity filter
+    const commodityFilter = document.getElementById('business-commodity-filter');
+    commodityFilter.innerHTML = '<option value="">All Commodities</option>';
+    
+    const uniqueCommodities = new Map();
+    Object.values(businessData).forEach(pb => {
+      if (pb.years.size > 0 && pb.product.commodity) {
+        uniqueCommodities.set(pb.product.commodity.name, pb.product.commodity.name);
+      }
+    });
+    
+    Array.from(uniqueCommodities.keys())
+      .sort()
+      .forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        commodityFilter.appendChild(option);
+      });
+  }
+
+  async function loadBusinessData() {
+    const container = document.getElementById('business-container');
+    container.innerHTML = '<p style="text-align:center; padding: 40px;">Loading product business data...</p>';
+    
+    try {
+      // Fetch all products
+      const { data: allProducts, error: productsError } = await supabase
+        .from('product_variety')
+        .select('id, product_name, variety_name, supplier:supplier_id(name), commodity:commodity_id(name)');
+      
+      if (productsError) throw productsError;
+
+      // Fetch forecasts
+      const { data: forecasts, error: forecastsError } = await supabase
+        .from('forecast')
+        .select('product_variety_id, year, forecast_qty');
+      
+      if (forecastsError) throw forecastsError;
+
+      // Fetch shipment products with year from shipment
+      const { data: shipmentProducts, error: shipmentProductsError } = await supabase
+        .from('shipment_products')
+        .select(`
+          product_variety_id,
+          quantity,
+          shipment:shipment_id(created_at)
+        `);
+      
+      if (shipmentProductsError) throw shipmentProductsError;
+
+      // Process data by product
+      const productBusinessMap = {};
+      
+      allProducts.forEach(product => {
+        productBusinessMap[product.id] = {
+          product: product,
+          yoyData: {},
+          totalForecast: 0,
+          totalOrdered: 0,
+          years: new Set()
+        };
+      });
+
+      // Group forecasts by product and year
+      forecasts.forEach(forecast => {
+        const productId = forecast.product_variety_id;
+        if (productBusinessMap[productId]) {
+          const year = forecast.year;
+          if (!productBusinessMap[productId].yoyData[year]) {
+            productBusinessMap[productId].yoyData[year] = {
+              forecastQty: 0,
+              orderedQty: 0
+            };
+          }
+          productBusinessMap[productId].yoyData[year].forecastQty += parseFloat(forecast.forecast_qty || 0);
+          productBusinessMap[productId].totalForecast += parseFloat(forecast.forecast_qty || 0);
+          productBusinessMap[productId].years.add(year);
+        }
+      });
+
+      // Group shipment products by product and year
+      shipmentProducts.forEach(sp => {
+        const productId = sp.product_variety_id;
+        if (productBusinessMap[productId] && sp.shipment) {
+          const year = new Date(sp.shipment.created_at).getFullYear();
+          if (!productBusinessMap[productId].yoyData[year]) {
+            productBusinessMap[productId].yoyData[year] = {
+              forecastQty: 0,
+              orderedQty: 0
+            };
+          }
+          productBusinessMap[productId].yoyData[year].orderedQty += parseFloat(sp.quantity || 0);
+          productBusinessMap[productId].totalOrdered += parseFloat(sp.quantity || 0);
+          productBusinessMap[productId].years.add(year);
+        }
+      });
+
+      businessData = productBusinessMap;
+      populateBusinessFilters();
+      renderBusinessView();
+      
+    } catch (error) {
+      console.error('Error loading business data:', error);
+      container.innerHTML = `<p class="error-message">Error loading business data: ${error.message}</p>`;
+    }
+  }
+
+  function renderBusinessView() {
+    const container = document.getElementById('business-container');
+    
+    // Apply filters
+    let productsWithData = Object.values(businessData).filter(p => p.years.size > 0);
+    
+    if (businessFilters.product_id) {
+      productsWithData = productsWithData.filter(p => p.product.id === businessFilters.product_id);
+    }
+    if (businessFilters.supplier_id) {
+      productsWithData = productsWithData.filter(p => p.product.supplier?.name === businessFilters.supplier_id);
+    }
+    if (businessFilters.commodity_id) {
+      productsWithData = productsWithData.filter(p => p.product.commodity?.name === businessFilters.commodity_id);
+    }
+
+    if (productsWithData.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-tags"></i>
+          <h3>No Product Data Yet</h3>
+          <p>Forecasts and shipment orders will appear here once products are added.</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    
+    productsWithData.forEach(productBusiness => {
+      const product = productBusiness.product;
+      const yearsArray = Array.from(productBusiness.years).sort((a, b) => b - a);
+      const overallDifference = productBusiness.totalOrdered - productBusiness.totalForecast;
+      const accuracy = productBusiness.totalForecast > 0 
+        ? ((productBusiness.totalOrdered / productBusiness.totalForecast) * 100).toFixed(1) 
+        : 0;
+      
+      html += `
+        <div class="product-summary-card" id="product-card-${product.id}" onclick="toggleProductExpand('${product.id}')">
+          <div class="product-summary-header">
+            <div class="product-summary-title">
+              <div class="product-icon">
+                <i class="fas fa-tags"></i>
+              </div>
+              <div>
+                <h3>${product.product_name} - ${product.variety_name}</h3>
+                <p style="margin: 5px 0 0 0; color: #64748B; font-size: 13px;">
+                  ${product.commodity?.name || 'No commodity'} • ${product.supplier?.name || 'No supplier'}
+                </p>
+              </div>
+            </div>
+            <div class="expand-indicator">
+              <i class="fas fa-chevron-down"></i>
+            </div>
+          </div>
+          
+          <!-- Summary Stats -->
+          <div class="product-summary-stats">
+            <div class="summary-stat">
+              <div class="summary-stat-label">
+                <i class="fas fa-calendar"></i>
+                Years Tracked
+              </div>
+              <div class="summary-stat-value">${yearsArray.length}</div>
+            </div>
+            <div class="summary-stat">
+              <div class="summary-stat-label">
+                <i class="fas fa-bullhorn"></i>
+                Total Forecast
+              </div>
+              <div class="summary-stat-value">${formatNumber(productBusiness.totalForecast)}</div>
+            </div>
+            <div class="summary-stat">
+              <div class="summary-stat-label">
+                <i class="fas fa-shopping-cart"></i>
+                Total Ordered
+              </div>
+              <div class="summary-stat-value">${formatNumber(productBusiness.totalOrdered)}</div>
+            </div>
+            <div class="summary-stat">
+              <div class="summary-stat-label">
+                <i class="fas fa-chart-bar"></i>
+                Forecast Accuracy
+              </div>
+              <div class="summary-stat-value ${accuracy >= 90 ? 'positive' : accuracy >= 70 ? '' : 'negative'}">${accuracy}%</div>
+            </div>
+          </div>
+
+          <!-- YoY History (Expandable) -->
+          <div class="yoy-history">
+            <div class="yoy-history-header">
+              <h4><i class="fas fa-history"></i> Year-over-Year Analysis</h4>
+              <span style="color: #64748B; font-size: 14px;">${yearsArray.length} year${yearsArray.length !== 1 ? 's' : ''}</span>
+            </div>
+            
+            <div style="margin-bottom: 15px; padding: 12px; background: rgba(99, 102, 241, 0.05); border-radius: 8px; border-left: 3px solid #6366F1;">
+              <p style="margin: 0; color: #6366F1; font-size: 13px; font-weight: 600;">
+                <i class="fas fa-info-circle" style="margin-right: 6px;"></i>
+                Comparing forecasted demand vs actual ordered quantities by year
+              </p>
+            </div>
+            
+            ${yearsArray.length > 0 ? `
+              <table class="yoy-table">
+                <thead>
+                  <tr>
+                    <th>Year</th>
+                    <th>Forecast Qty</th>
+                    <th>Ordered Qty</th>
+                    <th>Difference</th>
+                    <th>Variance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${yearsArray.map(year => {
+                    const yearData = productBusiness.yoyData[year];
+                    const difference = yearData.orderedQty - yearData.forecastQty;
+                    const variance = yearData.forecastQty > 0 
+                      ? ((difference / yearData.forecastQty) * 100).toFixed(1) 
+                      : 0;
+                    const varianceClass = difference > 0 ? 'positive' : difference < 0 ? 'negative' : 'neutral';
+                    
+                    return `
+                      <tr>
+                        <td><strong>${year}</strong></td>
+                        <td><span class="qty-value">${formatNumber(yearData.forecastQty)}</span></td>
+                        <td><span class="qty-value">${formatNumber(yearData.orderedQty)}</span></td>
+                        <td>
+                          <span style="color: ${difference > 0 ? '#059669' : difference < 0 ? '#EF4444' : '#64748B'}; font-weight: 600;">
+                            ${difference > 0 ? '+' : ''}${formatNumber(difference)}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="variance-badge ${varianceClass}">
+                            ${difference > 0 ? '▲' : difference < 0 ? '▼' : '●'} ${variance > 0 ? '+' : ''}${variance}%
+                          </span>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                  <tr style="background: rgba(99, 102, 241, 0.05); font-weight: 600;">
+                    <td>TOTAL</td>
+                    <td><span class="qty-value">${formatNumber(productBusiness.totalForecast)}</span></td>
+                    <td><span class="qty-value">${formatNumber(productBusiness.totalOrdered)}</span></td>
+                    <td>
+                      <span style="color: ${overallDifference > 0 ? '#059669' : overallDifference < 0 ? '#EF4444' : '#64748B'}; font-weight: 700;">
+                        ${overallDifference > 0 ? '+' : ''}${formatNumber(overallDifference)}
+                      </span>
+                    </td>
+                    <td>
+                      <span style="font-weight: 700; color: ${accuracy >= 90 ? '#059669' : accuracy >= 70 ? '#6366F1' : '#EF4444'};">
+                        Accuracy: ${accuracy}%
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            ` : '<div class="no-history">No year-over-year data available</div>'}
+          </div>
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+  }
+
+  function formatNumber(num) {
+    if (!num && num !== 0) return '0';
+    return parseFloat(num).toLocaleString('en-US', { maximumFractionDigits: 2 });
+  }
+
+  window.toggleProductExpand = (productId) => {
+    const card = document.getElementById(`product-card-${productId}`);
+    if (card) {
+      card.classList.toggle('expanded');
+    }
+  };
+
+  async function openHistoryModal(productId, productName) {
+    const modalTitle = document.getElementById('history-modal-title');
+    const modalContent = document.getElementById('history-modal-content');
+    
+    modalTitle.textContent = `Price History for ${productName}`;
+    modalContent.innerHTML = 'Loading...';
+    document.getElementById('history-modal').style.display = 'block';
+    
+    const { data, error } = await supabase
+      .from('product_price_history')
+      .select('rate, unit, changed_at')
+      .eq('product_variety_id', productId)
+      .order('changed_at', { ascending: false });
+
+    if (error) {
+      modalContent.innerHTML = `<p class="error-message">Error loading history: ${error.message}</p>`;
+    } else if (data.length === 0) {
+      modalContent.innerHTML = '<p>No price history found for this product.</p>';
+    } else {
+      let historyHtml = '<table><thead><tr><th>Date</th><th>Rate</th><th>Unit</th></tr></thead><tbody>';
+      data.forEach(entry => {
+        historyHtml += `<tr>
+          <td>${new Date(entry.changed_at).toLocaleString()}</td>
+          <td>${entry.rate || 'N/A'}</td>
+          <td>${entry.unit || 'N/A'}</td>
+        </tr>`;
+      });
+      historyHtml += '</tbody></table>';
+      modalContent.innerHTML = historyHtml;
+    }
+  }
+
+  async function loadFilters() {
+    const { data: suppliers, error: supplierError } = await supabase.from('supplier').select('id, name');
+    if (supplierError) console.error('Error loading suppliers:', supplierError);
+    else {
+      const select = document.getElementById('supplier-filter');
+      select.innerHTML = '<option value="">All Suppliers</option>';
+      
+      const supplierOptions = [
+        { value: '', text: 'All Suppliers' },
+        ...suppliers.map(item => ({
+          value: item.id,
+          text: item.name
+        }))
+      ];
+      
+      // Add options to original select
+      suppliers.forEach(item => {
+        select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+      });
+      
+      // Create searchable dropdown
+      createSearchableDropdown(select, supplierOptions, 'Search suppliers...');
+    }
+
+    const { data: commodities, error: commodityError } = await supabase.from('commodity').select('id, name');
+    if (commodityError) console.error('Error loading commodities:', commodityError);
+    else {
+      const select = document.getElementById('commodity-filter');
+      select.innerHTML = '<option value="">All Commodities</option>';
+      
+      const commodityOptions = [
+        { value: '', text: 'All Commodities' },
+        ...commodities.map(item => ({
+          value: item.id,
+          text: item.name
+        }))
+      ];
+      
+      // Add options to original select
+      commodities.forEach(item => {
+        select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+      });
+      
+      // Create searchable dropdown
+      createSearchableDropdown(select, commodityOptions, 'Search commodities...');
+    }
+  }
+
+  function updateFilterBadge() {
+    const filters = {
+        product_name: document.getElementById('product-name-filter').value,
+        supplier_id: document.getElementById('supplier-filter').value,
+        commodity_id: document.getElementById('commodity-filter').value
+    };
+    const activeFilters = Object.values(filters).filter(v => v !== '' && v !== null).length;
+    const badge = document.getElementById('filter-count-badge');
+    if (activeFilters > 0) {
+      badge.textContent = activeFilters;
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  window.onload = async () => {
+      const loader = document.getElementById("loader");
+      if (loader) {
+          loader.style.display = "block";
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+          window.location.href = 'login.html';
+      } else {
+          const { data: productData, error: productError } = await supabase.from('product_variety').select('*');
+          if (productError) {
+            console.error("Failed to load products for form");
+          } else {
+            products = productData;
+            await initializeProductFilter();
+          }
+          await loadProducts();
+          await loadFilters();
+      }
+
+      if (loader) {
+          loader.style.display = "none";
+      }
+
+      document.getElementById('filter-toggle-btn').addEventListener('click', () => {
+        const filterPane = document.getElementById('filter-pane');
+        const toggleBtn = document.getElementById('filter-toggle-btn');
+        
+        if (filterPane.classList.contains('open')) {
+          filterPane.classList.remove('open');
+          toggleBtn.classList.remove('active');
+        } else {
+          filterPane.classList.add('open');
+          toggleBtn.classList.add('active');
+        }
+      });
+
+      document.getElementById('apply-filters-btn').addEventListener('click', () => {
+        const filters = {
+            product_variety_id: document.getElementById('product-name-filter').value || null,
+            supplier_id: document.getElementById('supplier-filter').value || null,
+            commodity_id: document.getElementById('commodity-filter').value || null
+        };
+        loadProducts(filters);
+        updateFilterBadge();
+      });
+
+      document.getElementById('clear-filters-btn').addEventListener('click', () => {
+        document.getElementById('product-name-filter').value = '';
+        document.getElementById('supplier-filter').value = '';
+        document.getElementById('commodity-filter').value = '';
+        
+        // Clear searchable dropdown inputs
+        const productDropdownInput = document.querySelector('#product-name-filter').previousElementSibling?.querySelector('.dropdown-input');
+        if (productDropdownInput) {
+          productDropdownInput.value = 'All Products';
+          productDropdownInput.readOnly = true;
+        }
+
+        const supplierDropdownInput = document.querySelector('#supplier-filter').previousElementSibling?.querySelector('.dropdown-input');
+        if (supplierDropdownInput) {
+          supplierDropdownInput.value = 'All Suppliers';
+          supplierDropdownInput.readOnly = true;
+        }
+        
+        const commodityDropdownInput = document.querySelector('#commodity-filter').previousElementSibling?.querySelector('.dropdown-input');
+        if (commodityDropdownInput) {
+          commodityDropdownInput.value = 'All Commodities';
+          commodityDropdownInput.readOnly = true;
+        }
+        
+        loadProducts();
+        updateFilterBadge();
+      });
+
+      // Business View Filter Event Listeners
+      document.getElementById('business-filter-toggle-btn').addEventListener('click', () => {
+        const filterPane = document.getElementById('business-filter-pane');
+        const toggleBtn = document.getElementById('business-filter-toggle-btn');
+        
+        if (filterPane.classList.contains('open')) {
+          filterPane.classList.remove('open');
+          toggleBtn.classList.remove('active');
+        } else {
+          filterPane.classList.add('open');
+          toggleBtn.classList.add('active');
+        }
+      });
+
+      document.getElementById('apply-business-filters-btn').addEventListener('click', () => {
+        businessFilters.product_id = document.getElementById('business-product-filter').value || '';
+        businessFilters.supplier_id = document.getElementById('business-supplier-filter').value || '';
+        businessFilters.commodity_id = document.getElementById('business-commodity-filter').value || '';
+        renderBusinessView();
+      });
+      
+      document.getElementById('clear-business-filters-btn').addEventListener('click', () => {
+        document.getElementById('business-product-filter').value = '';
+        document.getElementById('business-supplier-filter').value = '';
+        document.getElementById('business-commodity-filter').value = '';
+        businessFilters.product_id = '';
+        businessFilters.supplier_id = '';
+        businessFilters.commodity_id = '';
+        renderBusinessView();
+      });
+  };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+  </div>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link active">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="documents.html" class="nav-link"><span class="text">Document Management</span></a></li>
+            <li><a href="admin-document-requirements.html" class="nav-link"><span class="text">Document Requirements</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu open">
+            <li><a href="send-freight-queries.html" class="nav-link"><span class="text">Send Freight Queries</span></a></li>
+            <li><a href="freight-query-response.html" class="nav-link"><span class="text">Freight Query Response</span></a></li>
+            <li><a href="manage-freight-queries.html" class="nav-link"><span class="text">Manage Freight Queries</span></a></li>
+            <li><a href="award-shipment.html" class="nav-link"><span class="text">Award Shipment</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Products</h1>
+      </div>
+      <div>
+        <button id="filter-toggle-btn" class="button button-secondary">
+          <i class="fas fa-filter"></i>
+          <span>Filters</span>
+          <span id="filter-count-badge" class="badge" style="display: none;"></span>
+        </button>
+        <button onclick="openNewProductModal()">Create New Product</button>
+      </div>
+    </header>
+    <!-- View Toggle -->
+    <div class="view-toggle-container">
+      <span class="view-toggle-label">
+        <i class="fas fa-tags"></i>
+        Product Details
+      </span>
+      <div class="toggle-switch" id="view-toggle" onclick="toggleView()">
+        <div class="toggle-slider"></div>
+      </div>
+      <span class="view-toggle-label">
+        <i class="fas fa-chart-line"></i>
+        Business View
+      </span>
+    </div>
+
+    <!-- Product Details View (Default) -->
+    <div id="product-details-view" class="view-section active">
+      <div class="panel">
+        <div id="filter-pane" class="filter-pane">
+          <div class="filter-group">
+            <label for="product-name-filter">Product Name</label>
+            <select id="product-name-filter">
+              <option value="">All Products</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="supplier-filter">Supplier</label>
+            <select id="supplier-filter"></select>
+          </div>
+          <div class="filter-group">
+            <label for="commodity-filter">Commodity</label>
+            <select id="commodity-filter"></select>
+          </div>
+          <div class="button-container">
+            <button id="apply-filters-btn" class="button">Apply</button>
+            <button id="clear-filters-btn" class="button button-secondary">Clear</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="products-list" class="table-container">Loading...</div>
+        </div>
+      </div>
+
+      <p class="back-link"><a href="admin-dashboard.html">← Back to Dashboard</a></p>
+    </div>
+
+    <!-- Business View -->
+    <div id="business-view" class="view-section">
+      <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <h2 style="margin: 0 0 8px 0; color: #1E293B; font-size: 28px; font-weight: 700;">
+            <i class="fas fa-chart-line" style="color: #6366F1; margin-right: 12px;"></i>
+            Product Business Overview
+          </h2>
+          <p style="margin: 0; color: #64748B; font-size: 15px;">
+            Year-over-Year analysis of forecasted vs actual ordered quantities per product
+          </p>
+        </div>
+        <button id="business-filter-toggle-btn" class="button button-secondary">
+          <i class="fas fa-filter"></i>
+          <span>Filters</span>
+        </button>
+      </div>
+      
+      <!-- Business View Filters -->
+      <div class="panel">
+        <div id="business-filter-pane" class="filter-pane open">
+          <div class="filter-group">
+            <label for="business-product-filter">Product Name</label>
+            <select id="business-product-filter">
+              <option value="">All Products</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="business-supplier-filter">Supplier</label>
+            <select id="business-supplier-filter">
+              <option value="">All Suppliers</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="business-commodity-filter">Commodity</label>
+            <select id="business-commodity-filter">
+              <option value="">All Commodities</option>
+            </select>
+          </div>
+          <div class="button-container">
+            <button id="apply-business-filters-btn" class="button">Apply</button>
+            <button id="clear-business-filters-btn" class="button button-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+      
+      <div id="business-container">Loading business data...</div>
+    </div>
+
+    <div id="new-product-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close-button" onclick="closeModal('new-product-modal')">&times;</span>
+        <h2>Create New Product</h2>
+        <div id="new-product-form-container"></div>
+      </div>
+    </div>
+
+    <div id="history-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close-button" onclick="closeModal('history-modal')">&times;</span>
+        <h2 id="history-modal-title">Price History</h2>
+        <div id="history-modal-content" class="table-container"></div>
+      </div>
+    </div>
+  </div>
+
+<div id="add-unit-modal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close-button" id="close-add-unit-modal-btn">&times;</span>
+    <h2>Add New Unit</h2>
+    <div id="add-unit-message"></div>
+    <form id="add-unit-form">
+      <div>
+        <label for="new_unit_name">Unit Name:</label>
+        <input type="text" id="new_unit_name" name="new_unit_name" required>
+      </div>
+      <button type="submit">Save Unit</button>
+    </form>
+  </div>
+</div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.querySelector('.sidebar');
+      const sidebarToggle = document.querySelector('.sidebar-toggle');
+      const navLinks = document.querySelectorAll('.nav-link');
+      const hasSubmenus = document.querySelectorAll('.has-submenu');
+
+      // Responsive off-canvas menu (for mobile)
+      const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+      function handleMediaQueryChange(e) {
+        if (e.matches) { // If on mobile
+          sidebar.classList.remove('collapsed'); // Ensure it's not collapsed on mobile
+          sidebar.classList.remove('open'); // Ensure it's closed initially on mobile
+        } else { // If on desktop
+          sidebar.classList.remove('open'); // Ensure it's not open on desktop
+        }
+      }
+
+      // Initial check for mobile responsiveness
+      handleMediaQueryChange(mediaQuery);
+
+      // Listen for changes in media query
+      mediaQuery.addListener(handleMediaQueryChange);
+
+      // Unified sidebar toggle logic
+      sidebarToggle.addEventListener('click', () => {
+        if (mediaQuery.matches) {
+          // If on mobile, toggle 'open' class
+          sidebar.classList.toggle('open');
+        } else {
+          // If on desktop, toggle 'collapsed' class
+          sidebar.classList.toggle('collapsed');
+        }
+      });
+
+      // Accordion sub-menus (no change)
+      hasSubmenus.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const submenu = item.nextElementSibling;
+          if (submenu && submenu.classList.contains('submenu')) {
+            submenu.classList.toggle('open');
+            item.classList.toggle('open');
+          }
+        });
+      });
+
+      // Active link highlighting (no change)
+      const currentPath = window.location.pathname.split('/').pop();
+      navLinks.forEach(link => {
+        if (link.href.split('/').pop() === currentPath) {
+          link.classList.add('active');
+          let parentSubmenu = link.closest('.submenu');
+          if (parentSubmenu) {
+            parentSubmenu.classList.add('open');
+            let parentHasSubmenu = parentSubmenu.previousElementSibling;
+            if (parentHasSubmenu && parentHasSubmenu.classList.contains('has-submenu')) {
+              parentHasSubmenu.classList.add('open');
+            }
+          }
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    });
+    
+  </script>
+</body>
+</html>

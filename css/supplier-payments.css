@@ -1,0 +1,467 @@
+:root {
+    --stat-card-height: 120px;
+}
+.dashboard-grid {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: repeat(12, 1fr);
+}
+.stat-card {
+    grid-column: span 3; /* 4 cards per row */
+    height: var(--stat-card-height);
+    position: relative; /* Needed for absolute positioning of the spark chart */
+    padding-bottom: 50px; /* Add padding to make space for the chart */
+}
+
+.spark-chart {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 50px; /* Adjust as needed */
+}
+.chart-panel-1 {
+    grid-column: span 4;
+}
+.chart-panel-2 {
+    grid-column: span 8;
+}
+.table-panel {
+    grid-column: span 12;
+}
+.stat-card .stat-info p {
+    font-size: 24px;
+}
+.stat-card .stat-info h3 {
+    font-size: 14px;
+}
+.stat-card .icon-container {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    color: #fff; /* Set icon color to white */
+}
+.stat-card.total-payable .icon-container { background: linear-gradient(135deg, #3B82F6, #60A5FA); }
+.stat-card.total-overdue .icon-container { background: linear-gradient(135deg, var(--error-color), #F87171); }
+.stat-card.payable-this-month .icon-container { background: linear-gradient(135deg, var(--warning-color), #FBBF24); }
+.stat-card.payments-made .icon-container { background: linear-gradient(135deg, var(--success-color), #34D399); }
+
+.table-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.table-controls .search-container {
+    position: relative;
+}
+.table-controls .search-container i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary-color);
+}
+.table-controls input, .table-controls select {
+    padding: 10px 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    min-width: 220px;
+}
+.table-controls input {
+    padding-left: 40px;
+}
+.status-pill {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    text-transform: capitalize;
+}
+.status-paid { background-color: var(--success-color); }
+.status-partially_paid { background-color: #17a2b8; }
+.status-pending { background-color: var(--warning-color); color: var(--text-primary-color); }
+.status-overdue { background-color: var(--error-color); }
+
+@media (max-width: 1200px) {
+    .stat-card { grid-column: span 6; }
+    .chart-panel-1, .chart-panel-2 { grid-column: span 12; }
+}
+@media (max-width: 768px) {
+    .stat-card { grid-column: span 12; }
+}
+
+/* Upcoming Payments List Styles */
+#upcoming-payments-list {
+    max-height: 400px; /* Or height of the chart */
+    overflow-y: auto;
+}
+
+.payment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+}
+
+.payment-item:last-child {
+    border-bottom: none;
+}
+
+.payment-item:hover {
+    background-color: #f8f9fa;
+}
+
+.payment-info .supplier-name {
+    font-weight: 600;
+    color: var(--text-primary-color);
+    display: block;
+}
+
+.payment-info .shipment-ref {
+    font-size: 13px;
+    color: var(--text-secondary-color);
+}
+
+.payment-due {
+    text-align: right;
+}
+
+.payment-due .amount {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary-color);
+    display: block;
+}
+
+.payment-due .due-date {
+    font-size: 13px;
+}
+
+.due-date.overdue {
+    color: var(--error-color);
+    font-weight: 600;
+}
+
+.due-date.due-soon {
+    color: var(--warning-color);
+    font-weight: 600;
+}
+
+.due-date.upcoming {
+    color: var(--text-secondary-color);
+}
+
+/* Enhanced Upcoming Payments List */
+.payment-group h4 {
+    margin: 20px 0 10px 0;
+    font-size: 14px;
+    color: var(--text-primary-color);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.payment-group h4 i {
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.overdue-group h4 i { color: var(--error-color); }
+.due-soon-group h4 i { color: var(--warning-color); }
+.upcoming-group h4 i { color: #3B82F6; }
+
+.payment-item {
+    cursor: pointer;
+}
+
+.payment-item.overdue {
+    background-color: #fee2e2;
+    border-left: 4px solid var(--error-color);
+    border-radius: 4px;
+}
+
+.payment-item.overdue:hover {
+    background-color: #fecaca;
+}
+
+#payments-table tbody tr.highlight {
+    background-color: var(--primary-color-light);
+    transition: background-color 0.3s ease;
+}
+
+.payment-summary {
+    display: grid; /* Use grid for more control */
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+    .payment-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.summary-item {
+    text-align: center;
+}
+
+.summary-item h4 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    color: var(--text-secondary-color);
+    font-weight: 500;
+}
+
+.summary-item p {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary-color);
+}
+
+.summary-item.remaining p {
+    color: var(--error-color);
+}
+
+.payment-progress {
+    grid-column: 1 / -1; /* Span all columns */
+    margin-top: 15px;
+    width: 100%;
+    height: 8px;
+    background-color: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: var(--success-color);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+
+.quick-pay-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.quick-pay-btn {
+    background-color: #e2e8f0;
+    color: var(--text-primary-color);
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.transaction-form-container {
+    max-width: 400px; /* Constrain form width */
+}
+
+.quick-pay-btn:hover {
+    background-color: #cbd5e1;
+}
+
+.manage-payment-terms-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-image: linear-gradient(to right, var(--accent-color) 0%, var(--highlight-color) 100%);
+    background-size: 200% auto;
+    color: var(--primary-color);
+    box-shadow: 0 4px 15px 0 rgba(124, 58, 237, 0.3);
+    padding: 10px 20px;
+}
+
+.manage-payment-terms-btn:hover {
+    background-position: right center;
+    box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Payment Log Modal Styles */
+
+#payment-log-modal .modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--text-secondary-color);
+  cursor: pointer;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+#payment-log-modal .modal-close:hover {
+  color: var(--error-color);
+  transform: rotate(90deg);
+}
+.payment-log-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.transaction-list-container {
+    border-right: 1px solid #e2e8f0;
+    padding-right: 30px;
+    position: relative;
+}
+
+.transaction-list-container::before {
+    content: '';
+    position: absolute;
+    left: 30px; /* Adjust for padding */
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background-color: #e2e8f0;
+}
+
+.transaction-item {
+    padding: 15px 0 15px 50px;
+    position: relative;
+    border-bottom: none;
+}
+
+.transaction-item:last-child { border-bottom: none; }
+
+.transaction-icon {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.transaction-item.credit-card .transaction-icon { color: #3B82F6; border-color: #3B82F6; }
+.transaction-item.bank-transfer .transaction-icon { color: #10B981; border-color: #10B981; }
+.transaction-item.other .transaction-icon { color: #6B7280; border-color: #6B7280; }
+
+.transaction-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.transaction-details .amount {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.transaction-meta {
+    font-size: 12px;
+    color: var(--text-secondary-color);
+    margin-top: 4px;
+}
+
+.transaction-meta a {
+    margin-left: 10px;
+}
+
+/* Icon Button Styles */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+/* Table Enhancements */
+#payments-table th[data-sort] {
+    cursor: pointer;
+    position: relative;
+    padding-right: 25px; /* Make space for the icon */
+}
+
+#payments-table th[data-sort] i {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary-color);
+    transition: transform 0.2s ease;
+}
+
+#payments-table th[data-sort].asc i {
+    transform: rotate(180deg);
+    color: var(--primary-color);
+}
+
+#payments-table th[data-sort].desc i {
+    transform: rotate(0deg);
+    color: var(--primary-color);
+}
+
+#payments-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Overdue Payment Highlighting */
+#payments-table tbody tr.overdue-payment {
+    background-color: #fee2e2;
+    border-left: 4px solid var(--error-color);
+}
+
+#payments-table tbody tr.overdue-payment:hover {
+    background-color: #fecaca;
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.pagination-controls button {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 8px 14px;
+    margin: 0 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #334155;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.pagination-controls button:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+.pagination-controls button.active {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+.pagination-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    background-color: #f1f5f9;
+    color: #94a3b8;
+}

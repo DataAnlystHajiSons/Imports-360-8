@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Insurance Calculation Browser Test</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f8fafc; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin: 20px 0; }
+        .test-section { background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 15px 0; }
+        .code { background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; font-family: monospace; margin: 10px 0; }
+        .success { background: #dcfce7; border-left: 4px solid #16a34a; color: #166534; }
+        .error { background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; }
+        .warning { background: #fef3c7; border-left: 4px solid #f59e0b; color: #92400e; }
+        button { background: #7c3aed; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin: 5px; }
+        button:hover { background: #6d28d9; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 5px; }
+        input { padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; }
+        .calculated { background: #dcfce7 !important; border-color: #16a34a !important; font-weight: 600; }
+        .result { background: #fef3c7; padding: 15px; border-radius: 8px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Insurance Calculation Browser Test</h1>
+        <p>This page helps you test the insurance calculations directly in your browser.</p>
+        
+        <div class="test-section warning">
+            <h3>⚠️ Important Instructions</h3>
+            <ol>
+                <li><strong>Open this page in a NEW TAB</strong></li>
+                <li><strong>Keep your shipment tracker page open</strong></li>
+                <li><strong>Copy-paste the test scripts in the shipment tracker console</strong></li>
+                <li><strong>Do NOT run tests on this page - it won't work without Supabase</strong></li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 Step 1: Check if Functions are Loaded</h2>
+        <div class="test-section">
+            <p>Copy this code and paste it in your <strong>shipment tracker</strong> browser console:</p>
+            <div class="code">
+// Check if functions are available
+console.log("🔍 Function Check:");
+console.log("setupInsuranceCalculationListeners:", typeof setupInsuranceCalculationListeners);
+console.log("calculateInsuranceValues:", typeof calculateInsuranceValues);
+console.log("updateFieldWithAnimation:", typeof updateFieldWithAnimation);
+console.log("supabase:", typeof supabase);
+console.log("shipmentId:", typeof shipmentId, shipmentId);
+
+// Check if modal elements exist
+console.log("\n🔍 Element Check:");
+console.log("Insurance modal:", !!document.getElementById('insurance-modal'));
+console.log("Value field:", !!document.getElementById('value'));
+console.log("Rate field:", !!document.getElementById('rate'));
+console.log("Amount field:", !!document.getElementById('amount'));
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 Step 2: Force Setup Event Listeners</h2>
+        <div class="test-section">
+            <p>If functions exist, run this to force setup the event listeners:</p>
+            <div class="code">
+// Force setup event listeners
+if (typeof setupInsuranceCalculationListeners === 'function') {
+    console.log("🎯 Forcing setup of event listeners...");
+    setupInsuranceCalculationListeners();
+    console.log("✅ Event listeners setup complete");
+} else {
+    console.error("❌ setupInsuranceCalculationListeners function not found");
+}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 Step 3: Test Manual Calculation</h2>
+        <div class="test-section">
+            <p>Set test values and force calculation:</p>
+            <div class="code">
+// Set test values in insurance modal
+const testValues = {
+    value: 100000,
+    rate: 0.5,
+    marine_perc: 0.1,
+    war_perc: 0.05,
+    asc_1: 100,
+    fif_perc: 2,
+    sts_perc: 1,
+    stamp: 50
+};
+
+// Apply values to form fields
+Object.keys(testValues).forEach(key => {
+    const field = document.getElementById(key);
+    if (field) {
+        field.value = testValues[key];
+        console.log(`✅ Set ${key}: ${testValues[key]}`);
+    } else {
+        console.warn(`⚠️ Field not found: ${key}`);
+    }
+});
+
+// Force calculation
+if (typeof calculateInsuranceValues === 'function') {
+    console.log("🚀 Forcing calculation...");
+    calculateInsuranceValues();
+} else {
+    console.error("❌ calculateInsuranceValues function not found");
+}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 Step 4: Test Backend Function Directly</h2>
+        <div class="test-section">
+            <p>Test the Supabase function directly:</p>
+            <div class="code">
+// Test backend function
+const testData = {
+    input: {
+        value: 100000,
+        rate: 0.5,
+        marine_perc: 0.1,
+        war_perc: 0.05,
+        asc_1: 100,
+        fif_perc: 2,
+        sts_perc: 1,
+        stamp: 50
+    },
+    shipment_id: shipmentId || "test-id",
+    user_id: "test-user"
+};
+
+console.log("🚀 Testing backend function...");
+supabase.functions.invoke('calculate-insurance', { body: testData })
+    .then(result => {
+        console.log("✅ Backend function result:", result);
+        if (result.data && result.data.success) {
+            console.log("✅ Calculations:", result.data.calculations);
+            console.log("📊 Expected Amount:", result.data.calculations.amount, "(should be 500)");
+            console.log("📊 Expected Grand Total:", result.data.calculations.grand_total);
+        } else {
+            console.error("❌ Backend function failed:", result.error);
+        }
+    })
+    .catch(error => {
+        console.error("❌ Backend function error:", error);
+    });
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 Step 5: Check Browser Cache</h2>
+        <div class="test-section error">
+            <h3>❌ If Functions Still Not Found:</h3>
+            <ol>
+                <li><strong>Clear browser cache:</strong> Press Ctrl+Shift+R or Ctrl+F5</li>
+                <li><strong>Hard refresh:</strong> Hold Shift while clicking refresh button</li>
+                <li><strong>Check network tab:</strong> Verify shipment-tracker.js is loading the latest version</li>
+                <li><strong>Check timestamp:</strong> Look for the file modification date in network tab</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>✅ Expected Working Flow</h2>
+        <div class="test-section success">
+            <h3>When Everything Works:</h3>
+            <ol>
+                <li>Open insurance modal → Click Edit</li>
+                <li>You should see console: <code>🎯 Setting up insurance calculation listeners...</code></li>
+                <li>Enter Value: 100000 → Should trigger: <code>🔄 calculateInsuranceValues called</code></li>
+                <li>Enter Rate: 0.5 → Amount field should auto-fill with 500</li>
+                <li>Console should show: <code>✅ Calculations received: {amount: 500, ...}</code></li>
+                <li>All calculated fields should update automatically</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🆘 Troubleshooting</h2>
+        <div class="test-section">
+            <h3>Common Issues:</h3>
+            <ul>
+                <li><strong>Functions not defined:</strong> Clear cache, hard refresh</li>
+                <li><strong>Fields not found:</strong> Make sure you're in Edit mode of insurance modal</li>
+                <li><strong>Backend errors:</strong> Check Supabase function logs in dashboard</li>
+                <li><strong>No calculations:</strong> Check console for errors, verify input values</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // This page is just for reference - actual testing happens in shipment tracker
+        console.log("ℹ️ This is a reference page. Run the tests in your shipment tracker console.");
+    </script>
+</body>
+</html>

@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shipment Details</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .main-content {
+      padding: 20px;
+    }
+    .shipment-header {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .shipment-header h1 {
+      margin-top: 0;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .summary-item .label {
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 5px;
+    }
+    .summary-item .value {
+      color: #333;
+    }
+    .filters-container {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    .stages-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .stage-card {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      border-left: 5px solid #ccc;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .stage-card.completed {
+      border-left-color: #28a745;
+    }
+    .stage-card.current {
+      border-left-color: #007bff;
+    }
+    .stage-card h3 {
+      margin-top: 0;
+      font-size: 1.5rem;
+      color: #333;
+    }
+    .stage-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .detail-item .label {
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 5px;
+    }
+    .detail-item .value {
+      color: #333;
+    }
+    .document-link {
+      color: #007bff;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .document-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .document-modal-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 900px;
+      border-radius: 8px;
+      position: relative;
+    }
+    .document-modal-close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .document-modal-close:hover,
+    .document-modal-close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .document-viewer {
+      width: 100%;
+      height: 600px;
+    }
+  </style>
+</head>
+<body>
+  <div class="loader-overlay" id="loader">
+    <div class="loader">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+  </div>
+  <aside class="sidebar">
+     <div class="sidebar-header">
+      <img src="https://i.postimg.cc/j5K3DCyc/20250826-1802-Imports-360-Logo-simple-compose-01k3k7grx1f2fsmtvdcvwbx54s.png" alt="Logo" class="sidebar-logo">
+      <button class="sidebar-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="admin-dashboard.html" class="nav-link active">
+            <i class="fas fa-home icon"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="documents.html" class="nav-link">
+            <i class="fas fa-file-alt icon"></i>
+            <span class="text">Documents</span>
+          </a>
+        </li>
+        <li>
+          <a href="forecast.html" class="nav-link">
+            <i class="fas fa-bullhorn icon"></i>
+            <span class="text">Forecasts</span>
+          </a>
+        </li>
+        <li><a href="verification-list.html" class="nav-link"><i class="fas fa-check-double icon"></i><span class="text">Verification List</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-box icon"></i>
+            <span class="text">Shipments</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+          <ul class="submenu">
+            <li><a href="shipment_tracker.html" class="nav-link"><span class="text">Shipment Tracker</span></a></li>
+            <li><a href="shipment-details.html" class="nav-link"><span class="text">All Shipments</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="product-details.html" class="nav-link">
+            <i class="fas fa-tags icon"></i>
+            <span class="text">Products</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-details.html" class="nav-link">
+            <i class="fas fa-truck icon"></i>
+            <span class="text">Suppliers</span>
+          </a>
+        </li>
+        <li>
+          <a href="supplier-shipment-responses.html" class="nav-link">
+            <i class="fas fa-inbox icon"></i>
+            <span class="text">Supplier Responses</span>
+          </a>
+        </li>
+        <li>
+          <a href="bank-details.html" class="nav-link">
+            <i class="fas fa-university icon"></i>
+            <span class="text">Banks</span>
+          </a>
+        </li>
+        <li>
+          <a href="admin-payment-terms.html" class="nav-link">
+            <i class="fas fa-credit-card icon"></i>
+            <span class="text">Payment Terms</span>
+          </a>
+        </li>
+        <li>
+          <a href="clearing-agent-details.html" class="nav-link">
+            <i class="fas fa-user-shield icon"></i>
+            <span class="text">Clearing Agents</span>
+          </a>
+        </li>
+        <li>
+          <a href="warehouse-details.html" class="nav-link">
+            <i class="fas fa-warehouse icon"></i>
+            <span class="text">Warehouses</span>
+          </a>
+        </li>
+        <li><a href="logistic-cells.html" class="nav-link"><i class="fas fa-cubes icon"></i><span class="text">Logistic Cells</span></a></li>
+        <li>
+          <a href="#" class="nav-link has-submenu">
+            <i class="fas fa-truck-ramp-box icon"></i>
+            <span class="text">Freight</span>
+            <span class="arrow"><i class="fas fa-chevron-down"></i></span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Shipment Details</h1>
+      </div>
+    </header>
+    <div class="container">
+      <div id="shipment-summary" class="shipment-header"></div>
+      <div id="stages-container" class="stages-container">Loading...</div>
+    </div>
+  </div>
+
+  <div id="document-modal" class="document-modal">
+    <div class="document-modal-content">
+      <span class="document-modal-close" onclick="closeDocumentModal()">&times;</span>
+      <div id="document-viewer"></div>
+    </div>
+  </div>
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+  const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const shipmentId = urlParams.get("id");
+  let shipmentData = null;
+
+  const STAGE_ORDER = [
+    "enlistment_verification", "availability_confirmation", "proforma", "purchase_order",
+    "invoice", "ip_number", "lc_opening", "lc_shared_with_supplier", "shipment_details_from_supplier",
+    "freight_query", "award_shipment", "non_negotiable_docs", "original_docs", "bank_endorsement",
+    "send_to_clearing_agent", "under_clearing_agent", "release_orders", "gate_out", "transportation",
+    "warehouse", "bills"
+  ];
+
+  const STAGE_CONFIG = {
+    "enlistment_verification": {
+        table: "enlistment_verification",
+        fields: [
+            { name: "verified", type: "boolean", label: "Verified" },
+            { name: "verification_notes", type: "text", label: "Verification Notes" },
+            { name: "verified_at", type: "datetime-local", label: "Verified At" },
+            { name: "verifier_id", type: "uuid", label: "Verifier", fk: { relation: "verifier", displayColumn: "full_name" } },
+            { name: "verification_doc_url", type: "text", label: "Document URL", isDoc: true }
+        ]
+    },
+    "availability_confirmation": {
+        table: "availability_confirmation",
+        fields: [
+            { name: "available", type: "boolean", label: "Available" },
+            { name: "notes", type: "text", label: "Notes" },
+            { name: "confirmed_at", type: "datetime-local", label: "Confirmed At" },
+            { name: "confirmed_by", type: "uuid", label: "Confirmed By", fk: { relation: "confirmed_by", displayColumn: "full_name" } },
+            { name: "supplier_id", type: "uuid", label: "Supplier", fk: { relation: "supplier", displayColumn: "name" } }
+        ]
+    },
+    "purchase_order": {
+        table: "purchase_order",
+        fields: [
+            { name: "po_number", type: "text", label: "PO Number" },
+            { name: "po_date", type: "date", label: "PO Date" },
+            { name: "po_file_url", type: "text", label: "PO File URL", isDoc: true }
+        ]
+    },
+    "proforma": {
+        table: "proforma_invoice",
+        fields: [
+            { name: "proforma_number", type: "text", label: "Proforma Number" },
+            { name: "proforma_date", type: "date", label: "Proforma Date" },
+            { name: "file_url", type: "text", label: "File URL", isDoc: true }
+        ]
+    },
+    "invoice": {
+        table: "commercial_invoice",
+        fields: [
+            { name: "invoice_number", type: "text", label: "Invoice Number" },
+            { name: "invoice_date", type: "date", label: "Invoice Date" },
+            { name: "file_url", type: "text", label: "File URL", isDoc: true }
+        ]
+    },
+    "ip_number": {
+        table: "ip_number",
+        fields: [
+            { name: "ip_reference", type: "text", label: "IP Reference" },
+            { name: "issued_date", type: "date", label: "Issued Date" },
+            { name: "file_url", type: "text", label: "File URL", isDoc: true }
+        ]
+    },
+    "lc_opening": {
+        table: "letter_of_credit",
+        fields: [
+            { name: "lc_number", type: "text", label: "LC Number" },
+            { name: "opened_date", type: "date", label: "Opened Date" },
+            { name: "file_url", type: "text", label: "File URL", isDoc: true },
+            { name: "bank_id", type: "uuid", label: "Bank", fk: { relation: "bank", displayColumn: "name" } }
+        ]
+    },
+    "lc_shared_with_supplier": {
+        table: "lc_share",
+        fields: [
+            { name: "shared_date", type: "date", label: "Shared Date" },
+            { name: "notes", type: "text", label: "Notes" }
+        ]
+    },
+    "shipment_details_from_supplier": {
+        table: "supplier_shipment_details",
+        fields: [
+            { name: "readiness_date", type: "date", label: "Readiness Date" },
+            { name: "dimensions", type: "jsonb", label: "Dimensions" },
+            { name: "gross_weight", type: "number", label: "Gross Weight" },
+            { name: "cartons_count", type: "number", label: "Cartons Count" },
+            { name: "transport", type: "text", label: "Transport" },
+            { name: "details_received_date", type: "date", label: "Details Received Date" }
+        ]
+    },
+    "freight_query": {
+        table: "freight_query",
+        fields: [
+            { name: "sent_at", type: "datetime-local", label: "Sent At" },
+            { name: "query_payload", type: "jsonb", label: "Query Payload" },
+            { name: "logistics_company_id", type: "uuid", label: "Logistics Company", fk: { relation: "logistics_company", displayColumn: "name" } }
+        ]
+    },
+    "award_shipment": {
+        table: "shipment_awarded",
+        fields: [
+            { name: "awarded", type: "boolean", label: "Awarded" },
+            { name: "notes", type: "text", label: "Notes" },
+            { name: "awarded_at", type: "datetime-local", label: "Awarded At" },
+            { name: "awarded_by", type: "uuid", label: "Awarded By", fk: { relation: "awarded_by", displayColumn: "full_name" } },
+            { name: "freight_quote_response_id", type: "uuid", label: "Freight Quote Response", fk: { relation: "freight_quote_response", displayColumn: "id" } }
+        ]
+    },
+    "non_negotiable_docs": {
+        table: "non_negotiable_docs",
+        fields: [
+            { name: "status", type: "select", label: "Status", options: ["Sended", "Arrived", "Pending"] },
+            { name: "sended_at", type: "datetime-local", label: "Sended At" },
+            { name: "uploaded_by", type: "uuid", label: "Uploaded By", fk: { relation: "uploaded_by", displayColumn: "full_name" } },
+            { name: "docs_url", type: "text", label: "Docs URL", isDoc: true },
+            { name: "bank_id", type: "uuid", label: "Bank", fk: { relation: "bank", displayColumn: "name" } }
+        ]
+    },
+    "original_docs": {
+        table: "original_docs",
+        fields: [
+            { name: "status", type: "text", label: "Status" },
+            { name: "received_at", type: "datetime-local", label: "Received At" },
+            { name: "uploaded_by", type: "uuid", label: "Uploaded By", fk: { relation: "uploaded_by", displayColumn: "full_name" } },
+            { name: "docs_url", type: "text", label: "Docs URL", isDoc: true },
+            { name: "shipping_company", type: "text", label: "Shipping Company" },
+            { name: "tracking_number", type: "text", label: "Tracking Number" },
+            { name: "shipping_guarantee_applied_date", type: "date", label: "Shipping Guarantee Applied Date" },
+            { name: "shipping_guarantee_received_date", type: "date", label: "Shipping Guarantee Received Date" },
+            { name: "dispatch_date", type: "date", label: "Dispatch Date" },
+            { name: "arrival_at_bank", type: "date", label: "Arrival at Bank" },
+            { name: "due_date", type: "date", label: "Due Date" },
+            { name: "payment_date", type: "date", label: "Payment Date" },
+            { name: "bank_id", type: "uuid", label: "Bank", fk: { relation: "bank", displayColumn: "name" } }
+        ]
+    },
+    "bank_endorsement": {
+        table: "bank_endorsement",
+        fields: [
+            { name: "endorsed", type: "boolean", label: "Endorsed" },
+            { name: "endorsed_at", type: "datetime-local", label: "Endorsed At" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "updated_by", displayColumn: "full_name" } }
+        ]
+    },
+    "send_to_clearing_agent": {
+        table: "docs_to_clearing_agent",
+        fields: [
+            { name: "name", type: "text", label: "Name" },
+            { name: "shipping_company", type: "text", label: "Shipping Company" },
+            { name: "tracking_number", type: "text", label: "Tracking Number" },
+            { name: "sended_at", type: "date", label: "Sended At" },
+            { name: "expected_arrival_date", type: "date", label: "Expected Arrival Date" },
+            { name: "slip_picture_url", type: "text", label: "Slip Picture URL", isDoc: true },
+            { name: "clearing_agent_id", type: "uuid", label: "Clearing Agent", fk: { relation: "clearing_agent", displayColumn: "name" } }
+        ]
+    },
+    "under_clearing_agent": {
+        table: "under_clearing_agent",
+        fields: [
+            { name: "is_received", type: "boolean", label: "Received" },
+            { name: "receiving_date", type: "date", label: "Receiving Date" },
+            { name: "destuffed_date", type: "date", label: "Destuffed Date" },
+            { name: "frsd_application_date", type: "date", label: "FRSD Application Date" },
+            { name: "duty_payment_date", type: "date", label: "Duty Payment Date" },
+            { name: "sampling_date", type: "date", label: "Sampling Date" },
+            { name: "do_date", type: "date", label: "DO Date" },
+            { name: "clearing_agent_id", type: "uuid", label: "Clearing Agent", fk: { relation: "clearing_agent", displayColumn: "name" } }
+        ]
+    },
+    "release_orders": {
+        table: "release_orders",
+        fields: [
+            { name: "dpp_ro_number", type: "text", label: "DPP RO Number" },
+            { name: "dpp_date", type: "date", label: "DPP Date" },
+            { name: "fscrd_ro_number", type: "text", label: "FSCRD RO Number" },
+            { name: "fscrd_date", type: "date", label: "FSCRD Date" }
+        ]
+    },
+    "gate_out": {
+        table: "gate_out",
+        fields: [
+            { name: "is_gate_out", type: "boolean", label: "Gate Out" },
+            { name: "gate_out_date", type: "date", label: "Gate Out Date" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "updated_by", displayColumn: "full_name" } }
+        ]
+    },
+    "transportation": {
+        table: "transporter",
+        fields: [
+            { name: "transporter_name", type: "text", label: "Transporter Name" },
+            { name: "bilti_number", type: "text", label: "Bilti Number" },
+            { name: "bilti_date", type: "date", label: "Bilti Date" },
+            { name: "no_of_pieces", type: "number", label: "No of Pieces" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "updated_by", displayColumn: "full_name" } }
+        ]
+    },
+    "warehouse": {
+        table: "warehouse_arrival",
+        fields: [
+            { name: "warehouse_name", type: "text", label: "Warehouse Name" },
+            { name: "arrival_date", type: "date", label: "Arrival Date" },
+            { name: "gr_no", type: "text", label: "GR No" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "updated_by", displayColumn: "full_name" } }
+        ]
+    },
+    "bills": {
+        table: "bills",
+        fields: [
+            { name: "forwarder_date", type: "date", label: "Forwarder Date" },
+            { name: "clearing_agent_date", type: "date", label: "Clearing Agent Date" },
+            { name: "transporter_date", type: "date", label: "Transporter Date" },
+            { name: "costing", type: "number", label: "Costing" },
+            { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "updated_by", displayColumn: "full_name" } }
+        ]
+    }
+  };
+
+  function formatValue(value, field, stageData) {
+    if (field.fk && stageData) {
+        const relationName = field.fk.relation;
+        const relatedData = stageData[relationName];
+        if (relatedData && relatedData[field.fk.displayColumn]) {
+            return relatedData[field.fk.displayColumn];
+        }
+    }
+    if (value === undefined || value === null || value === '') {
+        return 'N/A';
+    }
+    if (field.isDoc) {
+        return `<a class="document-link" onclick="openDocumentModal('${value}')">View Document</a>`;
+    }
+    if (field.type === 'boolean') {
+        return value ? 'Yes' : 'No';
+    }
+    if (field.type === 'date' || field.type === 'datetime-local') {
+        return new Date(value).toLocaleString();
+    }
+    if (field.type === 'jsonb') {
+        return `<pre>${JSON.stringify(value, null, 2)}</pre>`;
+    }
+    return value;
+  }
+
+  function renderStages(statusFilter, docsOnlyFilter) {
+    const stagesContainer = document.getElementById('stages-container');
+    stagesContainer.innerHTML = '';
+    const currentStageIndex = STAGE_ORDER.indexOf(shipmentData.current_stage);
+
+    STAGE_ORDER.forEach((stageKey, index) => {
+      const stageConfig = STAGE_CONFIG[stageKey];
+      if (!stageConfig) return;
+
+      const stageData = shipmentData[stageConfig.table];
+      const isCompleted = index < currentStageIndex;
+      const isCurrent = index === currentStageIndex;
+
+      if (statusFilter === 'completed' && !isCompleted) return;
+      if (statusFilter === 'current' && !isCurrent) return;
+
+      let hasDocs = false;
+      for (const field of stageConfig.fields) {
+        if (field.isDoc && stageData && stageData[field.name]) {
+          hasDocs = true;
+          break;
+        }
+      }
+
+      if (docsOnlyFilter && !hasDocs) return;
+
+      if (index > currentStageIndex) return;
+      if (!stageData) return;
+      
+      const stageTitle = stageKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      let stageHtml = `
+        <div class="stage-card ${isCompleted ? 'completed' : 'current'}">
+          <h3>${stageTitle}</h3>
+          <div class="stage-details-grid">
+      `;
+
+      for (const field of stageConfig.fields) {
+          const value = stageData[field.name];
+          const formattedValue = formatValue(value, field, stageData);
+          stageHtml += `
+            <div class="detail-item">
+              <span class="label">${field.label}</span>
+              <span class="value">${formattedValue}</span>
+            </div>
+          `;
+      }
+
+      stageHtml += `</div></div>`;
+      stagesContainer.innerHTML += stageHtml;
+    });
+  }
+
+  async function loadShipmentDetails() {
+    if (!shipmentId) {
+        document.getElementById("shipment-details-container").innerHTML = "<p>No shipment ID provided.</p>";
+        return;
+    }
+
+    const { data, error } = await supabase
+      .from("shipment")
+      .select(`
+        *,
+        shipment_products (*, product_variety(*, supplier(name))),
+        created_by(full_name),
+        enlistment_verification (*, verifier:verifier_id(full_name)),
+        availability_confirmation (*, confirmed_by(full_name), supplier(name)),
+        purchase_order (*),
+        proforma_invoice (*),
+        commercial_invoice (*),
+        ip_number (*),
+        letter_of_credit (*, bank(name)),
+        lc_share (*),
+        supplier_shipment_details (*),
+        freight_query (*, logistics_company(name)),
+        shipment_awarded (*, awarded_by(full_name), freight_quote_response(id, freight_query(logistics_company(name)))),
+        non_negotiable_docs (*, uploaded_by(full_name), bank(name)),
+        original_docs (*, uploaded_by(full_name), bank(name)),
+        bank_endorsement (*, updated_by(full_name)),
+        docs_to_clearing_agent (*, clearing_agent(name)),
+        under_clearing_agent (*, clearing_agent(name)),
+        release_orders (*),
+        gate_out (*, updated_by(full_name)),
+        transporter (*, updated_by(full_name)),
+        warehouse_arrival (*, updated_by(full_name)),
+        bills (*, updated_by(full_name))
+      `)
+      .eq("id", shipmentId)
+      .single();
+
+    if (error) {
+      document.getElementById("stages-container").innerHTML = `<p class="error-message">Error loading shipment details: ${error.message}</p>`;
+      return;
+    }
+
+    shipmentData = data;
+
+    let productsHtml = '<h3>Products</h3><table><thead><tr><th>Product</th><th>Variety</th><th>Supplier</th><th>Quantity</th><th>Unit</th><th>Rate</th><th>Amount</th></tr></thead><tbody>';
+    let totalAmount = 0;
+    data.shipment_products.forEach(p => {
+      const rate = p.rate || 0;
+      const quantity = p.quantity || 0;
+      const amount = p.amount || (rate * quantity);
+      totalAmount += amount;
+      productsHtml += `<tr>
+        <td>${p.product_variety.product_name}</td>
+        <td>${p.product_variety.variety_name}</td>
+        <td>${p.product_variety.supplier.name}</td>
+        <td>${quantity}</td>
+        <td>${p.unit}</td>
+        <td>${rate}</td>
+        <td>${amount.toFixed(2)}</td>
+      </tr>`;
+    });
+    productsHtml += `</tbody><tfoot><tr><td colspan="6" style="text-align: right; font-weight: bold;">Total Amount:</td><td style="font-weight: bold;">${totalAmount.toFixed(2)}</td></tr></tfoot></table>';
+
+    // Render summary
+    const summaryContainer = document.getElementById('shipment-summary');
+    summaryContainer.innerHTML = `
+      <h1>Shipment: ${data.reference_code}</h1>
+      <div class="summary-grid">
+        <div class="summary-item"><span class="label">Current Stage</span><span class="value">${data.current_stage.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span></div>
+        <div class="summary-item"><span class="label">Status</span><span class="value">${data.status}</span></div>
+      </div>
+      ${productsHtml}
+      <div class="filters-container">
+        <select id="status-filter">
+          <option value="all">All Stages</option>
+          <option value="completed">Completed</option>
+          <option value="current">Current</option>
+        </select>
+        <label>
+          <input type="checkbox" id="docs-only-filter">
+          Show only stages with documents
+        </label>
+        <button id="apply-filters-btn">Apply</button>
+      </div>
+    `;
+
+    renderStages('all', false);
+
+    const applyFiltersBtn = document.getElementById('apply-filters-btn');
+    applyFiltersBtn.addEventListener('click', () => {
+      const statusFilter = document.getElementById('status-filter').value;
+      const docsOnlyFilter = document.getElementById('docs-only-filter').checked;
+      renderStages(statusFilter, docsOnlyFilter);
+    });
+  }
+
+  function openDocumentModal(url) {
+    const modal = document.getElementById('document-modal');
+    const viewer = document.getElementById('document-viewer');
+    const fileExtension = url.split('.').pop().toLowerCase();
+
+    if (['png', 'jpg', 'jpeg', 'gif'].includes(fileExtension)) {
+      viewer.innerHTML = `<img src="${url}" style="width: 100%;">`;
+    } else if (fileExtension === 'pdf') {
+      viewer.innerHTML = `<iframe src="${url}" class="document-viewer"></iframe>`;
+    } else {
+      viewer.innerHTML = `<p>Cannot preview this file type. <a href="${url}" target="_blank">Download Document</a></p>`;
+    }
+
+    modal.style.display = 'block';
+  }
+
+  function closeDocumentModal() {
+    document.getElementById('document-modal').style.display = 'none';
+  }
+
+  window.openDocumentModal = openDocumentModal;
+  window.closeDocumentModal = closeDocumentModal;
+
+  window.onload = async () => {
+      const loader = document.getElementById("loader");
+      if (loader) {
+          loader.style.display = "block";
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+          window.location.href = 'login.html';
+      } else {
+          await loadShipmentDetails();
+      }
+
+      if (loader) {
+          loader.style.display = "none";
+      }
+  };
+</script>
+</body>
+</html>

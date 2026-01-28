@@ -1,0 +1,146 @@
+<!-- ============================================================================
+     COPY THIS ENTIRE SECTION
+     ============================================================================
+     
+     INSTRUCTIONS:
+     1. Open shipment_tracker.html
+     2. Find the "Manage Documents" button (around line 200)
+     3. Paste this code RIGHT AFTER the documents section
+     4. Save the file
+     5. Refresh your browser
+     
+     ============================================================================ -->
+
+<!-- Products Management Section ⭐ ADD THIS -->
+<div class="products-section" style="margin-top: 16px;">
+  <button 
+    class="products-manage-btn" 
+    onclick="openManageProductsModal()" 
+    style="
+      width: 100%;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    " 
+    onmouseover="
+      this.style.transform='translateY(-2px)'; 
+      this.style.boxShadow='0 6px 20px rgba(124, 58, 237, 0.4)';
+    " 
+    onmouseout="
+      this.style.transform='translateY(0)'; 
+      this.style.boxShadow='0 4px 12px rgba(124, 58, 237, 0.3)';
+    "
+    title="Add, edit, or remove products from this shipment"
+  >
+    <i class="fas fa-boxes"></i>
+    <span>Manage Products</span>
+    <i class="fas fa-chevron-right" style="margin-left: auto; font-size: 12px;"></i>
+  </button>
+</div>
+
+<!-- ============================================================================
+     END OF CODE TO COPY
+     ============================================================================
+     
+     WHAT IT LOOKS LIKE:
+     
+     ┌─────────────────────────────────────┐
+     │  📦 Manage Products              ›  │  ← Purple gradient, hover effect
+     └─────────────────────────────────────┘
+     
+     WHAT IT DOES:
+     - Opens a modal with 3 tabs
+     - Current Products (view/edit/delete)
+     - Add Product (add new products)
+     - Change History (see all changes with who/when/why)
+     
+     NEXT STEPS:
+     1. Also add the modal HTML at the end of the page (see below)
+     2. Import the JavaScript files
+     3. Initialize product management
+     
+     ============================================================================ -->
+
+
+<!-- ============================================================================
+     ALSO ADD THIS AT THE END (just before </body>)
+     ============================================================================ -->
+
+<!-- Include Product Management Modal -->
+<div id="product-management-modal-container"></div>
+<script>
+  // Automatically load the product management modal
+  fetch('manage-products-modal.html')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to load product management modal');
+      }
+      return response.text();
+    })
+    .then(html => {
+      document.getElementById('product-management-modal-container').innerHTML = html;
+      console.log('✅ Product management modal loaded successfully');
+    })
+    .catch(error => {
+      console.error('❌ Error loading product management modal:', error);
+      console.log('Make sure manage-products-modal.html is in the root directory');
+    });
+</script>
+
+<!-- ============================================================================
+     COMPLETE EXAMPLE: Your sidebar should look like this
+     ============================================================================ -->
+
+<!--
+<div class="tracker-sidebar">
+  
+  <div class="supplier-details-section">
+    ...supplier info...
+  </div>
+
+  <h3>Current Stage Details</h3>
+  <div class="stage-details" id="currentStageDetails">
+    ...stage details...
+  </div>
+
+  <div class="progress-bar-container">
+    <div class="progress-bar">
+      <div class="progress-fill" id="overallProgress"></div>
+    </div>
+  </div>
+
+  <!-- Documents Management Button (EXISTING) -->
+  <div class="documents-section">
+    <button class="documents-stage-btn" onclick="openDocumentsModal()">
+      <i class="fas fa-folder-open"></i>
+      <span>Manage Documents</span>
+    </button>
+  </div>
+
+  <!-- Products Management Button (NEW - ADD THIS) -->
+  <div class="products-section" style="margin-top: 16px;">
+    <button class="products-manage-btn" onclick="openManageProductsModal()" style="...">
+      <i class="fas fa-boxes"></i>
+      <span>Manage Products</span>
+      <i class="fas fa-chevron-right" style="margin-left: auto; font-size: 12px;"></i>
+    </button>
+  </div>
+
+  <h3>Timeline</h3>
+  <div class="timeline" id="timeline">
+    ...timeline items...
+  </div>
+
+</div>
+-->

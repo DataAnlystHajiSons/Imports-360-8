@@ -1,0 +1,2325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Shipment Tracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #FEFEFE;
+      min-height: 100vh;
+      color: #1E293B;
+      overflow-x: auto;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 4px;
+      background: #7C3AED;
+      border-radius: 2px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #1E293B;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      color: #64748B;
+      font-weight: 500;
+    }
+
+    .tracker-container {
+      display: flex;
+      flex-direction: row;
+      gap: 120px;
+      align-items: stretch;
+      margin-top: -50px;
+    }
+
+    .circular-container {
+      order: 1;
+      flex-basis: 60%;
+      display: flex;
+      justify-content: center;
+      position: relative;
+    }
+
+    .tracker-sidebar {
+      order: 2;
+      flex-basis: 30%;
+      width: 300px;
+      background: #F1F5F9;
+      border-radius: 24px;
+      padding: 30px;
+      border: 1px solid rgba(124, 58, 237, 0.1);
+      height: fit-content;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .tracker-sidebar h3 {
+        font-size: 1.4rem;
+        margin-bottom: 20px;
+        color: #1E293B;
+    }
+
+    .circular-progress {
+      position: relative;
+      width: 840px;
+      height: 840px;
+    }
+
+    .progress-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 740px;
+      height: 740px;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg,
+        rgba(124, 58, 237, 0.1) 0%,
+        rgba(139, 92, 246, 0.1) 50%,
+        rgba(124, 58, 237, 0.05) 100%
+      );
+      animation: rotate 30s linear infinite;
+    }
+
+    .center-hub {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 280px;
+      height: 280px;
+      background: #F1F5F9;
+      border-radius: 50%;
+      border: 2px solid rgba(124, 58, 237, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 
+        0 0 30px rgba(124, 58, 237, 0.15),
+        0 10px 30px rgba(0, 0, 0, 0.05);
+      z-index: 10;
+    }
+
+    .shipment-id {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #7C3AED;
+      margin-bottom: 8px;
+    }
+
+    .shipment-product {
+      font-size: 1.1rem;
+      color: #1E293B;
+      margin-bottom: 12px;
+    }
+
+    .shipment-status {
+      font-size: 0.9rem;
+      padding: 6px 16px;
+      border-radius: 20px;
+      background: rgba(124, 58, 237, 0.05);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      color: #7C3AED;
+    }
+
+    .progress-stats {
+      display: flex;
+      gap: 20px;
+      margin-top: 15px;
+      font-size: 0.8rem;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #7C3AED;
+    }
+
+    .stat-label {
+      color: #64748B;
+      margin-top: 2px;
+    }
+
+    .stage-node {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid transparent;
+      transform-origin: center;
+    }
+
+    .stage-node.pending {
+      background: rgba(100, 116, 139, 0.1);
+      border-color: rgba(100, 116, 139, 0.3);
+      color: #64748B;
+    }
+
+    .stage-node.completed {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: #22c55e;
+      color: #15803d;
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
+    }
+
+    .stage-node.current {
+      background: rgba(124, 58, 237, 0.1);
+      border-color: #7C3AED;
+      color: #7C3AED;
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    .stage-node:hover {
+      transform: scale(1.15);
+      z-index: 5;
+    }
+
+    .stage-node.completed:hover {
+      box-shadow: 0 0 25px rgba(34, 197, 94, 0.4);
+    }
+
+    .stage-node.current:hover {
+      box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+    }
+
+    .stage-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    .stage-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.1;
+      max-width: 70px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      background: #1E293B;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+    }
+
+    .stage-node:hover .tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(-5px);
+    }
+
+    .sidebar {
+      width: 350px;
+      background: #F1F5F9;
+      border-radius: 24px;
+      padding: 30px;
+      border: 1px solid rgba(124, 58, 237, 0.1);
+      height: fit-content;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .sidebar h3 {
+      font-size: 1.4rem;
+      margin-bottom: 20px;
+      color: #1E293B;
+    }
+
+    .stage-details {
+      background: #FEFEFE;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(124, 58, 237, 0.1);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    }
+
+    .stage-details h4 {
+      color: #7C3AED;
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+      font-size: 0.9rem;
+    }
+
+    .detail-label {
+      color: rgba(100, 116, 139, 0.6);
+    }
+
+    .detail-value {
+      color: #1E293B;
+      font-weight: 500;
+    }
+
+    .progress-bar-container {
+      margin: 20px 0;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(100, 116, 139, 0.2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #7C3AED, #8B5CF6);
+      border-radius: 4px;
+      transition: width 1s ease;
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    .timeline {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      margin: 15px 0;
+      padding: 12px;
+      border-radius: 12px;
+      background: #FEFEFE;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(124, 58, 237, 0.05);
+    }
+
+    .timeline-item:hover {
+      background: rgba(124, 58, 237, 0.02);
+      border-color: rgba(124, 58, 237, 0.1);
+    }
+
+    .timeline-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      font-size: 14px;
+    }
+
+    .timeline-icon.completed {
+      background: rgba(34, 197, 94, 0.1);
+      color: #15803d;
+    }
+
+    .timeline-icon.current {
+      background: rgba(124, 58, 237, 0.1);
+      color: #7C3AED;
+    }
+
+    .timeline-icon.pending {
+      background: rgba(100, 116, 139, 0.1);
+      color: #64748B;
+    }
+
+    .timeline-content {
+      flex: 1;
+    }
+
+    .timeline-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #1E293B;
+    }
+
+    .timeline-time {
+      font-size: 0.8rem;
+      color: rgba(100, 116, 139, 0.6);
+    }
+
+    @keyframes rotate {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+      }
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .tracker-container {
+        grid-template-columns: 1fr;
+        align-items: center;
+      }
+      
+      .circular-progress {
+        width: 700px;
+        height: 700px;
+      }
+      
+      .progress-ring {
+        width: 600px;
+        height: 600px;
+      }
+      
+      .sidebar {
+        width: 100%;
+        max-width: 600px;
+        margin-top: 30px;
+        grid-column: 1; /* Reset grid column */
+      }
+    }
+
+    @media (max-width: 768px) {
+      .tracker-container {
+        grid-template-columns: 1fr;
+      }
+
+      .circular-progress {
+        width: 500px;
+        height: 500px;
+      }
+      
+      .progress-ring {
+        width: 400px;
+        height: 400px;
+      }
+      
+      .center-hub {
+        width: 200px;
+        height: 200px;
+      }
+      
+      .stage-node {
+        width: 60px;
+        height: 60px;
+      }
+      
+      .stage-icon {
+        font-size: 18px;
+      }
+      
+      .stage-label {
+        font-size: 8px;
+      }
+    }
+    .modal {
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0s 0.3s;
+    }
+
+    .modal.show {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-content {
+        position: relative;
+        transform: scale(0.9);
+        transition: transform 0.3s ease, opacity 0.3s ease; /* Add opacity transition */
+        opacity: 0; /* Initially hidden */
+    }
+
+    .modal.show .modal-content {
+        transform: scale(1);
+        opacity: 1; /* Fade in */
+        transition-delay: 0.1s;
+    }
+    #modal-body {
+        min-height: 200px;
+        transition: min-height 0.3s ease;
+    }
+    .toast-notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1001;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .toast-notification.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .toast-notification .icon {
+        font-size: 24px;
+    }
+    .toast-notification.success {
+        background-color: #28a745;
+    }
+
+    .toast-notification.error {
+        background-color: #dc3545;
+    }
+
+    .modal-loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.9);
+      display: none; /* Hidden by default */
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+      border-radius: 12px;
+    }
+
+    #bank-charges-modal .modal-content {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    #bank-charges-form .form-section {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 0 15px rgba(124, 58, 237, 0.1);
+    }
+
+    #bank-charges-form h3 {
+        margin-top: 0;
+    }
+
+    #bank-charges-form input[type="text"],
+    #bank-charges-form input[type="number"],
+    #bank-charges-form input[type="date"] {
+        border: 1px solid #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="main-header">
+      <div class="header-title">
+        <button class="back-button" onclick="window.history.back();"><i class="fas fa-arrow-left"></i></button>
+        <h1>Shipment Tracker</h1>
+      </div>
+    </header>
+
+    <div class="tracker-container">
+      <div class="circular-container">
+        <div class="circular-progress" id="circularProgress">
+          <div class="progress-ring"></div>
+          <div class="center-hub">
+            <div class="shipment-id">#SP-2025-001</div>
+            <div class="shipment-product">Premium Cauliflower</div>
+            <div class="shipment-status">In Transit</div>
+            <div class="progress-stats">
+              <div class="stat">
+                <div class="stat-value" id="completedCount">8</div>
+                <div class="stat-label">Completed</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value" id="progressPercent">36%</div>
+                <div class="stat-label">Progress</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value" id="remainingCount">14</div>
+                <div class="stat-label">Remaining</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tracker-sidebar">
+        <h3>Current Stage Details</h3>
+        <div class="stage-details" id="currentStageDetails">
+          <h4>LC Opening</h4>
+          <div class="detail-item">
+            <span class="detail-label">Started:</span>
+            <span class="detail-value">Sep 3, 2025</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Expected:</span>
+            <span class="detail-value">Sep 5, 2025</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Responsible:</span>
+            <span class="detail-value">Finance Team</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Status:</span>
+            <span class="detail-value">In Progress</span>
+          </div>
+        </div>
+
+        <div class="progress-bar-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="overallProgress" style="width: 36%"></div>
+          </div>
+        </div>
+
+        <h3>Timeline</h3>
+        <div class="timeline" id="timeline">
+          <!-- Timeline items will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="stage-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeModal()">&times;</span>
+      <h2 id="modal-title"></h2>
+      <div id="modal-body">
+        <!-- View State -->
+        <div id="stage-view-container">
+          <table id="stage-details-table">
+            <!-- Dynamic content will be injected here -->
+          </table>
+          <div class="button-container">
+            <button id="edit-stage-button" onclick="renderStageEdit()">Edit</button>
+          </div>
+        </div>
+        <!-- Edit State -->
+        <div id="stage-edit-container" style="display: none;">
+          <form id="modal-form">
+            <!-- Dynamic form fields will be injected here -->
+          </form>
+          <div id="document-upload-container">
+            <label for="document">Document</label>
+            <input type="file" id="document" name="document">
+          </div>
+          <div class="button-container">
+            <button id="save-stage-button" onclick="saveStageDetails()" style="display: none;">Save</button>
+            <button id="cancel-edit-button" onclick="renderStageView()" style="display: none;">Cancel</button>
+          </div>
+        </div>
+        <div id="stage-modal-message"></div>
+        <div class="modal-loader" style="display: none;">
+            <div class="loader">
+              <div class="loader-dot"></div>
+              <div class="loader-dot"></div>
+              <div class="loader-dot"></div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="toast-message"></div>
+
+  <div id="bank-charges-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeBankChargesModal()">&times;</span>
+      <h2>Bank Charges</h2>
+      <div id="bank-charges-modal-body">
+        <!-- View State -->
+        <div id="bank-charges-view-container">
+          <div id="bank-charges-details-table"></div>
+          <div class="button-container">
+            <button id="edit-bank-charges-button" onclick="renderBankChargesEdit()">Edit</button>
+          </div>
+        </div>
+        <!-- Edit State -->
+        <div id="bank-charges-edit-container" style="display: none;">
+          <form id="bank-charges-form">
+            <input type="hidden" id="bank_charges_id" name="bank_charges_id">
+            <div class="form-section">
+              <h3>Main Details</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="usd_amount">USD Amount</label>
+                  <input type="number" id="usd_amount" name="usd_amount">
+                </div>
+                <div class="form-group">
+                  <label for="rate">Rate</label>
+                  <input type="number" id="rate" name="rate">
+                </div>
+                <div class="form-group">
+                    <label for="rs">RS</label>
+                    <input type="number" id="rs" name="rs">
+                </div>
+                <div class="form-group">
+                    <label for="lc_issuance_date">LC Issuance Date</label>
+                    <input type="date" id="lc_issuance_date" name="lc_issuance_date">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Issuance Charges</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                    <label for="issuance_services_charges_amount">Services Charges Amount</label>
+                    <input type="number" id="issuance_services_charges_amount" name="issuance_services_charges_amount">
+                </div>
+                <div class="form-group">
+                    <label for="issuance_services_charges_per">Services Charges (%)</label>
+                    <input type="number" id="issuance_services_charges_per" name="issuance_services_charges_per">
+                </div>
+                <div class="form-group">
+                    <label for="issuance_swift_amount">Swift Amount</label>
+                    <input type="number" id="issuance_swift_amount" name="issuance_swift_amount">
+                </div>
+                <div class="form-group">
+                    <label for="issuance_swift_percentage">Swift (%)</label>
+                    <input type="number" id="issuance_swift_percentage" name="issuance_swift_percentage">
+                </div>
+                <div class="form-group">
+                    <label for="issuance_fed_amount">FED Amount</label>
+                    <input type="number" id="issuance_fed_amount" name="issuance_fed_amount">
+                </div>
+                <div class="form-group">
+                    <label for="issuance_fed_per">FED (%)</label>
+                    <input type="number" id="issuance_fed_per" name="issuance_fed_per">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Amendment Charges</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                    <label for="amendment_charges_amount">Amendment Charges Amount</label>
+                    <input type="number" id="amendment_charges_amount" name="amendment_charges_amount">
+                </div>
+                <div class="form-group">
+                    <label for="amendment_charges_per">Amendment Charges (%)</label>
+                    <input type="number" id="amendment_charges_per" name="amendment_charges_per">
+                </div>
+                <div class="form-group">
+                    <label for="amendment_fed_amount">FED Amount</label>
+                    <input type="number" id="amendment_fed_amount" name="amendment_fed_amount">
+                </div>
+                <div class="form-group">
+                    <label for="amendment_fed_per">FED (%)</label>
+                    <input type="number" id="amendment_fed_per" name="amendment_fed_per">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Final Payment Charges</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                    <label for="final_payment_services_charges_amount">Services Charges Amount</label>
+                    <input type="number" id="final_payment_services_charges_amount" name="final_payment_services_charges_amount">
+                </div>
+                <div class="form-group">
+                    <label for="final_payment_services_charges_per">Services Charges (%)</label>
+                    <input type="number" id="final_payment_services_charges_per" name="final_payment_services_charges_per">
+                </div>
+                <div class="form-group">
+                    <label for="final_payment_fed_amount">FED Amount</label>
+                    <input type="number" id="final_payment_fed_amount" name="final_payment_fed_amount">
+                </div>
+                <div class="form-group">
+                    <label for="final_payment_fed_per">FED (%)</label>
+                    <input type="number" id="final_payment_fed_per" name="final_payment_fed_per">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Documents</h3>
+              <div id="bank-charge-documents-list"></div>
+              <div id="add-document-form-container"></div>
+              <button type="button" class="button-secondary" onclick="addDocumentForm()">Add Document</button>
+            </div>
+
+            <div class="button-container">
+              <button type="button" onclick="saveBankCharges()">Save Bank Charges</button>
+              <button type="button" class="button-secondary" onclick="cancelBankChargesEdit()">Cancel</button>
+            </div>
+          </form>
+        </div>
+        <div id="bank-charges-modal-message"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="insurance-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeInsuranceModal()">&times;</span>
+      <h2>Insurance</h2>
+      <div id="insurance-modal-body">
+        <!-- View State -->
+        <div id="insurance-view-container">
+          <div id="insurance-details-table"></div>
+          <div class="button-container">
+            <button id="edit-insurance-button" onclick="renderInsuranceEdit()">Edit</button>
+          </div>
+        </div>
+        <!-- Edit State -->
+        <div id="insurance-edit-container" style="display: none;">
+          <form id="insurance-form">
+            <input type="hidden" id="insurance_id" name="insurance_id">
+            <div class="form-section">
+                <h3>Insurance Details</h3>
+                <div class="form-grid">
+                    <div class="form-group"><label for="value">Value</label><input type="number" id="value" name="value"></div>
+                    <div class="form-group"><label for="rate">Rate</label><input type="number" id="rate" name="rate"></div>
+                    <div class="form-group"><label for="amount">Amount</label><input type="number" id="amount" name="amount"></div>
+                    <div class="form-group"><label for="ten_perc">10%</label><input type="number" id="ten_perc" name="ten_perc"></div>
+                    <div class="form-group"><label for="total_value">Total Value</label><input type="number" id="total_value" name="total_value"></div>
+                    <div class="form-group"><label for="marine_perc">Marine (%)</label><input type="number" id="marine_perc" name="marine_perc"></div>
+                    <div class="form-group"><label for="marine_amount">Marine Amount</label><input type="number" id="marine_amount" name="marine_amount"></div>
+                    <div class="form-group"><label for="war_perc">War (%)</label><input type="number" id="war_perc" name="war_perc"></div>
+                    <div class="form-group"><label for="war_amount">War Amount</label><input type="number" id="war_amount" name="war_amount"></div>
+                    <div class="form-group"><label for="asc_1">ASC</label><input type="number" id="asc_1" name="asc_1"></div>
+                    <div class="form-group"><label for="fif_perc">FIF (%)</label><input type="number" id="fif_perc" name="fif_perc"></div>
+                    <div class="form-group"><label for="fif_amount">FIF Amount</label><input type="number" id="fif_amount" name="fif_amount"></div>
+                    <div class="form-group"><label for="sts_perc">STS (%)</label><input type="number" id="sts_perc" name="sts_perc"></div>
+                    <div class="form-group"><label for="sts_amount">STS Amount</label><input type="number" id="sts_amount" name="sts_amount"></div>
+                    <div class="form-group"><label for="stamp">Stamp</label><input type="number" id="stamp" name="stamp"></div>
+                    <div class="form-group"><label for="grand_total">Grand Total</label><input type="number" id="grand_total" name="grand_total"></div>
+                </div>
+            </div>
+            <div class="form-section">
+              <h3>Documents</h3>
+              <div id="insurance-documents-list"></div>
+              <div id="add-insurance-document-form-container"></div>
+              <button type="button" class="button-secondary" onclick="addInsuranceDocumentForm()">Add Document</button>
+            </div>
+            <div class="button-container">
+              <button type="button" onclick="saveInsurance()">Save Insurance</button>
+              <button type="button" class="button-secondary" onclick="cancelInsuranceEdit()">Cancel</button>
+            </div>
+          </form>
+        </div>
+        <div id="insurance-modal-message"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm";
+    const supabase = createClient("https://sfknzqkiqxivzcualcau.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma256cWtpcXhpdnpjdWFsY2F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTU0ODksImV4cCI6MjA3MjM3MTQ4OX0.JKjOS9NRdbVH1UanfqmBeHmMSnlWlZtDr-5LdKw5YaA");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const shipmentId = urlParams.get("id");
+    let currentStageData = {};
+
+    const STAGE_ORDER = [
+      "forecast", "enlistment_verification", "availability_confirmation", "proforma", "purchase_order",
+      "invoice", "ip_number", "lc_opening", "lc_shared_with_supplier", "shipment_details_from_supplier",
+      "freight_query", "award_shipment", "non_negotiable_docs", "original_docs", "bank_endorsement",
+      "send_to_clearing_agent", "under_clearing_agent", "release_orders", "gate_out", "transportation",
+      "warehouse", "bills"
+    ];
+
+    const STAGE_DETAILS = {
+        "forecast": { name: "Forecast", icon: "fa-solid fa-bullhorn", responsible: "Sales Team", duration: "1 day" },
+        "enlistment_verification": { name: "Enlistment Verification", icon: "fa-solid fa-check-double", responsible: "Compliance", duration: "2 days" },
+        "availability_confirmation": { name: "Availability Confirmation", icon: "fa-solid fa-calendar-check", responsible: "Inventory", duration: "1 day" },
+        "purchase_order": { name: "Purchase Order", icon: "fa-solid fa-file-invoice", responsible: "Procurement", duration: "1 day" },
+        "proforma": { name: "Proforma", icon: "fa-solid fa-file-signature", responsible: "Finance Team", duration: "2 days" },
+        "invoice": { name: "Invoice", icon: "fa-solid fa-file-invoice-dollar", responsible: "Accounts", duration: "1 day" },
+        "ip_number": { name: "IP Number", icon: "fa-solid fa-hashtag", responsible: "Regulatory", duration: "2 days" },
+        "lc_opening": { name: "LC Opening", icon: "fa-solid fa-building-columns", responsible: "Finance Team", duration: "3 days" },
+        "lc_shared_with_supplier": { name: "LC Shared", icon: "fa-solid fa-share-square", responsible: "Finance Team", duration: "1 day" },
+        "shipment_details_from_supplier": { name: "Supplier Details", icon: "fa-solid fa-truck-fast", responsible: "Supplier Relations", duration: "1 day" },
+        "freight_query": { name: "Freight Query", icon: "fa-solid fa-dolly", responsible: "Logistics", duration: "2 days" },
+        "award_shipment": { name: "Award Shipment", icon: "fa-solid fa-award", responsible: "Operations", duration: "1 day" },
+        "non_negotiable_docs": { name: "Non Negotiable Docs", icon: "fa-solid fa-file-contract", responsible: "Documentation", duration: "2 days" },
+        "original_docs": { name: "Original Docs", icon: "fa-solid fa-file-import", responsible: "Documentation", duration: "1 day" },
+        "bank_endorsement": { name: "Bank Endorsement", icon: "fa-solid fa-signature", responsible: "Banking", duration: "2 days" },
+        "send_to_clearing_agent": { name: "Send to Clearing Agent", icon: "fa-solid fa-paper-plane", responsible: "Logistics", duration: "1 day" },
+        "under_clearing_agent": { name: "Under Clearing Agent", icon: "fa-solid fa-user-shield", responsible: "Clearing Agent", duration: "3 days" },
+        "release_orders": { name: "Release Orders", icon: "fa-solid fa-box-open", responsible: "Customs", duration: "2 days" },
+        "gate_out": { name: "Gate Out", icon: "fa-solid fa-torii-gate", responsible: "Port Authority", duration: "1 day" },
+        "transportation": { name: "Transportation", icon: "fa-solid fa-truck", responsible: "Transport Co.", duration: "5 days" },
+        "warehouse": { name: "Warehouse", icon: "fa-solid fa-warehouse", responsible: "Warehouse Team", duration: "1 day" },
+        "bills": { name: "Bills", icon: "fa-solid fa-money-bill-wave", responsible: "Finance Team", duration: "2 days" }
+    };
+
+    const STAGE_CONFIG = {
+        "enlistment_verification": {
+            table: "enlistment_verification",
+            fields: [
+                { name: "verified", type: "boolean", label: "Verified" },
+                { name: "verification_notes", type: "text", label: "Verification Notes" },
+                { name: "verified_at", type: "datetime-local", label: "Verified At" },
+                { name: "verifier_id", type: "uuid", label: "Verifier", fk: { relation: "app_user", displayColumn: "full_name" } },
+                { name: "verification_doc_url", type: "text", label: "Document URL", readonly: true }
+            ]
+        },
+        "availability_confirmation": {
+            table: "availability_confirmation",
+            fields: [
+                { name: "available", type: "boolean", label: "Available" },
+                { name: "notes", type: "text", label: "Notes" },
+                { name: "confirmed_at", type: "datetime-local", label: "Confirmed At" },
+                { name: "confirmed_by", type: "uuid", label: "Confirmed By", fk: { relation: "app_user", displayColumn: "full_name" } },
+                { name: "supplier_id", type: "uuid", label: "Supplier", fk: { relation: "supplier", displayColumn: "name" } }
+            ]
+        },
+        "purchase_order": {
+            table: "purchase_order",
+            fields: [
+                { name: "po_number", type: "text", label: "PO Number" },
+                { name: "po_date", type: "date", label: "PO Date" },
+                { name: "po_file_url", type: "text", label: "PO File URL", readonly: true }
+            ]
+        },
+        "proforma": {
+            table: "proforma_invoice",
+            fields: [
+                { name: "proforma_number", type: "text", label: "Proforma Number" },
+                { name: "proforma_date", type: "date", label: "Proforma Date" },
+                { name: "file_url", type: "text", label: "File URL", readonly: true }
+            ]
+        },
+        "invoice": {
+            table: "commercial_invoice",
+            fields: [
+                { name: "invoice_number", type: "text", label: "Invoice Number" },
+                { name: "invoice_date", type: "date", label: "Invoice Date" },
+                { name: "file_url", type: "text", label: "File URL", readonly: true }
+            ]
+        },
+        "ip_number": {
+            table: "ip_number",
+            fields: [
+                { name: "ip_reference", type: "text", label: "IP Reference" },
+                { name: "issued_date", type: "date", label: "Issued Date" },
+                { name: "file_url", type: "text", label: "File URL", readonly: true }
+            ]
+        },
+        "lc_opening": {
+            table: "letter_of_credit",
+            fields: [
+                { name: "lc_number", type: "text", label: "LC Number" },
+                { name: "opened_date", type: "date", label: "Opened Date" },
+                { name: "file_url", type: "text", label: "File URL", readonly: true },
+                { name: "bank_id", type: "uuid", label: "Bank", fk: { relation: "bank", displayColumn: "name" } }
+            ]
+        },
+        "lc_shared_with_supplier": {
+            table: "lc_share",
+            fields: [
+                { name: "shared_date", type: "date", label: "Shared Date" },
+                { name: "notes", type: "text", label: "Notes" }
+            ]
+        },
+        "shipment_details_from_supplier": {
+            table: "supplier_shipment_details",
+            fields: [
+                { name: "readiness_date", type: "date", label: "Readiness Date" },
+                { name: "dimensions", type: "jsonb", label: "Dimensions" },
+                { name: "gross_weight", type: "number", label: "Gross Weight" },
+                { name: "cartons_count", type: "number", label: "Cartons Count" },
+                { name: "transport", type: "text", label: "Transport" },
+                { name: "details_received_date", type: "date", label: "Details Received Date" }
+            ]
+        },
+        "freight_query": {
+            table: "freight_query",
+            fields: [
+                { name: "sent_at", type: "datetime-local", label: "Sent At" },
+                { name: "query_payload", type: "jsonb", label: "Query Payload" },
+                { name: "logistics_company_id", type: "uuid", label: "Logistics Company", fk: { relation: "logistics_company", displayColumn: "name" } }
+            ]
+        },
+        "award_shipment": {
+            table: "shipment_awarded",
+            fields: [
+                { name: "awarded", type: "boolean", label: "Awarded" },
+                { name: "notes", type: "text", label: "Notes" },
+                { name: "awarded_at", type: "datetime-local", label: "Awarded At" },
+                { name: "awarded_by", type: "uuid", label: "Awarded By", fk: { relation: "app_user", displayColumn: "full_name" } },
+                { name: "freight_quote_response_id", type: "uuid", label: "Freight Quote Response", fk: { relation: "freight_quote_response", displayColumn: "id" } }
+            ]
+        },
+        "non_negotiable_docs": {
+            table: "non_negotiable_docs",
+            fields: [
+                { name: "status", type: "select", label: "Status", options: ["Sended", "Arrived", "Pending"] },
+                { name: "sended_at", type: "datetime-local", label: "Sended At" },
+                { name: "uploaded_by", type: "uuid", label: "Uploaded By", fk: { relation: "app_user", displayColumn: "full_name" } },
+                { name: "docs_url", type: "text", label: "Docs URL", readonly: true },
+                { name: "bank_id", type: "uuid", label: "Bank", fk: { relation: "bank", displayColumn: "name" } }
+            ]
+        },
+        "original_docs": {
+            table: "original_docs",
+            fields: [
+                { name: "status", type: "text", label: "Status" },
+                { name: "received_at", type: "datetime-local", label: "Received At" },
+                { name: "uploaded_by", type: "uuid", label: "Uploaded By", fk: { relation: "app_user", displayColumn: "full_name" } },
+                { name: "docs_url", type: "text", label: "Docs URL", readonly: true },
+                { name: "shipping_company", type: "text", label: "Shipping Company" },
+                { name: "tracking_number", type: "text", label: "Tracking Number" },
+                { name: "shipping_guarantee_applied_date", type: "date", label: "Shipping Guarantee Applied Date" },
+                { name: "shipping_guarantee_received_date", type: "date", label: "Shipping Guarantee Received Date" },
+                { name: "dispatch_date", type: "date", label: "Dispatch Date" },
+                { name: "arrival_at_bank", type: "date", label: "Arrival at Bank" },
+                { name: "due_date", type: "date", label: "Due Date" },
+                { name: "payment_date", type: "date", label: "Payment Date" },
+                { name: "bank_id", type: "uuid", label: "Bank", fk: { relation: "bank", displayColumn: "name" } }
+            ]
+        },
+        "bank_endorsement": {
+            table: "bank_endorsement",
+            fields: [
+                { name: "endorsed", type: "boolean", label: "Endorsed" },
+                { name: "endorsed_at", type: "datetime-local", label: "Endorsed At" },
+                { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "app_user", displayColumn: "full_name" } }
+            ]
+        },
+        "send_to_clearing_agent": {
+            table: "docs_to_clearing_agent",
+            fields: [
+                { name: "name", type: "text", label: "Name" },
+                { name: "shipping_company", type: "text", label: "Shipping Company" },
+                { name: "tracking_number", type: "text", label: "Tracking Number" },
+                { name: "sended_at", type: "date", label: "Sended At" },
+                { name: "expected_arrival_date", type: "date", label: "Expected Arrival Date" },
+                { name: "slip_picture_url", type: "text", label: "Slip Picture URL", readonly: true },
+                { name: "clearing_agent_id", type: "uuid", label: "Clearing Agent", fk: { relation: "clearing_agent", displayColumn: "name" } }
+            ]
+        },
+        "under_clearing_agent": {
+            table: "under_clearing_agent",
+            fields: [
+                { name: "is_received", type: "boolean", label: "Received" },
+                { name: "receiving_date", type: "date", label: "Receiving Date" },
+                { name: "destuffed_date", type: "date", label: "Destuffed Date" },
+                { name: "frsd_application_date", type: "date", label: "FRSD Application Date" },
+                { name: "duty_payment_date", type: "date", label: "Duty Payment Date" },
+                { name: "sampling_date", type: "date", label: "Sampling Date" },
+                { name: "do_date", type: "date", label: "DO Date" },
+                { name: "clearing_agent_id", type: "uuid", label: "Clearing Agent", fk: { relation: "clearing_agent", displayColumn: "name" } }
+            ]
+        },
+        "release_orders": {
+            table: "release_orders",
+            fields: [
+                { name: "dpp_ro_number", type: "text", label: "DPP RO Number" },
+                { name: "dpp_date", type: "date", label: "DPP Date" },
+                { name: "fscrd_ro_number", type: "text", label: "FSCRD RO Number" },
+                { name: "fscrd_date", type: "date", label: "FSCRD Date" }
+            ]
+        },
+        "gate_out": {
+            table: "gate_out",
+            fields: [
+                { name: "is_gate_out", type: "boolean", label: "Gate Out" },
+                { name: "gate_out_date", type: "date", label: "Gate Out Date" },
+                { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "app_user", displayColumn: "full_name" } }
+            ]
+        },
+        "transportation": {
+            table: "transporter",
+            fields: [
+                { name: "transporter_name", type: "text", label: "Transporter Name" },
+                { name: "bilti_number", type: "text", label: "Bilti Number" },
+                { name: "bilti_date", type: "date", label: "Bilti Date" },
+                { name: "no_of_pieces", type: "number", label: "No of Pieces" },
+                { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "app_user", displayColumn: "full_name" } }
+            ]
+        },
+        "warehouse": {
+            table: "warehouse_arrival",
+            fields: [
+                { name: "warehouse_id", type: "fk", label: "Warehouse Name", fk: { relation: "warehouse", displayColumn: "warehouse_name" } },
+                { name: "arrival_date", type: "date", label: "Arrival Date" },
+                { name: "gr_no", type: "text", label: "GR No" },
+                { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "app_user", displayColumn: "full_name" } }
+            ]
+        },
+        "bills": {
+            table: "bills",
+            fields: [
+                { name: "forwarder_date", type: "date", label: "Forwarder Date" },
+                { name: "clearing_agent_date", type: "date", label: "Clearing Agent Date" },
+                { name: "transporter_date", type: "date", label: "Transporter Date" },
+                { name: "costing", type: "number", label: "Costing" },
+                { name: "updated_by", type: "uuid", label: "Updated By", fk: { relation: "app_user", displayColumn: "full_name" } }
+            ]
+        }
+    };
+
+    function showMessage(containerId, message, isError = false) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = `<p class="${isError ? 'error-message' : 'success-message'}">${message}</p>`;
+    }
+
+    function showToast(message, isSuccess = true) {
+        const toast = document.getElementById('toast-message');
+        toast.className = 'toast-notification'; // Reset classes
+        if (isSuccess) {
+            toast.classList.add('success');
+            toast.innerHTML = `<i class="fas fa-check-circle icon"></i> ${message}`;
+        } else {
+            toast.classList.add('error');
+            toast.innerHTML = `<i class="fas fa-exclamation-circle icon"></i> ${message}`;
+        }
+        
+        toast.classList.add('show');
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    async function initializeTracker() {
+        const { data, error } = await supabase
+            .from("shipment")
+            .select("*, shipment_products(*, product_variety(*, supplier(name)))")
+            .eq("id", shipmentId)
+            .single();
+
+        if (error) {
+            document.body.innerHTML = `<p class="error-message">Error loading shipment: ${error.message}</p>`;
+            return;
+        }
+
+        const { data: checklistData, error: checklistError } = await supabase
+            .from("v_shipment_stage_checklist")
+            .select("*")
+            .eq("shipment_id", shipmentId)
+            .single();
+        
+        if (checklistError) {
+            document.body.innerHTML = `<p class="error-message">Error loading checklist: ${checklistError.message}</p>`;
+            return;
+        }
+
+        const currentStageIndex = STAGE_ORDER.indexOf(data.current_stage);
+
+        // Update center hub
+        document.querySelector('.shipment-id').textContent = data.reference_code;
+        const productCount = data.shipment_products.length;
+        const productElement = document.querySelector('.shipment-product');
+        if (productCount > 1) {
+          productElement.textContent = `${productCount} Products`;
+          let productList = data.shipment_products.map(p => `${p.product_variety.product_name} - ${p.product_variety.variety_name}`).join('\n');
+          productElement.title = productList;
+        } else if (productCount === 1) {
+          productElement.textContent = `${data.shipment_products[0].product_variety.product_name} - ${data.shipment_products[0].product_variety.variety_name}`;
+        }
+        document.querySelector('.shipment-status').textContent = data.status;
+
+        // Render circular progress
+        const circularProgress = document.getElementById('circularProgress');
+        
+        // Remove existing stage nodes to prevent duplication on re-render
+        const existingNodes = circularProgress.querySelectorAll('.stage-node');
+        existingNodes.forEach(node => node.remove());
+
+        const radius = 320;
+        const centerX = 420;
+        const centerY = 420;
+        const totalStages = STAGE_ORDER.length;
+        const angleIncrement = (2 * Math.PI) / totalStages;
+
+        STAGE_ORDER.forEach((stageKey, index) => {
+            const stage = STAGE_DETAILS[stageKey];
+            const angle = index * angleIncrement - Math.PI / 2;
+            const x = centerX + radius * Math.cos(angle) - 40;
+            const y = centerY + radius * Math.sin(angle) - 40;
+            
+            const stageNode = document.createElement('div');
+            stageNode.className = 'stage-node';
+            stageNode.style.left = `${x}px`;
+            stageNode.style.top = `${y}px`;
+            
+            let statusClass = 'pending';
+            if (index < currentStageIndex) {
+                statusClass = 'completed';
+            } else if (index === currentStageIndex) {
+                statusClass = 'current';
+            }
+            
+            stageNode.classList.add(statusClass);
+            
+            stageNode.innerHTML = `
+            <i class="${stage.icon} stage-icon"></i>
+            <div class="stage-label">${stage.name}</div>
+            <div class="tooltip">
+                <strong>${stage.name}</strong><br>
+                ${stage.responsible}<br>
+                Duration: ${stage.duration}
+            </div>
+            `;
+
+            stageNode.addEventListener('click', () => openStageModal(stageKey));
+            circularProgress.appendChild(stageNode);
+        });
+
+        updateStatistics(currentStageIndex);
+        populateTimeline(currentStageIndex);
+        selectStage(currentStageIndex);
+    }
+
+    function updateStatistics(currentStageIndex) {
+        const completedCount = currentStageIndex;
+        const totalStages = STAGE_ORDER.length;
+        const progressPercent = Math.round((completedCount / totalStages) * 100);
+        const remainingCount = totalStages - completedCount;
+
+        document.getElementById('completedCount').textContent = completedCount;
+        document.getElementById('progressPercent').textContent = progressPercent + '%';
+        document.getElementById('remainingCount').textContent = remainingCount;
+        document.getElementById('overallProgress').style.width = progressPercent + '%';
+    }
+
+    function populateTimeline(currentStageIndex) {
+        const timeline = document.getElementById('timeline');
+        timeline.innerHTML = '';
+        
+        STAGE_ORDER.forEach((stageKey, index) => {
+            const stage = STAGE_DETAILS[stageKey];
+            let statusClass = 'pending';
+            let timeText = 'Pending';
+            
+            if (index < currentStageIndex) {
+            statusClass = 'completed';
+            timeText = `Completed`;
+            } else if (index === currentStageIndex) {
+            statusClass = 'current';
+            timeText = 'In Progress';
+            }
+            
+            const timelineItem = document.createElement('div');
+            timelineItem.className = 'timeline-item';
+            timelineItem.innerHTML = `
+            <div class="timeline-icon ${statusClass}">
+                <i class="${stage.icon}"></i>
+            </div>
+            <div class="timeline-content">
+                <div class="timeline-title">${stage.name}</div>
+                <div class="timeline-time">${timeText}</div>
+            </div>
+            `;
+            
+            timeline.appendChild(timelineItem);
+        });
+    }
+
+    function selectStage(index) {
+        const stageKey = STAGE_ORDER[index];
+        const stage = STAGE_DETAILS[stageKey];
+        const detailsContainer = document.getElementById('currentStageDetails');
+        
+        let statusText = 'Pending';
+        if (index < STAGE_ORDER.indexOf(currentStageData.current_stage)) {
+            statusText = 'Completed';
+        } else if (index === STAGE_ORDER.indexOf(currentStageData.current_stage)) {
+            statusText = 'In Progress';
+        }
+
+        detailsContainer.innerHTML = `
+            <h4>${stage.name}</h4>
+            <div class="detail-item">
+            <span class="detail-label">Responsible:</span>
+            <span class="detail-value">${stage.responsible}</span>
+            </div>
+            <div class="detail-item">
+            <span class="detail-label">Status:</span>
+            <span class="detail-value">${statusText}</span>
+            </div>
+        `;
+    }
+
+    async function openStageModal(stageName) {
+        const modal = document.getElementById('stage-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const table = document.getElementById('stage-details-table');
+        const editContainer = document.getElementById('stage-edit-container');
+        const editButton = document.getElementById('edit-stage-button');
+
+        // Show modal with loading state
+        modalTitle.innerText = 'Loading...';
+        table.innerHTML = '<tr><td>Loading stage details...</td></tr>';
+        editContainer.style.display = 'none';
+        editButton.style.display = 'none';
+        modal.classList.add('show');
+
+        console.log('openStageModal called with stageName:', stageName);
+        const { data: shipmentData, error: shipmentError } = await supabase
+        .from('shipment')
+        .select('current_stage')
+        .eq('id', shipmentId)
+        .single();
+
+        if (shipmentError) {
+            showMessage('stage-modal-message', `Error fetching shipment data: ${shipmentError.message}`, true);
+            setTimeout(() => closeModal(), 2000);
+            return;
+        }
+
+        const currentShipmentStage = shipmentData.current_stage;
+        const currentStageIndex = STAGE_ORDER.indexOf(currentShipmentStage);
+        const clickedStageIndex = STAGE_ORDER.indexOf(stageName);
+
+        if (stageName !== 'bills' && clickedStageIndex > currentStageIndex + 1) {
+            showToast('You must complete the previous stages first.', false);
+            closeModal();
+            return;
+        }
+
+        if (!stageName || !STAGE_CONFIG[stageName]) {
+            console.error("Invalid stage name or configuration for:", stageName);
+            closeModal();
+            return;
+        }
+        currentStageData.stageName = stageName;
+        const config = STAGE_CONFIG[stageName];
+        currentStageData.config = config;
+        modalTitle.innerText = stageName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        showMessage('stage-modal-message', '');
+        
+        await renderStageView();
+        console.log('Showing stage modal.');
+    }
+
+    async function renderStageView() {
+        const viewContainer = document.getElementById('stage-view-container');
+        const editContainer = document.getElementById('stage-edit-container');
+        const table = document.getElementById('stage-details-table');
+        const config = currentStageData.config;
+        
+        let selectString = '*';
+        config.fields.forEach(field => {
+            if (field.fk) {
+                const relationName = field.fk.relation;
+                const displayColumn = field.fk.displayColumn;
+                selectString += `, ${relationName}(${displayColumn})`;
+            }
+        });
+
+        const { data, error } = await supabase
+            .from(config.table)
+            .select(selectString)
+            .eq("shipment_id", shipmentId)
+            .maybeSingle();
+
+        if (error && error.code !== 'PGRST116') {
+            showMessage('stage-modal-message', `Error loading stage details: ${error.message}`, true);
+            return;
+        }
+        currentStageData.details = data || {};
+
+        table.innerHTML = ''; // Clear previous data
+
+        for (const field of currentStageData.config.fields) {
+            let value = currentStageData.details[field.name];
+            let displayValue = value;
+
+            if (field.fk) {
+                const relationName = field.fk.relation;
+                const relatedData = currentStageData.details[relationName];
+                if (relatedData && relatedData[field.fk.displayColumn]) {
+                    displayValue = relatedData[field.fk.displayColumn];
+                } 
+            }
+
+            if (value === undefined || value === null) {
+                displayValue = 'N/A';
+            }
+
+            if (field.type === 'boolean') {
+                displayValue = value ? 'Yes' : 'No';
+            }
+
+            if (field.name.endsWith('_url') || field.name.endsWith('_doc')) {
+                if (value) {
+                    displayValue = `<a href="${value}" target="_blank" class="button button-secondary">View Document</a>`;
+                } else {
+                    displayValue = 'N/A';
+                }
+            }
+
+            const row = table.insertRow();
+            row.innerHTML = `<td>${field.label}</td><td>${displayValue || 'N/A'}</td>`;
+        }
+
+        const buttonContainer = viewContainer.querySelector('.button-container');
+        if (buttonContainer) {
+            // Clear existing buttons before adding new ones
+            buttonContainer.innerHTML = '<button id="edit-stage-button" onclick="renderStageEdit()">Edit</button>';
+        }
+
+        if (currentStageData.stageName === 'bills') {
+            if (buttonContainer) {
+                const bankChargesButton = document.createElement('button');
+                bankChargesButton.textContent = 'Manage Bank Charges';
+                bankChargesButton.onclick = openBankChargesModal;
+                bankChargesButton.classList.add('button-secondary', 'ml-2');
+                buttonContainer.appendChild(bankChargesButton);
+
+                const insuranceButton = document.createElement('button');
+                insuranceButton.textContent = 'Manage Insurance';
+                insuranceButton.onclick = openInsuranceModal;
+                insuranceButton.classList.add('button-secondary', 'ml-2');
+                buttonContainer.appendChild(insuranceButton);
+            }
+        }
+
+        viewContainer.style.display = 'block';
+        editContainer.style.display = 'none';
+        document.getElementById('edit-stage-button').style.display = 'block';
+        document.getElementById('save-stage-button').style.display = 'none';
+        document.getElementById('cancel-edit-button').style.display = 'none';
+    }
+
+    async function renderStageEdit() {
+        const viewContainer = document.getElementById('stage-view-container');
+        const editContainer = document.getElementById('stage-edit-container');
+        const form = document.getElementById('modal-form');
+        form.innerHTML = ''; // Clear previous form
+        const config = currentStageData.config;
+        const data = currentStageData.details;
+
+        for (const field of config.fields) {
+            const value = data ? data[field.name] : '';
+            const formField = document.createElement('div');
+            formField.classList.add('form-field');
+            let fieldHtml = `<label for="${field.name}">${field.label}:</label>`;
+            if (field.type === 'select') {
+                fieldHtml += `<select id="${field.name}" name="${field.name}">`;
+                field.options.forEach(option => {
+                    fieldHtml += `<option value="${option}" ${value === option ? 'selected' : ''}>${option}</option>`;
+                });
+                fieldHtml += `</select>`;
+            } else if (field.fk) {
+                fieldHtml += `<select id="${field.name}" name="${field.name}"></select>`;
+            } else if (field.type === 'boolean') {
+                fieldHtml += `<label class="switch">
+                                    <input type="checkbox" id="${field.name}" name="${field.name}" ${value ? 'checked' : ''}>
+                                    <span class="slider round"></span>
+                                </label>`;
+            } else if (field.type === 'jsonb') {
+                fieldHtml += `<textarea id="${field.name}" name="${field.name}">${value ? JSON.stringify(value, null, 2) : ''}</textarea>`;
+            } else {
+                fieldHtml += `<input type="${field.type}" id="${field.name}" name="${field.name}" value="${value || ''}" ${field.readonly ? 'readonly' : ''}>`;
+            }
+            formField.innerHTML = fieldHtml;
+            form.appendChild(formField);
+        }
+
+        // Populate foreign key dropdowns and special fields
+        for (const field of config.fields) {
+            if (field.fk) {
+                if (currentStageData.stageName === 'award_shipment' && field.name === 'freight_quote_response_id') {
+                    const { data: freightQueries, error: fqError } = await supabase
+                        .from('freight_query')
+                        .select('id')
+                        .eq('shipment_id', shipmentId);
+
+                    if (fqError) {
+                        console.error('Error loading freight queries:', fqError);
+                        continue;
+                    }
+
+                    const freightQueryIds = freightQueries.map(fq => fq.id);
+
+                    const { data: fkData, error: fkError } = await supabase
+                        .from('freight_quote_response')
+                        .select(`id, freight_query (*, logistics_company(name)) `)
+                        .in('freight_query_id', freightQueryIds);
+
+                    if (fkError) {
+                        console.error(`Error loading data for ${field.fk.relation}:`, fkError);
+                        continue;
+                    }
+                    const select = document.getElementById(field.name);
+                    fkData.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.freight_query.logistics_company.name;
+                        if (data && data[field.name] === item.id) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+                } else {
+                    const { data: fkData, error: fkError } = await supabase.from(field.fk.relation).select(`id, ${field.fk.displayColumn}`);
+                    if (fkError) {
+                        console.error(`Error loading data for ${field.fk.relation}:`, fkError);
+                        continue;
+                    }
+                    const select = document.getElementById(field.name);
+                    fkData.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item[field.fk.displayColumn];
+                        if (data && data[field.name] === item.id) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+                }
+            } else if (currentStageData.stageName === 'award_shipment' && field.name === 'awarded_by') {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                document.getElementById(field.name).value = user.id;
+                document.getElementById(field.name).readOnly = true;
+                }
+            }
+        }
+
+        const docUploadContainer = document.getElementById('document-upload-container');
+        if (new Set(["availability_confirmation", "lc_shared_with_supplier", "shipment_details_from_supplier", "freight_query", "award_shipment", "bank_endorsement", "under_clearing_agent", "release_orders", "gate_out", "transportation", "warehouse_arrival", "bills"]).has(currentStageData.stageName)) {
+            docUploadContainer.style.display = 'none';
+        } else {
+            docUploadContainer.style.display = 'block';
+        }
+
+        viewContainer.style.display = 'none';
+        editContainer.style.display = 'block';
+        document.getElementById('edit-stage-button').style.display = 'none';
+        document.getElementById('save-stage-button').style.display = 'block';
+        document.getElementById('cancel-edit-button').style.display = 'block';
+    }
+
+    async function saveStageDetails() {
+        const modalLoader = document.querySelector('#stage-modal .modal-loader');
+        try {
+            modalLoader.style.display = 'flex';
+            console.log('saveStageDetails function called.');
+            const stageName = currentStageData.stageName;
+            const config = STAGE_CONFIG[stageName];
+            const form = document.getElementById('modal-form');
+            const formData = new FormData(form);
+            const updates = { 
+                shipment_id: shipmentId
+            };
+
+            const fileUrlField = config.fields.find(f => f.name.endsWith('_url') || f.name.endsWith('_doc'));
+            let file_url = null;
+            if (fileUrlField && currentStageData.details) {
+                file_url = currentStageData.details[fileUrlField.name] || null;
+            }
+
+            for (const field of config.fields) {
+                const key = field.name;
+                if (key === (fileUrlField ? fileUrlField.name : '')) continue;
+
+                let value = formData.get(key);
+
+                if (field.type === 'boolean') {
+                    updates[key] = form.querySelector(`[name="${key}"]`).checked;
+                } else if (field.type === 'datetime-local') {
+                    updates[key] = value ? new Date(value).toISOString() : null;
+                } else if (field.type === 'jsonb') {
+                    try {
+                        updates[key] = value ? JSON.parse(value) : null;
+                    } catch (e) {
+                        showMessage("stage-modal-message", `<p class="error-message">Invalid JSON in ${field.label}</p>`);
+                        return;
+                    }
+                } else if (field.type === 'uuid' && !value) {
+                    continue;
+                } else if (field.type !== 'file') {
+                    updates[key] = value || null;
+                }
+            }
+
+            const file = document.getElementById('document').files[0];
+            if (file && file.size > 0) {
+                const { data, error } = await supabase.storage
+                    .from('shipment-docs')
+                    .upload(`${shipmentId}/${stageName}/${file.name}`, file, {
+                        cacheControl: '3600',
+                        upsert: true
+                    });
+
+                if (error) {
+                    showMessage('stage-modal-message', `Error uploading file: ${error.message}`, true);
+                    return;
+                }
+
+                const { data: publicUrlData } = supabase.storage.from('shipment-docs').getPublicUrl(data.path);
+                file_url = publicUrlData.publicUrl;
+
+                if (file_url && fileUrlField) {
+                    updates[fileUrlField.name] = file_url;
+
+                    const { data: { user } } = await supabase.auth.getUser();
+                    const { error: docError } = await supabase.from('document').insert({
+                        shipment_id: shipmentId,
+                        doc_type: stageName,
+                        file_url: file_url,
+                        uploaded_by: user.id
+                    });
+
+                    if (docError) {
+                        showMessage('stage-modal-message', `Error saving document record: ${docError.message}`, true);
+                        return;
+                    }
+                }
+            }
+
+            Object.keys(updates).forEach(key => {
+                if (updates[key] === undefined) {
+                    delete updates[key];
+                }
+            });
+
+            console.log('Sending updates:', updates);
+
+            let query;
+            if (stageName === 'freight_query') {
+                query = supabase.from(config.table).insert(updates);
+            } else {
+                query = supabase.from(config.table).upsert(updates, {
+                    onConflict: 'shipment_id'
+                });
+            }
+
+            const { error: upsertError } = await query;
+
+            if (upsertError) {
+                showMessage("stage-modal-message", `<p class="error-message">Error saving details: ${upsertError.message}</p>`);
+                return;
+            }
+            console.log('Upsert successful.');
+
+            const { data: checklistData, error: checklistError } = await supabase
+                .from('v_shipment_stage_checklist')
+                .select('current_stage')
+                .eq('shipment_id', shipmentId)
+                .single();
+
+            if (checklistError) {
+                showMessage('stage-modal-message', `Error fetching current stage: ${checklistError.message}`, true);
+                return;
+            }
+
+            if (stageName === 'bills' && checklistData.current_stage !== 'warehouse') {
+                closeModal();
+                initializeTracker();
+                showToast('Bills updated successfully!', true);
+                return;
+            }
+
+            const { data: nextStageData, error: nextStageError } = await supabase
+                .from('stage_edge')
+                .select('to_stage')
+                .eq('from_stage', checklistData.current_stage);
+
+            if (nextStageError) {
+                showMessage('stage-modal-message', `Error fetching next stage: ${nextStageError.message}`, true);
+                return;
+            }
+
+            if (!nextStageData || nextStageData.length === 0) {
+                closeModal();
+                initializeTracker();
+                showToast('Stage updated successfully!', true);
+                return;
+            }
+
+            const nextStage = nextStageData[0].to_stage;
+
+            const { error: advanceStageError } = await supabase.rpc('advance_stage', {
+                p_shipment_id: shipmentId,
+                p_to_stage: nextStage,
+                p_meta: { manual: true }
+            });
+
+            if (advanceStageError) {
+                if (advanceStageError.message.includes('Requirements not met')) {
+                    showMessage("stage-modal-message", `<p class="warning-message">Data saved, but the stage cannot be advanced. Please ensure all required fields are filled. Reason: ${advanceStageError.message}</p>`);
+                    initializeTracker();
+                } else {
+                    showMessage("stage-modal-message", `<p class="error-message">Error advancing stage: ${advanceStageError.message}</p>`);
+                }
+            } else {
+                closeModal();
+                initializeTracker();
+                showToast('Stage updated and advanced successfully!', true);
+            }
+        } finally {
+            modalLoader.style.display = 'none';
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('stage-modal');
+        modal.classList.remove('show');
+    }
+
+    let bankChargesData = {};
+
+    async function openBankChargesModal() {
+        const modal = document.getElementById('bank-charges-modal');
+        modal.classList.add('show');
+        
+        const { data, error } = await supabase
+            .from('bank_charges')
+            .select(`
+                *,
+                issuance (*),
+                amendment (*),
+                final_payment (*),
+                bank_charge_documents (*)
+            `)
+            .eq('shipment_id', shipmentId)
+            .single();
+
+        if (error && error.code !== 'PGRST116') {
+            showMessage('bank-charges-modal-message', `Error loading bank charges: ${error.message}`, true);
+            return;
+        }
+        bankChargesData = data || {};
+        renderBankChargesView();
+    }
+
+    function renderBankChargesView() {
+        const viewContainer = document.getElementById('bank-charges-view-container');
+        const editContainer = document.getElementById('bank-charges-edit-container');
+        const detailsTable = document.getElementById('bank-charges-details-table');
+
+        let html = '<div class="form-section"><h3>Main Details</h3><div class="form-grid">';
+        html += `<div class="detail-item"><span class="detail-label">USD Amount:</span><span class="detail-value">${bankChargesData.usd_amount || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">Rate:</span><span class="detail-value">${bankChargesData.rate || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">RS:</span><span class="detail-value">${bankChargesData.rs || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">LC Issuance Date:</span><span class="detail-value">${bankChargesData.lc_issuance_date || 'N/A'}</span></div>`;
+        html += '</div></div>';
+
+        if (bankChargesData.issuance && bankChargesData.issuance.length > 0) {
+            const issuance = bankChargesData.issuance[0];
+            html += '<div class="form-section"><h3>Issuance Charges</h3><div class="form-grid">';
+            html += `<div class="detail-item"><span class="detail-label">Services Charges Amount:</span><span class="detail-value">${issuance.services_charges_amount || 'N/A'}</span></div>`;
+            html += `<div class="detail-item"><span class="detail-label">Services Charges (%):</span><span class="detail-value">${issuance.services_charges_per || 'N/A'}</span></div>`;
+            html += `<div class="detail-item"><span class="detail-label">Swift Amount:</span><span class="detail-value">${issuance.swift_amount || 'N/A'}</span></div>`;
+            html += `<div class="detail-item"><span class="detail-label">Swift (%):</span><span class="detail-value">${issuance.swift_percentage || 'N/A'}</span></div>`;
+            html += `<div class="detail-item"><span class="detail-label">FED Amount:</span><span class="detail-value">${issuance.fed_amount || 'N/A'}</span></div>`;
+            html += `<div class="detail-item"><span class="detail-label">FED (%):</span><span class="detail-value">${issuance.fed_per || 'N/A'}</span></div>`;
+            html += '</div></div>';
+        }
+
+        if (bankChargesData.amendment && bankChargesData.amendment.length > 0) {
+            const amendment = bankChargesData.amendment[0];
+            html += '<div class="form-section"><h3>Amendment Charges</h3><div class="form-grid">';
+            html += `<div class="detail-item"><span class="detail-label">Amendment Charges Amount:</span><span class="detail-value">${amendment.amendment_charges_amount || 'N/A'}</span></div>`;
+            html += `<div class="detail-item"><span class="detail-label">Amendment Charges (%):</span><span class="detail-value">${amendment.amendment_charges_per || 'N/A'}</span></div>`;
+            html += `<div class="detail-item"><span class="detail-label">FED Amount:</span><span class="detail-value">${amendment.fed_amount || 'N/A'}</span></div>`;
+            html += `<div class="detail-item"><span class="detail-label">FED (%):</span><span class="detail-value">${amendment.fed_per || 'N/A'}</span></div>`;
+            html += '</div></div>';
+        }
+
+        if (bankChargesData.final_payment && bankChargesData.final_payment.length > 0) {
+            const final_payment = bankChargesData.final_payment[0];
+            html += '<div class="form-section"><h3>Final Payment Charges</h3><div class="form-grid">';
+            html += `<div class="detail-item"><span class="detail-label">Services Charges Amount:</span><span class="detail-value">${final_payment.services_charges_amount || 'N/A'}</span></div>`;
+            html += `<div class="detail-item"><span class="detail-label">Services Charges (%):</span><span class="detail-value">${final_payment.services_charges_per || 'N/A'}</span></div>`;
+            html += `<div class="detail-item"><span class="detail-label">FED Amount:</span><span class="detail-value">${final_payment.fed_amount || 'N/A'}</span></div>`;
+            html += `<div class="detail-item"><span class="detail-label">FED (%):</span><span class="detail-value">${final_payment.fed_per || 'N/A'}</span></div>`;
+            html += '</div></div>';
+        }
+
+        if (bankChargesData.bank_charge_documents && bankChargesData.bank_charge_documents.length > 0) {
+            html += '<div class="form-section"><h3>Documents</h3><ul>';
+            bankChargesData.bank_charge_documents.forEach(doc => {
+                html += `<li><a href="${doc.file_url}" target="_blank">${doc.file_name}</a> (${doc.doc_category || 'No Category'})</li>`;
+            });
+            html += '</ul></div>';
+        }
+
+        detailsTable.innerHTML = html;
+
+        viewContainer.style.display = 'block';
+        editContainer.style.display = 'none';
+    }
+
+    function renderBankChargesEdit() {
+        const viewContainer = document.getElementById('bank-charges-view-container');
+        const editContainer = document.getElementById('bank-charges-edit-container');
+
+        document.getElementById('bank_charges_id').value = bankChargesData.id || '';
+        document.getElementById('usd_amount').value = bankChargesData.usd_amount || '';
+        document.getElementById('rate').value = bankChargesData.rate || '';
+        document.getElementById('rs').value = bankChargesData.rs || '';
+        document.getElementById('lc_issuance_date').value = bankChargesData.lc_issuance_date || '';
+
+        if (bankChargesData.issuance && bankChargesData.issuance.length > 0) {
+            const issuance = bankChargesData.issuance[0];
+            document.getElementById('issuance_services_charges_amount').value = issuance.services_charges_amount || '';
+            document.getElementById('issuance_services_charges_per').value = issuance.services_charges_per || '';
+            document.getElementById('issuance_swift_amount').value = issuance.swift_amount || '';
+            document.getElementById('issuance_swift_percentage').value = issuance.swift_percentage || '';
+            document.getElementById('issuance_fed_amount').value = issuance.fed_amount || '';
+            document.getElementById('issuance_fed_per').value = issuance.fed_per || '';
+        }
+
+        if (bankChargesData.amendment && bankChargesData.amendment.length > 0) {
+            const amendment = bankChargesData.amendment[0];
+            document.getElementById('amendment_charges_amount').value = amendment.amendment_charges_amount || '';
+            document.getElementById('amendment_charges_per').value = amendment.amendment_charges_per || '';
+            document.getElementById('amendment_fed_amount').value = amendment.fed_amount || '';
+            document.getElementById('amendment_fed_per').value = amendment.fed_per || '';
+        }
+
+        if (bankChargesData.final_payment && bankChargesData.final_payment.length > 0) {
+            const final_payment = bankChargesData.final_payment[0];
+            document.getElementById('final_payment_services_charges_amount').value = final_payment.services_charges_amount || '';
+            document.getElementById('final_payment_services_charges_per').value = final_payment.services_charges_per || '';
+            document.getElementById('final_payment_fed_amount').value = final_payment.fed_amount || '';
+            document.getElementById('final_payment_fed_per').value = final_payment.fed_per || '';
+        }
+
+        const documentsList = document.getElementById('bank-charge-documents-list');
+        documentsList.innerHTML = '';
+        if (bankChargesData.bank_charge_documents && bankChargesData.bank_charge_documents.length > 0) {
+            let docsHtml = '<h4>Uploaded Documents</h4><ul>';
+            bankChargesData.bank_charge_documents.forEach(doc => {
+                docsHtml += `<li><a href="${doc.file_url}" target="_blank">${doc.file_name}</a> (${doc.doc_category || 'No Category'})</li>`;
+            });
+            docsHtml += '</ul>';
+            documentsList.innerHTML = docsHtml;
+        }
+
+        viewContainer.style.display = 'none';
+        editContainer.style.display = 'block';
+    }
+
+    function cancelBankChargesEdit() {
+        renderBankChargesView();
+    }
+
+    function closeBankChargesModal() {
+        const modal = document.getElementById('bank-charges-modal');
+        modal.classList.remove('show');
+    }
+
+    function getNumericValue(id) {
+        const value = document.getElementById(id).value;
+        return value === '' ? null : value;
+    }
+
+    async function saveBankCharges() {
+        const bankChargesId = document.getElementById('bank_charges_id').value;
+        const { data: { user } } = await supabase.auth.getUser();
+
+        const bankChargesData = {
+            shipment_id: shipmentId,
+            usd_amount: getNumericValue('usd_amount'),
+            rate: getNumericValue('rate'),
+            rs: getNumericValue('rs'),
+            lc_issuance_date: document.getElementById('lc_issuance_date').value || null,
+            created_by: user.id
+        };
+
+        let bcId = bankChargesId;
+
+        if (bankChargesId) {
+            const { error } = await supabase.from('bank_charges').update(bankChargesData).eq('id', bankChargesId);
+            if (error) {
+                showMessage('bank-charges-modal-message', `Error updating bank charges: ${error.message}`, true);
+                return;
+            }
+        } else {
+            const { data, error } = await supabase.from('bank_charges').insert(bankChargesData).select().single();
+            if (error) {
+                showMessage('bank-charges-modal-message', `Error creating bank charges: ${error.message}`, true);
+                return;
+            }
+            bcId = data.id;
+            document.getElementById('bank_charges_id').value = bcId;
+        }
+
+        const issuanceData = {
+            bank_charges_id: bcId,
+            shipment_id: shipmentId,
+            services_charges_amount: getNumericValue('issuance_services_charges_amount'),
+            services_charges_per: getNumericValue('issuance_services_charges_per'),
+            swift_amount: getNumericValue('issuance_swift_amount'),
+            swift_percentage: getNumericValue('issuance_swift_percentage'),
+            fed_amount: getNumericValue('issuance_fed_amount'),
+            fed_per: getNumericValue('issuance_fed_per'),
+            created_by: user.id
+        };
+        const { error: issuanceError } = await supabase.from('issuance').upsert(issuanceData, { onConflict: 'bank_charges_id' });
+        if (issuanceError) {
+            showMessage('bank-charges-modal-message', `Error saving issuance charges: ${issuanceError.message}`, true);
+            return;
+        }
+
+        const amendmentData = {
+            bank_charges_id: bcId,
+            shipment_id: shipmentId,
+            amendment_charges_amount: getNumericValue('amendment_charges_amount'),
+            amendment_charges_per: getNumericValue('amendment_charges_per'),
+            fed_amount: getNumericValue('amendment_fed_amount'),
+            fed_per: getNumericValue('amendment_fed_per'),
+            created_by: user.id
+        };
+        const { error: amendmentError } = await supabase.from('amendment').upsert(amendmentData, { onConflict: 'bank_charges_id' });
+        if (amendmentError) {
+            showMessage('bank-charges-modal-message', `Error saving amendment charges: ${amendmentError.message}`, true);
+            return;
+        }
+
+        const finalPaymentData = {
+            bank_charges_id: bcId,
+            shipment_id: shipmentId,
+            services_charges_amount: getNumericValue('final_payment_services_charges_amount'),
+            services_charges_per: getNumericValue('final_payment_services_charges_per'),
+            fed_amount: getNumericValue('final_payment_fed_amount'),
+            fed_per: getNumericValue('final_payment_fed_per'),
+            created_by: user.id
+        };
+        const { error: finalPaymentError } = await supabase.from('final_payment').upsert(finalPaymentData, { onConflict: 'bank_charges_id' });
+        if (finalPaymentError) {
+            showMessage('bank-charges-modal-message', `Error saving final payment charges: ${finalPaymentError.message}`, true);
+            return;
+        }
+
+        showToast('Bank charges saved successfully!', true);
+        await openBankChargesModal();
+    }
+
+    function addDocumentForm() {
+        const container = document.getElementById('add-document-form-container');
+        const formHtml = `
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="new_doc_name">File Name</label>
+                    <input type="text" id="new_doc_name" name="new_doc_name">
+                </div>
+                <div class="form-group">
+                    <label for="new_doc_category">File Category</label>
+                    <input type="text" id="new_doc_category" name="new_doc_category">
+                </div>
+                <div class="form-group">
+                    <label for="new_doc_file">File</label>
+                    <input type="file" id="new_doc_file" name="new_doc_file">
+                </div>
+            </div>
+            <button type="button" onclick="saveBankChargeDocument()">Save Document</button>
+            <button type="button" class="button-secondary" onclick="cancelAddDocument()">Cancel</button>
+        `;
+        container.innerHTML = formHtml;
+    }
+
+    function cancelAddDocument() {
+        const container = document.getElementById('add-document-form-container');
+        container.innerHTML = '';
+    }
+
+    async function saveBankChargeDocument() {
+        let bankChargesId = document.getElementById('bank_charges_id').value;
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // If bank charges do not exist, create a new entry first
+        if (!bankChargesId) {
+            const { data, error } = await supabase.from('bank_charges').insert({ shipment_id: shipmentId, created_by: user.id }).select().single();
+            if (error) {
+                showMessage('bank-charges-modal-message', `Error creating bank charges: ${error.message}`, true);
+                return;
+            }
+            bankChargesId = data.id;
+            document.getElementById('bank_charges_id').value = bankChargesId;
+        }
+
+        const fileName = document.getElementById('new_doc_name').value;
+        const fileCategory = document.getElementById('new_doc_category').value;
+        const file = document.getElementById('new_doc_file').files[0];
+
+        if (!file) {
+            showMessage('bank-charges-modal-message', 'File is required.', true);
+            return;
+        }
+
+        const { data, error } = await supabase.storage
+            .from('shipment-docs')
+            .upload(`${shipmentId}/bank_charges/${file.name}`, file, {
+                cacheControl: '3600',
+                upsert: true
+            });
+
+        if (error) {
+            showMessage('bank-charges-modal-message', `Error uploading file: ${error.message}`, true);
+            return;
+        }
+
+        const { data: publicUrlData } = supabase.storage.from('shipment-docs').getPublicUrl(data.path);
+
+        const docData = {
+            bank_charges_id: bankChargesId,
+            file_url: publicUrlData.publicUrl,
+            file_name: fileName || file.name,
+            doc_category: fileCategory,
+            uploaded_by: user.id
+        };
+
+        const { error: docError } = await supabase.from('bank_charge_documents').insert(docData);
+
+        if (docError) {
+            showMessage('bank-charges-modal-message', `Error saving document record: ${docError.message}`, true);
+        } else {
+            showToast('Document saved successfully!', true);
+            cancelAddDocument();
+            await openBankChargesModal(); // Refresh the modal
+        }
+    }
+
+    window.openBankChargesModal = openBankChargesModal;
+    window.closeBankChargesModal = closeBankChargesModal;
+    window.saveBankCharges = saveBankCharges;
+    window.addDocumentForm = addDocumentForm;
+    window.cancelAddDocument = cancelAddDocument;
+    window.saveBankChargeDocument = saveBankChargeDocument;
+    window.renderBankChargesView = renderBankChargesView;
+    window.renderBankChargesEdit = renderBankChargesEdit;
+    window.cancelBankChargesEdit = cancelBankChargesEdit;
+
+    let insuranceData = {};
+
+    async function openInsuranceModal() {
+        const modal = document.getElementById('insurance-modal');
+        modal.classList.add('show');
+        
+        const { data, error } = await supabase
+            .from('insurance')
+            .select(`
+                *,
+                insurance_documents (*)
+            `)
+            .eq('shipment_id', shipmentId)
+            .single();
+
+        if (error && error.code !== 'PGRST116') {
+            showMessage('insurance-modal-message', `Error loading insurance: ${error.message}`, true);
+            return;
+        }
+        insuranceData = data || {};
+        renderInsuranceView();
+    }
+
+    function renderInsuranceView() {
+        const viewContainer = document.getElementById('insurance-view-container');
+        const editContainer = document.getElementById('insurance-edit-container');
+        const detailsTable = document.getElementById('insurance-details-table');
+
+        let html = '<div class="form-section"><h3>Insurance Details</h3><div class="form-grid">';
+        html += `<div class="detail-item"><span class="detail-label">Value:</span><span class="detail-value">${insuranceData.value || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">Rate:</span><span class="detail-value">${insuranceData.rate || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">Amount:</span><span class="detail-value">${insuranceData.amount || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">10%:</span><span class="detail-value">${insuranceData.ten_perc || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">Total Value:</span><span class="detail-value">${insuranceData.total_value || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">Marine (%):</span><span class="detail-value">${insuranceData.marine_perc || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">Marine Amount:</span><span class="detail-value">${insuranceData.marine_amount || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">War (%):</span><span class="detail-value">${insuranceData.war_perc || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">War Amount:</span><span class="detail-value">${insuranceData.war_amount || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">ASC:</span><span class="detail-value">${insuranceData.asc_1 || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">FIF (%):</span><span class="detail-value">${insuranceData.fif_perc || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">FIF Amount:</span><span class="detail-value">${insuranceData.fif_amount || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">STS (%):</span><span class="detail-value">${insuranceData.sts_perc || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">STS Amount:</span><span class="detail-value">${insuranceData.sts_amount || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">Stamp:</span><span class="detail-value">${insuranceData.stamp || 'N/A'}</span></div>`;
+        html += `<div class="detail-item"><span class="detail-label">Grand Total:</span><span class="detail-value">${insuranceData.grand_total || 'N/A'}</span></div>`;
+        html += '</div></div>';
+
+        if (insuranceData.insurance_documents && insuranceData.insurance_documents.length > 0) {
+            html += '<div class="form-section"><h3>Documents</h3><ul>';
+            insuranceData.insurance_documents.forEach(doc => {
+                html += `<li><a href="${doc.file_url}" target="_blank">${doc.file_name}</a> (${doc.doc_category || 'No Category'})</li>`;
+            });
+            html += '</ul></div>';
+        }
+
+        detailsTable.innerHTML = html;
+
+        viewContainer.style.display = 'block';
+        editContainer.style.display = 'none';
+    }
+
+    function renderInsuranceEdit() {
+        const viewContainer = document.getElementById('insurance-view-container');
+        const editContainer = document.getElementById('insurance-edit-container');
+
+        document.getElementById('insurance_id').value = insuranceData.id || '';
+        document.getElementById('value').value = insuranceData.value || '';
+        document.getElementById('rate').value = insuranceData.rate || '';
+        document.getElementById('amount').value = insuranceData.amount || '';
+        document.getElementById('ten_perc').value = insuranceData.ten_perc || '';
+        document.getElementById('total_value').value = insuranceData.total_value || '';
+        document.getElementById('marine_perc').value = insuranceData.marine_perc || '';
+        document.getElementById('marine_amount').value = insuranceData.marine_amount || '';
+        document.getElementById('war_perc').value = insuranceData.war_perc || '';
+        document.getElementById('war_amount').value = insuranceData.war_amount || '';
+        document.getElementById('asc_1').value = insuranceData.asc_1 || '';
+        document.getElementById('fif_perc').value = insuranceData.fif_perc || '';
+        document.getElementById('fif_amount').value = insuranceData.fif_amount || '';
+        document.getElementById('sts_perc').value = insuranceData.sts_perc || '';
+        document.getElementById('sts_amount').value = insuranceData.sts_amount || '';
+        document.getElementById('stamp').value = insuranceData.stamp || '';
+        document.getElementById('grand_total').value = insuranceData.grand_total || '';
+
+        const documentsList = document.getElementById('insurance-documents-list');
+        documentsList.innerHTML = '';
+        if (insuranceData.insurance_documents && insuranceData.insurance_documents.length > 0) {
+            let docsHtml = '<h4>Uploaded Documents</h4><ul>';
+            insuranceData.insurance_documents.forEach(doc => {
+                docsHtml += `<li><a href="${doc.file_url}" target="_blank">${doc.file_name}</a> (${doc.doc_category || 'No Category'})</li>`;
+            });
+            docsHtml += '</ul>';
+            documentsList.innerHTML = docsHtml;
+        }
+
+        viewContainer.style.display = 'none';
+        editContainer.style.display = 'block';
+    }
+
+    function cancelInsuranceEdit() {
+        renderInsuranceView();
+    }
+
+    function closeInsuranceModal() {
+        const modal = document.getElementById('insurance-modal');
+        modal.classList.remove('show');
+    }
+
+    async function saveInsurance() {
+        const insuranceId = document.getElementById('insurance_id').value;
+        const { data: { user } } = await supabase.auth.getUser();
+
+        const insuranceDetails = {
+            shipment_id: shipmentId,
+            value: getNumericValue('value'),
+            rate: getNumericValue('rate'),
+            amount: getNumericValue('amount'),
+            ten_perc: getNumericValue('ten_perc'),
+            total_value: getNumericValue('total_value'),
+            marine_perc: getNumericValue('marine_perc'),
+            marine_amount: getNumericValue('marine_amount'),
+            war_perc: getNumericValue('war_perc'),
+            war_amount: getNumericValue('war_amount'),
+            asc_1: getNumericValue('asc_1'),
+            fif_perc: getNumericValue('fif_perc'),
+            fif_amount: getNumericValue('fif_amount'),
+            sts_perc: getNumericValue('sts_perc'),
+            sts_amount: getNumericValue('sts_amount'),
+            stamp: getNumericValue('stamp'),
+            grand_total: getNumericValue('grand_total'),
+            created_by: user.id
+        };
+
+        if (insuranceId) {
+            const { error } = await supabase.from('insurance').update(insuranceDetails).eq('id', insuranceId);
+            if (error) {
+                showMessage('insurance-modal-message', `Error updating insurance: ${error.message}`, true);
+                return;
+            }
+        } else {
+            const { data, error } = await supabase.from('insurance').insert(insuranceDetails).select().single();
+            if (error) {
+                showMessage('insurance-modal-message', `Error creating insurance: ${error.message}`, true);
+                return;
+            }
+            document.getElementById('insurance_id').value = data.id;
+        }
+
+        showToast('Insurance saved successfully!', true);
+        await openInsuranceModal();
+    }
+
+    function addInsuranceDocumentForm() {
+        const container = document.getElementById('add-insurance-document-form-container');
+        const formHtml = `
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="new_insurance_doc_name">File Name</label>
+                    <input type="text" id="new_insurance_doc_name" name="new_insurance_doc_name">
+                </div>
+                <div class="form-group">
+                    <label for="new_insurance_doc_category">File Category</label>
+                    <input type="text" id="new_insurance_doc_category" name="new_insurance_doc_category">
+                </div>
+                <div class="form-group">
+                    <label for="new_insurance_doc_file">File</label>
+                    <input type="file" id="new_insurance_doc_file" name="new_insurance_doc_file">
+                </div>
+            </div>
+            <button type="button" onclick="saveInsuranceDocument()">Save Document</button>
+            <button type="button" class="button-secondary" onclick="cancelAddInsuranceDocument()">Cancel</button>
+        `;
+        container.innerHTML = formHtml;
+    }
+
+    function cancelAddInsuranceDocument() {
+        const container = document.getElementById('add-insurance-document-form-container');
+        container.innerHTML = '';
+    }
+
+    async function saveInsuranceDocument() {
+        let insuranceId = document.getElementById('insurance_id').value;
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!insuranceId) {
+            const { data, error } = await supabase.from('insurance').insert({ shipment_id: shipmentId, created_by: user.id }).select().single();
+            if (error) {
+                showMessage('insurance-modal-message', `Error creating insurance: ${error.message}`, true);
+                return;
+            }
+            insuranceId = data.id;
+            document.getElementById('insurance_id').value = insuranceId;
+        }
+
+        const fileName = document.getElementById('new_insurance_doc_name').value;
+        const fileCategory = document.getElementById('new_insurance_doc_category').value;
+        const file = document.getElementById('new_insurance_doc_file').files[0];
+
+        if (!file) {
+            showMessage('insurance-modal-message', 'File is required.', true);
+            return;
+        }
+
+        const { data, error } = await supabase.storage
+            .from('shipment-docs')
+            .upload(`${shipmentId}/insurance/${file.name}`, file, {
+                cacheControl: '3600',
+                upsert: true
+            });
+
+        if (error) {
+            showMessage('insurance-modal-message', `Error uploading file: ${error.message}`, true);
+            return;
+        }
+
+        const { data: publicUrlData } = supabase.storage.from('shipment-docs').getPublicUrl(data.path);
+
+        const docData = {
+            insurance_id: insuranceId,
+            file_url: publicUrlData.publicUrl,
+            file_name: fileName || file.name,
+            doc_category: fileCategory,
+            uploaded_by: user.id
+        };
+
+        const { error: docError } = await supabase.from('insurance_documents').insert(docData);
+
+        if (docError) {
+            showMessage('insurance-modal-message', `Error saving document record: ${docError.message}`, true);
+        } else {
+            showToast('Document saved successfully!', true);
+            cancelAddInsuranceDocument();
+            await openInsuranceModal();
+        }
+    }
+
+    window.openInsuranceModal = openInsuranceModal;
+    window.closeInsuranceModal = closeInsuranceModal;
+    window.saveInsurance = saveInsurance;
+    window.addInsuranceDocumentForm = addInsuranceDocumentForm;
+    window.cancelAddInsuranceDocument = cancelAddInsuranceDocument;
+    window.saveInsuranceDocument = saveInsuranceDocument;
+    window.renderInsuranceView = renderInsuranceView;
+    window.renderInsuranceEdit = renderInsuranceEdit;
+    window.cancelInsuranceEdit = cancelInsuranceEdit;
+
+    window.openStageModal = openStageModal;
+    window.closeModal = closeModal;
+    window.saveStageDetails = saveStageDetails;
+    window.renderStageEdit = renderStageEdit;
+    window.renderStageView = renderStageView;
+
+    document.addEventListener('DOMContentLoaded', initializeTracker);
+  </script>
+</body>
+</html>
