@@ -164,7 +164,7 @@
                 { name: "status", type: "text", label: "Status" },
                 { name: "received_at", type: "datetime-local", label: "Received At" },
                 { name: "bl_date", type: "date", label: "BL Date" },
-                { name: "uploaded_by", type: "uuid", label: "Uploaded By", fk: { relation: "app_user", displayColumn: "full_name" } },
+                { name: "uploaded_by", type: "uuid", label: "Uploaded By", fk: { relation: "app_user", displayColumn: "full_name", constraint: "original_docs_uploaded_by_fkey" } },
                 { name: "docs_url", type: "text", label: "Docs URL", readonly: true },
                 { name: "shipping_company", type: "text", label: "Shipping Company" },
                 { name: "tracking_number", type: "text", label: "Tracking Number" },
@@ -882,7 +882,12 @@
             if (field.fk) {
                 const relationName = field.fk.relation;
                 const displayColumn = field.fk.displayColumn;
-                selectString += `, ${relationName}(${displayColumn})`;
+                // Use field name as alias to avoid ambiguity when multiple FKs point to same table
+                if (field.fk.constraint) {
+                    selectString += `, ${field.name}:${relationName}!${field.fk.constraint}(${displayColumn})`;
+                } else {
+                    selectString += `, ${field.name}:${relationName}(${displayColumn})`;
+                }
             }
         });
 
@@ -960,8 +965,8 @@
                 }
 
                 if (field.fk) {
-                    const relationName = field.fk.relation;
-                    const relatedData = currentStageData.details[relationName];
+                    // Use field name as key since we aliased it in the select
+                    const relatedData = currentStageData.details[field.name];
                     if (relatedData && relatedData[field.fk.displayColumn]) {
                         displayValue = relatedData[field.fk.displayColumn];
                     } else if (value === null || value === undefined || value === 'null') {
